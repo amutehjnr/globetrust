@@ -1,9 +1,9 @@
-/* Watermark 360° carousel — ambient, auto-spin, non-interactive */
+/* Watermark 360° — pure CSS auto-rotate */
 .gtb-carousel-section {
   position: relative;
-  padding: 0;
-  margin: 24px 0 8px;
-  pointer-events: none; /* no clicks required */
+  padding: 8px 0 16px;
+  margin: 16px 0;
+  pointer-events: none;
   user-select: none;
   overflow: hidden;
 }
@@ -11,20 +11,19 @@
 .gtb-carousel-360 {
   width: min(1440px, 100%);
   margin-inline: auto;
-  opacity: 0.28; /* watermark strength — raise to 0.4 if too faint */
-  filter: grayscale(0.15);
+  opacity: 0.3; /* watermark */
 }
 
 .gtb-carousel-360__intro,
 .gtb-carousel-360__controls {
-  display: none; /* no title, no arrows, no dots */
+  display: none;
 }
 
 .gtb-carousel-360__stage {
   position: relative;
-  height: min(320px, 55vw);
-  max-height: 360px;
-  perspective: 1400px;
+  height: min(300px, 50vw);
+  max-height: 340px;
+  perspective: 1200px;
   margin: 0 auto;
 }
 
@@ -32,64 +31,98 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  /* continuous spin driven by JS — no CSS transition */
+  animation: gtb-spin-360 18s linear infinite;
+}
+
+@keyframes gtb-spin-360 {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-360deg); }
 }
 
 .gtb-carousel-360__card {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(220px, 60vw);
-  margin: -110px 0 0 -110px;
-  padding: 22px 20px;
+  width: min(200px, 55vw);
+  height: auto;
+  margin: -100px 0 0 -100px;
+  padding: 20px 18px;
   border-radius: 14px;
   border: 1px solid rgba(151, 115, 59, 0.35);
-  background: linear-gradient(160deg, rgba(255, 253, 249, 0.95), rgba(244, 235, 224, 0.9));
-  box-shadow: 0 12px 28px rgba(52, 37, 17, 0.08);
-  text-align: left;
+  background: linear-gradient(160deg, #fffdf9, #f4ebe0);
+  box-shadow: 0 12px 28px rgba(52, 37, 17, 0.1);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* placed by JS or by fixed nth-child below */
+}
+
+/* 4 cards evenly around the circle (no JS required for layout) */
+.gtb-carousel-360__card:nth-child(1) {
+  transform: rotateY(0deg) translateZ(220px) rotateY(0deg);
+}
+.gtb-carousel-360__card:nth-child(2) {
+  transform: rotateY(90deg) translateZ(220px) rotateY(-90deg);
+}
+.gtb-carousel-360__card:nth-child(3) {
+  transform: rotateY(180deg) translateZ(220px) rotateY(-180deg);
+}
+.gtb-carousel-360__card:nth-child(4) {
+  transform: rotateY(270deg) translateZ(220px) rotateY(-270deg);
 }
 
 .gtb-carousel-360__icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font: 500 16px "Playfair Display", Georgia, serif;
+  font: 500 14px "Playfair Display", Georgia, serif;
   color: #f4d58c;
   background: radial-gradient(circle at 30% 25%, #e7c779, #8f6122 55%, #1a2433);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .gtb-carousel-360__card h3 {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  margin: 0 0 6px;
   color: #102238;
-  margin: 0 0 8px;
 }
 
 .gtb-carousel-360__card p {
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.55;
   color: #5a6570;
   margin: 0;
 }
 
 .gtb-carousel-360__card a {
-  display: none; /* watermark: no links */
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .gtb-carousel-360__ring {
-    animation: none !important;
+    animation: none;
   }
 }
 
 @media (max-width: 600px) {
-  .gtb-carousel-360__stage {
-    height: 260px;
+  .gtb-carousel-360__card:nth-child(1),
+  .gtb-carousel-360__card:nth-child(2),
+  .gtb-carousel-360__card:nth-child(3),
+  .gtb-carousel-360__card:nth-child(4) {
+    /* slightly smaller orbit on mobile */
+  }
+  .gtb-carousel-360__card:nth-child(1) {
+    transform: rotateY(0deg) translateZ(160px) rotateY(0deg);
+  }
+  .gtb-carousel-360__card:nth-child(2) {
+    transform: rotateY(90deg) translateZ(160px) rotateY(-90deg);
+  }
+  .gtb-carousel-360__card:nth-child(3) {
+    transform: rotateY(180deg) translateZ(160px) rotateY(-180deg);
+  }
+  .gtb-carousel-360__card:nth-child(4) {
+    transform: rotateY(270deg) translateZ(160px) rotateY(-270deg);
   }
 }
