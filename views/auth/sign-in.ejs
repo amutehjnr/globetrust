@@ -4,27 +4,123 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign in · Globe Trust Bank</title>
+  <meta name="description" content="Sign in to Globe Trust Bank online banking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/signin.css">
 </head>
-<body>
+<body class="sign-in-page">
   <%- include('../partials/header') %>
-  <main class="container page-hero" style="max-width:28rem;">
-    <h1>Sign in</h1>
-    <p class="prose">Access your online banking session. Use only official bank channels.</p>
-    <% if (error) { %><div class="notice" style="border-left-color:#8B3A3A;color:#8B3A3A;"><%= error %></div><% } %>
-    <form method="post" action="/sign-in" class="prose" style="margin-top:1.25rem;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="next" value="<%= next %>">
-      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">Email</label>
-      <input name="email" type="email" required autocomplete="username" style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;">
-      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">Password</label>
-      <input name="password" type="password" required autocomplete="current-password" style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;">
-      <button class="btn btn-navy" type="submit" style="width:100%;">Sign in</button>
-    </form>
-    <p class="prose" style="margin-top:1.25rem;font-size:0.9rem;">
-      <a href="/forgot-password">Forgot password?</a> · <a href="/register">Register</a>
-    </p>
+
+  <main class="sign-in-shell">
+
+    <!-- LEFT: Form -->
+    <section class="sign-in-form-panel">
+      <div class="sign-in-form-wrap">
+        <span class="eyebrow">Customer sign in</span>
+        <h1 class="sign-in-title">Welcome back.</h1>
+        <p class="sign-in-subtitle">
+          Sign in to see balances, move money, and manage your cards.
+        </p>
+
+        <% if (typeof flash !== 'undefined' && flash) { %>
+          <div class="form-alert form-alert-<%= flash.type === 'error' ? 'error' : 'success' %>">
+            <%= flash.message %>
+          </div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="form-alert form-alert-error"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/auth/login" class="sign-in-form" novalidate>
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+          <div class="form-group">
+            <label for="email">Email address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="username"
+              placeholder="you@example.com"
+              value="<%= typeof email !== 'undefined' ? email : '' %>"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              Password
+              <a href="/auth/forgot-password" class="form-link">Forgot password?</a>
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="••••••••"
+            >
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-block">Sign in →</button>
+        </form>
+
+        <div class="sign-in-secondary">
+          <p>
+            Don't have an account?
+            <a href="/register">Open one in minutes</a>
+          </p>
+        </div>
+
+        <div class="sign-in-security">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <span>
+            Two-step verification protects every sign-in.
+            <a href="/security">Learn about security →</a>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Brand panel -->
+    <aside class="sign-in-brand-panel">
+      <div class="sign-in-brand-inner">
+        <div class="sign-in-brand-mark">GT</div>
+        <h2>Globe Trust Bank</h2>
+        <p>
+          A bank built on unhurried conversation, plain language, and the
+          things that actually matter.
+        </p>
+
+        <ul class="sign-in-brand-list">
+          <li>
+            <span class="brand-check">✓</span>
+            Two-step verification
+          </li>
+          <li>
+            <span class="brand-check">✓</span>
+            Statements back 7 years
+          </li>
+          <li>
+            <span class="brand-check">✓</span>
+            Real support, no scripts
+          </li>
+        </ul>
+
+        <div class="sign-in-brand-footer">
+          <a href="/security">Security centre →</a>
+        </div>
+      </div>
+    </aside>
+
   </main>
+
   <%- include('../partials/footer') %>
+  <script defer src="/js/site.js"></script>
 </body>
 </html>
