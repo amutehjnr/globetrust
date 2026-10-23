@@ -1,130 +1,162 @@
+
 (() => {
   'use strict';
 
-  const root = document.querySelector('[data-gtb-carousel-360]');
-  if (!root) return;
+  function initCarousel() {
+    const root = document.querySelector('[data-gtb-carousel-360]');
+    if (!root || root.dataset.carouselInitialized === 'true') return;
 
-  const ring = root.querySelector('.gtb-carousel-360__ring');
-  const cards = Array.from(root.querySelectorAll('.gtb-carousel-360__card'));
-  const prevBtn = root.querySelector('[data-carousel-prev]');
-  const nextBtn = root.querySelector('[data-carousel-next]');
-  const dotsWrap = root.querySelector('.gtb-carousel-360__dots');
-  const stage = root.querySelector('.gtb-carousel-360__stage');
+    const ring = root.querySelector('.gtb-carousel-360__ring');
+    const cards = Array.from(root.querySelectorAll('.gtb-carousel-360__card'));
+    const prevBtn = root.querySelector('[data-carousel-prev]');
+    const nextBtn = root.querySelector('[data-carousel-next]');
+    const dotsWrap = root.querySelector('.gtb-carousel-360__dots');
+    const stage = root.querySelector('.gtb-carousel-360__stage');
 
-  const n = cards.length;
-  if (!ring || n === 0) return;
+    const count = cards.length;
+    if (!ring || !stage || count === 0) return;
 
-  const angleStep = 360 / n;
-  const radius = Math.min(320, Math.max(180, window.innerWidth * 0.28));
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.dataset.carouselInitialized = 'true';
 
-  // Degrees per second — full 360° every ~12 seconds
-  const DEGREES_PER_SEC = 30;
-  let rotation = 0;      // continuous angle
-  let index = 0;         // nearest card for dots/aria
-  let paused = false;
-  let lastTs = null;
-  let rafId = null;
+    const angleStep = 360 / count;
+    const DEGREES_PER_SEC = 30;
+    let rotation = 0;
+    let activeIndex = 0;
+    let lastTimestamp = null;
+    let animationFrame = null;
+    let startX = null;
 
-  cards.forEach((card, i) => {
-    const a = i * angleStep;
-    card.style.transform =
-      `rotateY(${a}deg) translateZ(${radius}px) rotateY(${-a}deg)`;
-  });
+    function getRadius() {
+      const width = stage.clientWidth;
+      const cardWidth = Math.min(260, width * 0.72);
 
-  function nearestIndex() {
-    // Which card is facing the camera (0° front)
-    const normalized = ((-rotation % 360) + 360) % 360;
-    return Math.round(normalized / angleStep) % n;
-  }
+      // Keep enough room for the cards on narrow screens.
+      return Math.max(110, Math.min(320, width * 0.42, cardWidth * 1.05));
+    }
 
-  function paint() {
-    ring.style.transform = `translateZ(-${radius * 0.15}px) rotateY(${rotation}deg)`;
+    let radius = getRadius();
 
-    index = nearestIndex();
-    cards.forEach((card, i) => {
-      const active = i === index;
-      card.setAttribute('aria-hidden', active ? 'false' : 'true');
-      card.style.opacity = active ? '1' : '0.5';
-    });
+    function positionCards() {
+      radius = getRadius();
+
+      cards.forEach((card, i) => {
+        const angle = i * angleStep;
+        card.style.transform =
+          `rotateY(${angle}deg) translateZ(${radius}px) rotateY(${-angle}deg)`;
+      });
+
+      paint();
+    }
+
+    function getNearestIndex() {
+      const normalized = ((-rotation % 360) + 360) % 360;
+      return Math.round(normalized / angleStep) % count;
+    }
+
+    function paint() {
+      ring.style.transform =
+        `translateZ(-${radius * 0.15}px) rotateY(${rotation}deg)`;
+
+      activeIndex = getNearestIndex();
+
+      cards.forEach((card, i) => {
+        const active = i === activeIndex;
+        card.setAttribute('aria-hidden', active ? 'false' : 'true');
+        card.style.opacity = active ? '1' : '0.5';
+        card.style.zIndex = active ? '2' : '1';
+      });
+
+      if (dotsWrap) {
+        dotsWrap.querySelectorAll('.gtb-carousel-360__dot')
+          .forEach((dot, i) => {
+            dot.setAttribute(
+              'aria-current',
+              i === activeIndex ? 'true' : 'false'
+            );
+          });
+      }
+    }
+
+    function snapTo(index) {
+      const target = ((index % count) + count) % count;
+      rotation = -target * angleStep;
+      paint();
+
+      // Automatic rotation continues immediately after manual navigation.
+      lastTimestamp = null;
+    }
 
     if (dotsWrap) {
-      dotsWrap.querySelectorAll('.gtb-carousel-360__dot').forEach((dot, di) => {
-        dot.setAttribute('aria-current', di === index ? 'true' : 'false');
+      dotsWrap.replaceChildren();
+
+      cards.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'gtb-carousel-360__dot';
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+
+        dot.addEventListener('click', () => snapTo(i));
+        dotsWrap.appendChild(dot);
       });
     }
-  }
 
-  function tick(ts) {
-    if (lastTs == null) lastTs = ts;
-    const dt = (ts - lastTs) / 1000;
-    lastTs = ts;
+    prevBtn?.addEventListener('click', () => snapTo(activeIndex - 1));
+    nextBtn?.addEventListener('click', () => snapTo(activeIndex + 1));
 
-    if (!paused && !reduceMotion) {
-      // Negative = spin so next cards come from the right
-      rotation -= DEGREES_PER_SEC * dt;
-    }
-
-    paint();
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function snapTo(i) {
-    index = ((i % n) + n) % n;
-    // Face that card toward the user
-    rotation = -index * angleStep;
-    paint();
-  }
-
-  if (dotsWrap) {
-    cards.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.type = 'button';
-      dot.className = 'gtb-carousel-360__dot';
-      dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
-      dot.addEventListener('click', () => snapTo(i));
-      dotsWrap.appendChild(dot);
+    // Optional swipe navigation. It never pauses the automatic rotation.
+    stage.addEventListener('pointerdown', (event) => {
+      startX = event.clientX;
     });
-  }
 
-  prevBtn?.addEventListener('click', () => snapTo(index - 1));
-  nextBtn?.addEventListener('click', () => snapTo(index + 1));
+    stage.addEventListener('pointerup', (event) => {
+      if (startX === null) return;
 
-  // Pause auto-spin while hovering / focusing / dragging
-  root.addEventListener('mouseenter', () => { paused = true; });
-  root.addEventListener('mouseleave', () => { paused = false; lastTs = null; });
-  root.addEventListener('focusin', () => { paused = true; });
-  root.addEventListener('focusout', (e) => {
-    if (!root.contains(e.relatedTarget)) {
-      paused = false;
-      lastTs = null;
+      const distance = event.clientX - startX;
+      startX = null;
+
+      if (Math.abs(distance) > 40) {
+        snapTo(activeIndex + (distance < 0 ? 1 : -1));
+      }
+    });
+
+    stage.addEventListener('pointercancel', () => {
+      startX = null;
+    });
+
+    function tick(timestamp) {
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+
+      const elapsed = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+      lastTimestamp = timestamp;
+
+      // Always rotate: no hover, focus, or reduced-motion pause.
+      rotation -= DEGREES_PER_SEC * elapsed;
+      paint();
+
+      animationFrame = requestAnimationFrame(tick);
     }
-  });
 
-  let startX = null;
-  stage?.addEventListener('pointerdown', (e) => {
-    startX = e.clientX;
-    paused = true;
-  });
-  window.addEventListener('pointerup', (e) => {
-    if (startX == null) return;
-    const dx = e.clientX - startX;
-    if (Math.abs(dx) > 40) snapTo(index + (dx < 0 ? 1 : -1));
-    startX = null;
-    paused = false;
-    lastTs = null;
-  });
+    // Recalculate the carousel radius when the viewport changes.
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(positionCards, 100);
+    });
 
-  // Reduced motion: no continuous spin — only show first card
-  if (reduceMotion) {
-    snapTo(0);
-    return;
+    positionCards();
+    animationFrame = requestAnimationFrame(tick);
+
+    window.addEventListener('pagehide', () => {
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+      }
+      clearTimeout(resizeTimer);
+    }, { once: true });
   }
 
-  paint();
-  rafId = requestAnimationFrame(tick);
-
-  window.addEventListener('beforeunload', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-  }, { once: true });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCarousel, { once: true });
+  } else {
+    initCarousel();
+  }
 })();
