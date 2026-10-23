@@ -67,47 +67,42 @@
       </div>
     </section>
 
-    <!-- 360° rotating carousel (new only) -->
+    <!-- GTB carousel (new) -->
     <section class="gtb-carousel-section" aria-label="Highlights">
-      <div class="gtb-carousel-360" data-gtb-carousel-360>
-        <div class="gtb-carousel-360__intro">
-          <p class="eyebrow">AROUND THE GLOBE</p>
-          <h2>Banking that turns<br><em>with you</em></h2>
+      <div class="gtb-carousel" data-gtb-carousel>
+        <div class="gtb-carousel__track">
+          <article class="gtb-carousel__slide">
+            <div>
+              <p class="gtb-carousel__eyebrow">Personal banking</p>
+              <h2 class="gtb-carousel__title">Everyday banking,<br><em>built around you</em></h2>
+              <p class="gtb-carousel__text">Accounts, cards and transfers designed for clarity and control—wherever you are.</p>
+              <a class="gtb-carousel__cta" href="/personal">Explore personal <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="gtb-carousel__mark" aria-hidden="true">P</div>
+          </article>
+          <article class="gtb-carousel__slide">
+            <div>
+              <p class="gtb-carousel__eyebrow">Business banking</p>
+              <h2 class="gtb-carousel__title">Tools that grow<br><em>with your business</em></h2>
+              <p class="gtb-carousel__text">Flexible accounts and services for the next stage of growth, with the same trusted standards.</p>
+              <a class="gtb-carousel__cta" href="/business">Explore business <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="gtb-carousel__mark" aria-hidden="true">B</div>
+          </article>
+          <article class="gtb-carousel__slide">
+            <div>
+              <p class="gtb-carousel__eyebrow">Security</p>
+              <h2 class="gtb-carousel__title">Protection at<br><em>every step</em></h2>
+              <p class="gtb-carousel__text">Thoughtful safeguards and clear activity so you stay informed and in control.</p>
+              <a class="gtb-carousel__cta" href="/security">How we protect you <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="gtb-carousel__mark" aria-hidden="true">S</div>
+          </article>
         </div>
-
-        <div class="gtb-carousel-360__stage">
-          <div class="gtb-carousel-360__ring">
-            <article class="gtb-carousel-360__card">
-              <div class="gtb-carousel-360__icon" aria-hidden="true">P</div>
-              <h3>Personal</h3>
-              <p>Everyday accounts and cards designed for clarity and control.</p>
-              <a href="/personal">Explore personal</a>
-            </article>
-            <article class="gtb-carousel-360__card">
-              <div class="gtb-carousel-360__icon" aria-hidden="true">B</div>
-              <h3>Business</h3>
-              <p>Flexible tools for the next stage of growth and cash flow.</p>
-              <a href="/business">Explore business</a>
-            </article>
-            <article class="gtb-carousel-360__card">
-              <div class="gtb-carousel-360__icon" aria-hidden="true">G</div>
-              <h3>Global</h3>
-              <p>Cross-border transfers with clear information and secure flows.</p>
-              <a href="/contact">Explore global</a>
-            </article>
-            <article class="gtb-carousel-360__card">
-              <div class="gtb-carousel-360__icon" aria-hidden="true">S</div>
-              <h3>Security</h3>
-              <p>Safeguards and alerts so you stay informed at every step.</p>
-              <a href="/security">How we protect you →</a>
-            </article>
-          </div>
-        </div>
-
-        <div class="gtb-carousel-360__controls">
-          <button type="button" class="gtb-carousel-360__btn" data-carousel-prev aria-label="Previous">‹</button>
-          <div class="gtb-carousel-360__dots" role="tablist" aria-label="Slides"></div>
-          <button type="button" class="gtb-carousel-360__btn" data-carousel-next aria-label="Next">›</button>
+        <div class="gtb-carousel__controls">
+          <button type="button" class="gtb-carousel__btn" data-carousel-prev aria-label="Previous slide">‹</button>
+          <div class="gtb-carousel__dots" role="tablist" aria-label="Slide indicators"></div>
+          <button type="button" class="gtb-carousel__btn" data-carousel-next aria-label="Next slide">›</button>
         </div>
       </div>
     </section>
