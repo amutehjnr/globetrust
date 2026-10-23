@@ -19,14 +19,20 @@
   height: 100%;
   align-items: center;
   gap: 32px;
-  /* force continuous motion */
-  animation: gtb-flags-scroll 22s linear infinite;
+  animation: gtb-flags-scroll 12s linear infinite; /* was 20–22s — much clearer */
   will-change: transform;
 }
 
 @keyframes gtb-flags-scroll {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Desktop: even a bit faster */
+@media (min-width: 761px) {
+  .gtb-flags-wm__track {
+    animation-duration: 10s;
+  }
 }
 
 .gtb-flags-wm__item {
