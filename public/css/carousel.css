@@ -1,201 +1,220 @@
-/* ==========================================================================
-   GLOBE TRUST BANK — 360° WATERMARK CAROUSEL
-   Full-width, auto-rotating background ornament. No interaction.
-   Used behind hero/sections as ambient depth. Watermark only.
-   ========================================================================== */
+
+/* =====================================================
+   GLOBE TRUST BANK — AUTOMATIC 360° WATERMARK
+   Pure CSS | No interaction | CSP-friendly
+   ===================================================== */
 
 .gtb-carousel-section {
   position: relative;
   width: 100%;
-  padding: 80px 0;
-  margin: 0;
+  margin: 12px 0;
+  padding: 12px 0;
+  overflow: hidden;
   pointer-events: none;
   user-select: none;
-  overflow: hidden;
-  /* Fade edges to feel like a watermark, not a widget */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    #000 12%,
-    #000 88%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    #000 12%,
-    #000 88%,
-    transparent 100%
-  );
+  -webkit-user-select: none;
 }
 
 .gtb-carousel-360 {
   width: 100%;
-  max-width: 1600px;
+  max-width: 1440px;
   margin-inline: auto;
-  opacity: 0.22; /* watermark — even lighter than before */
-  /* Soft vignette so the edges fade into the page */
-  -webkit-mask-image: radial-gradient(
-    ellipse 70% 55% at center,
-    #000 30%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 70% 55% at center,
-    #000 30%,
-    transparent 100%
-  );
+  opacity: 0.13;
 }
 
-/* Hide any legacy intro/controls just in case */
-.gtb-carousel-360__intro,
-.gtb-carousel-360__controls {
-  display: none;
-}
-
-/* ---------- Stage — tall enough for the ring ---------- */
 .gtb-carousel-360__stage {
   position: relative;
-  height: 420px;
-  perspective: 1600px;
-  perspective-origin: 50% 50%;
+  width: 100%;
+  height: clamp(230px, 28vw, 340px);
   margin: 0 auto;
+  perspective: 1000px;
+  perspective-origin: 50% 50%;
+  overflow: hidden;
 }
 
-@media (max-width: 900px) {
-  .gtb-carousel-360__stage { height: 340px; }
-}
-@media (max-width: 600px) {
-  .gtb-carousel-360__stage { height: 280px; }
-}
-
-/* ---------- Ring — spins forever ---------- */
 .gtb-carousel-360__ring {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  animation: gtb-spin-360 26s linear infinite;
+  animation: gtb-watermark-spin 28s linear infinite;
   will-change: transform;
 }
 
-@keyframes gtb-spin-360 {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(-360deg); }
+/* Continuous automatic full rotation */
+@keyframes gtb-watermark-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+
+  to {
+    transform: rotateY(360deg);
+  }
 }
 
-/* ---------- Cards ---------- */
+/* Watermark cards */
 .gtb-carousel-360__card {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(240px, 60vw);
-  height: auto;
-  margin: -110px 0 0 -120px;
-  padding: 22px 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(184, 150, 92, 0.35);
-  background: linear-gradient(160deg, #fffdf9, #f4ebe0);
-  box-shadow:
-    0 12px 28px rgba(52, 37, 17, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  width: clamp(145px, 17vw, 190px);
+  min-height: 135px;
+  box-sizing: border-box;
+  margin: -75px 0 0 calc(clamp(145px, 17vw, 190px) / -2);
+  padding: 18px;
+  overflow: hidden;
+
+  border: 1px solid rgba(197, 161, 91, 0.55);
+  border-radius: 12px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(255, 253, 249, 0.8),
+    rgba(231, 220, 200, 0.65)
+  );
+
+  box-shadow: 0 8px 24px rgba(16, 42, 67, 0.05);
+
+  text-align: left;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
 }
 
-/* 4 cards evenly spaced around a circle.
-   Larger radius (320px) makes it stretch across the section. */
+/* Four evenly spaced cards around the 3D ring */
 .gtb-carousel-360__card:nth-child(1) {
-  transform: rotateY(0deg) translateZ(320px) rotateY(0deg);
+  transform: rotateY(0deg) translateZ(210px);
 }
+
 .gtb-carousel-360__card:nth-child(2) {
-  transform: rotateY(90deg) translateZ(320px) rotateY(-90deg);
+  transform: rotateY(90deg) translateZ(210px);
 }
+
 .gtb-carousel-360__card:nth-child(3) {
-  transform: rotateY(180deg) translateZ(320px) rotateY(-180deg);
+  transform: rotateY(180deg) translateZ(210px);
 }
+
 .gtb-carousel-360__card:nth-child(4) {
-  transform: rotateY(270deg) translateZ(320px) rotateY(-270deg);
+  transform: rotateY(270deg) translateZ(210px);
 }
 
-/* ---------- Card contents ---------- */
+/* Initials */
 .gtb-carousel-360__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
   display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 10px;
   place-items: center;
-  font: 500 15px "Playfair Display", Georgia, serif;
-  color: #f4d58c;
-  background: radial-gradient(circle at 30% 25%, #e7c779, #8f6122 55%, #1a2433);
-  margin-bottom: 12px;
-  box-shadow: 0 4px 10px -4px rgba(143, 97, 34, 0.5);
+
+  border: 1px solid rgba(197, 161, 91, 0.6);
+  border-radius: 50%;
+
+  background: rgba(16, 42, 67, 0.9);
+  color: #e3cb91;
+
+  font: 500 14px "Playfair Display", Georgia, serif;
 }
 
+/* Card headings */
 .gtb-carousel-360__card h3 {
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: 18px;
-  font-weight: 500;
   margin: 0 0 6px;
-  color: #102238;
-  letter-spacing: -0.01em;
+  color: #102a43;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
+  font-weight: 500;
 }
 
+/* Supporting text */
 .gtb-carousel-360__card p {
-  font-size: 12px;
-  line-height: 1.55;
-  color: #5a6570;
   margin: 0;
+  color: #34495a;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
+/* Hide any carousel controls or links */
+.gtb-carousel-360__intro,
+.gtb-carousel-360__controls,
 .gtb-carousel-360__card a {
   display: none;
 }
 
-/* ---------- Mobile: shrink orbit ---------- */
-@media (max-width: 900px) {
-  .gtb-carousel-360__card:nth-child(1) {
-    transform: rotateY(0deg) translateZ(240px) rotateY(0deg);
-  }
-  .gtb-carousel-360__card:nth-child(2) {
-    transform: rotateY(90deg) translateZ(240px) rotateY(-90deg);
-  }
-  .gtb-carousel-360__card:nth-child(3) {
-    transform: rotateY(180deg) translateZ(240px) rotateY(-180deg);
-  }
-  .gtb-carousel-360__card:nth-child(4) {
-    transform: rotateY(270deg) translateZ(240px) rotateY(-270deg);
-  }
-}
-
-@media (max-width: 600px) {
+/* Tablet */
+@media (max-width: 800px) {
   .gtb-carousel-360 {
-    opacity: 0.15; /* even more subtle on mobile */
+    opacity: 0.11;
   }
-  .gtb-carousel-360__card {
-    width: 180px;
-    margin: -90px 0 0 -90px;
-    padding: 16px 14px;
+
+  .gtb-carousel-360__stage {
+    height: 230px;
+    perspective: 850px;
   }
-  .gtb-carousel-360__card h3 { font-size: 15px; }
-  .gtb-carousel-360__card p  { font-size: 11px; }
+
   .gtb-carousel-360__card:nth-child(1) {
-    transform: rotateY(0deg) translateZ(150px) rotateY(0deg);
+    transform: rotateY(0deg) translateZ(165px);
   }
+
   .gtb-carousel-360__card:nth-child(2) {
-    transform: rotateY(90deg) translateZ(150px) rotateY(-90deg);
+    transform: rotateY(90deg) translateZ(165px);
   }
+
   .gtb-carousel-360__card:nth-child(3) {
-    transform: rotateY(180deg) translateZ(150px) rotateY(-180deg);
+    transform: rotateY(180deg) translateZ(165px);
   }
+
   .gtb-carousel-360__card:nth-child(4) {
-    transform: rotateY(270deg) translateZ(150px) rotateY(-270deg);
+    transform: rotateY(270deg) translateZ(165px);
   }
 }
 
-/* ---------- Accessibility ---------- */
+/* Mobile */
+@media (max-width: 480px) {
+  .gtb-carousel-section {
+    margin: 6px 0;
+    padding: 8px 0;
+  }
+
+  .gtb-carousel-360__stage {
+    height: 190px;
+    perspective: 650px;
+  }
+
+  .gtb-carousel-360__card {
+    width: 135px;
+    min-height: 120px;
+    margin-top: -65px;
+    margin-left: -67.5px;
+    padding: 14px;
+  }
+
+  .gtb-carousel-360__card:nth-child(1) {
+    transform: rotateY(0deg) translateZ(125px);
+  }
+
+  .gtb-carousel-360__card:nth-child(2) {
+    transform: rotateY(90deg) translateZ(125px);
+  }
+
+  .gtb-carousel-360__card:nth-child(3) {
+    transform: rotateY(180deg) translateZ(125px);
+  }
+
+  .gtb-carousel-360__card:nth-child(4) {
+    transform: rotateY(270deg) translateZ(125px);
+  }
+
+  .gtb-carousel-360__card h3 {
+    font-size: 14px;
+  }
+
+  .gtb-carousel-360__card p {
+    font-size: 10px;
+  }
+}
+
+/* Respect accessibility preferences */
 @media (prefers-reduced-motion: reduce) {
   .gtb-carousel-360__ring {
     animation: none;
+    transform: rotateY(0deg);
+    will-change: auto;
   }
 }
