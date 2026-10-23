@@ -46,6 +46,9 @@ async function start() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
+const server = http.createServer(app);
+attachSocketServer(server, { supportService: app.get('supportService') });
+
 start().catch((error) => {
   logger.fatal({ err: error }, 'Application failed to start');
   process.exit(1);

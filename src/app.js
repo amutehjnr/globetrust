@@ -64,7 +64,8 @@ function createApp(pool) {
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
         imgSrc: ["'self'", 'data:'],
-        styleSrc: ["'self'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         scriptSrc: ["'self'"],
         connectSrc: ["'self'"],
         upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
