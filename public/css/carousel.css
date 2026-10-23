@@ -1,178 +1,95 @@
-/* 360° rotating carousel — standalone */
+/* Watermark 360° carousel — ambient, auto-spin, non-interactive */
 .gtb-carousel-section {
-  padding: 56px 0 72px;
+  position: relative;
+  padding: 0;
+  margin: 24px 0 8px;
+  pointer-events: none; /* no clicks required */
+  user-select: none;
   overflow: hidden;
 }
 
 .gtb-carousel-360 {
-  width: min(1440px, calc(100% - 48px));
+  width: min(1440px, 100%);
   margin-inline: auto;
-  text-align: center;
+  opacity: 0.28; /* watermark strength — raise to 0.4 if too faint */
+  filter: grayscale(0.15);
 }
 
-.gtb-carousel-360__intro {
-  margin-bottom: 28px;
-}
-
-.gtb-carousel-360__intro .eyebrow {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #8f6122;
-  margin: 0 0 10px;
-}
-
-.gtb-carousel-360__intro h2 {
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(28px, 4vw, 42px);
-  font-weight: 500;
-  color: #102238;
-  margin: 0;
-  letter-spacing: -0.03em;
-}
-
-.gtb-carousel-360__intro h2 em {
-  color: #8f6122;
-  font-style: italic;
+.gtb-carousel-360__intro,
+.gtb-carousel-360__controls {
+  display: none; /* no title, no arrows, no dots */
 }
 
 .gtb-carousel-360__stage {
   position: relative;
-  height: min(420px, 70vw);
-  max-height: 480px;
-  perspective: 1200px;
+  height: min(320px, 55vw);
+  max-height: 360px;
+  perspective: 1400px;
   margin: 0 auto;
-  touch-action: pan-y;
 }
 
 .gtb-carousel-360__ring {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  /* transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); */
+  /* continuous spin driven by JS — no CSS transition */
 }
 
 .gtb-carousel-360__card {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(260px, 72vw);
-  margin: -140px 0 0 -130px;
-  padding: 28px 24px 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(151, 115, 59, 0.28);
-  background:
-    radial-gradient(ellipse at 80% 0%, rgba(222, 185, 113, 0.22), transparent 50%),
-    linear-gradient(160deg, #fffdf9, #f4ebe0);
-  box-shadow: 0 18px 40px rgba(52, 37, 17, 0.14);
+  width: min(220px, 60vw);
+  margin: -110px 0 0 -110px;
+  padding: 22px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(151, 115, 59, 0.35);
+  background: linear-gradient(160deg, rgba(255, 253, 249, 0.95), rgba(244, 235, 224, 0.9));
+  box-shadow: 0 12px 28px rgba(52, 37, 17, 0.08);
   text-align: left;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.gtb-carousel-360__card[aria-hidden="true"] {
-  pointer-events: none;
-}
-
 .gtb-carousel-360__icon {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font: 500 20px "Playfair Display", Georgia, serif;
+  font: 500 16px "Playfair Display", Georgia, serif;
   color: #f4d58c;
   background: radial-gradient(circle at 30% 25%, #e7c779, #8f6122 55%, #1a2433);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .gtb-carousel-360__card h3 {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   color: #102238;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .gtb-carousel-360__card p {
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.6;
   color: #5a6570;
-  margin: 0 0 18px;
+  margin: 0;
 }
 
 .gtb-carousel-360__card a {
-  font-size: 12px;
-  font-weight: 700;
-  color: #8f6122;
-  text-decoration: none;
-}
-
-.gtb-carousel-360__card a:hover {
-  text-decoration: underline;
-}
-
-.gtb-carousel-360__controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 20px;
-}
-
-.gtb-carousel-360__btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid #c8a56e;
-  background: #fffdf9;
-  color: #563b1d;
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  display: grid;
-  place-items: center;
-}
-
-.gtb-carousel-360__btn:hover {
-  background: #f8e6bd;
-}
-
-.gtb-carousel-360__dots {
-  display: flex;
-  gap: 8px;
-}
-
-.gtb-carousel-360__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 0;
-  padding: 0;
-  background: #d4c4a8;
-  cursor: pointer;
-}
-
-.gtb-carousel-360__dot[aria-current="true"] {
-  background: #8f6122;
-  transform: scale(1.2);
+  display: none; /* watermark: no links */
 }
 
 @media (prefers-reduced-motion: reduce) {
   .gtb-carousel-360__ring {
-    transition: none;
+    animation: none !important;
   }
 }
 
 @media (max-width: 600px) {
-  .gtb-carousel-360 {
-    width: calc(100% - 28px);
-  }
   .gtb-carousel-360__stage {
-    height: 360px;
-  }
-  .gtb-carousel-360__card {
-    width: min(240px, 78vw);
-    margin-left: calc(min(240px, 78vw) / -2);
+    height: 260px;
   }
 }
