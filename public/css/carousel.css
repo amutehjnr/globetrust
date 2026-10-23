@@ -1,37 +1,81 @@
-/* Watermark 360° — pure CSS auto-rotate */
+/* ==========================================================================
+   GLOBE TRUST BANK — 360° WATERMARK CAROUSEL
+   Full-width, auto-rotating background ornament. No interaction.
+   Used behind hero/sections as ambient depth. Watermark only.
+   ========================================================================== */
+
 .gtb-carousel-section {
   position: relative;
-  padding: 8px 0 16px;
-  margin: 16px 0;
+  width: 100%;
+  padding: 80px 0;
+  margin: 0;
   pointer-events: none;
   user-select: none;
   overflow: hidden;
+  /* Fade edges to feel like a watermark, not a widget */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 }
 
 .gtb-carousel-360 {
-  width: min(1440px, 100%);
+  width: 100%;
+  max-width: 1600px;
   margin-inline: auto;
-  opacity: 0.3; /* watermark */
+  opacity: 0.22; /* watermark — even lighter than before */
+  /* Soft vignette so the edges fade into the page */
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 55% at center,
+    #000 30%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 55% at center,
+    #000 30%,
+    transparent 100%
+  );
 }
 
+/* Hide any legacy intro/controls just in case */
 .gtb-carousel-360__intro,
 .gtb-carousel-360__controls {
   display: none;
 }
 
+/* ---------- Stage — tall enough for the ring ---------- */
 .gtb-carousel-360__stage {
   position: relative;
-  height: min(300px, 50vw);
-  max-height: 340px;
-  perspective: 1200px;
+  height: 420px;
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
   margin: 0 auto;
 }
 
+@media (max-width: 900px) {
+  .gtb-carousel-360__stage { height: 340px; }
+}
+@media (max-width: 600px) {
+  .gtb-carousel-360__stage { height: 280px; }
+}
+
+/* ---------- Ring — spins forever ---------- */
 .gtb-carousel-360__ring {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  animation: gtb-spin-360 18s linear infinite;
+  animation: gtb-spin-360 26s linear infinite;
+  will-change: transform;
 }
 
 @keyframes gtb-spin-360 {
@@ -39,58 +83,66 @@
   to   { transform: rotateY(-360deg); }
 }
 
+/* ---------- Cards ---------- */
 .gtb-carousel-360__card {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(200px, 55vw);
+  width: min(240px, 60vw);
   height: auto;
-  margin: -100px 0 0 -100px;
-  padding: 20px 18px;
-  border-radius: 14px;
-  border: 1px solid rgba(151, 115, 59, 0.35);
+  margin: -110px 0 0 -120px;
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(184, 150, 92, 0.35);
   background: linear-gradient(160deg, #fffdf9, #f4ebe0);
-  box-shadow: 0 12px 28px rgba(52, 37, 17, 0.1);
+  box-shadow:
+    0 12px 28px rgba(52, 37, 17, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  /* placed by JS or by fixed nth-child below */
+  transform-style: preserve-3d;
 }
 
-/* 4 cards evenly around the circle (no JS required for layout) */
+/* 4 cards evenly spaced around a circle.
+   Larger radius (320px) makes it stretch across the section. */
 .gtb-carousel-360__card:nth-child(1) {
-  transform: rotateY(0deg) translateZ(220px) rotateY(0deg);
+  transform: rotateY(0deg) translateZ(320px) rotateY(0deg);
 }
 .gtb-carousel-360__card:nth-child(2) {
-  transform: rotateY(90deg) translateZ(220px) rotateY(-90deg);
+  transform: rotateY(90deg) translateZ(320px) rotateY(-90deg);
 }
 .gtb-carousel-360__card:nth-child(3) {
-  transform: rotateY(180deg) translateZ(220px) rotateY(-180deg);
+  transform: rotateY(180deg) translateZ(320px) rotateY(-180deg);
 }
 .gtb-carousel-360__card:nth-child(4) {
-  transform: rotateY(270deg) translateZ(220px) rotateY(-270deg);
+  transform: rotateY(270deg) translateZ(320px) rotateY(-270deg);
 }
 
+/* ---------- Card contents ---------- */
 .gtb-carousel-360__icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font: 500 14px "Playfair Display", Georgia, serif;
+  font: 500 15px "Playfair Display", Georgia, serif;
   color: #f4d58c;
   background: radial-gradient(circle at 30% 25%, #e7c779, #8f6122 55%, #1a2433);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px -4px rgba(143, 97, 34, 0.5);
 }
 
 .gtb-carousel-360__card h3 {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 500;
   margin: 0 0 6px;
   color: #102238;
+  letter-spacing: -0.01em;
 }
 
 .gtb-carousel-360__card p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.55;
   color: #5a6570;
   margin: 0;
@@ -100,29 +152,50 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .gtb-carousel-360__ring {
-    animation: none;
+/* ---------- Mobile: shrink orbit ---------- */
+@media (max-width: 900px) {
+  .gtb-carousel-360__card:nth-child(1) {
+    transform: rotateY(0deg) translateZ(240px) rotateY(0deg);
+  }
+  .gtb-carousel-360__card:nth-child(2) {
+    transform: rotateY(90deg) translateZ(240px) rotateY(-90deg);
+  }
+  .gtb-carousel-360__card:nth-child(3) {
+    transform: rotateY(180deg) translateZ(240px) rotateY(-180deg);
+  }
+  .gtb-carousel-360__card:nth-child(4) {
+    transform: rotateY(270deg) translateZ(240px) rotateY(-270deg);
   }
 }
 
 @media (max-width: 600px) {
-  .gtb-carousel-360__card:nth-child(1),
-  .gtb-carousel-360__card:nth-child(2),
-  .gtb-carousel-360__card:nth-child(3),
-  .gtb-carousel-360__card:nth-child(4) {
-    /* slightly smaller orbit on mobile */
+  .gtb-carousel-360 {
+    opacity: 0.15; /* even more subtle on mobile */
   }
+  .gtb-carousel-360__card {
+    width: 180px;
+    margin: -90px 0 0 -90px;
+    padding: 16px 14px;
+  }
+  .gtb-carousel-360__card h3 { font-size: 15px; }
+  .gtb-carousel-360__card p  { font-size: 11px; }
   .gtb-carousel-360__card:nth-child(1) {
-    transform: rotateY(0deg) translateZ(160px) rotateY(0deg);
+    transform: rotateY(0deg) translateZ(150px) rotateY(0deg);
   }
   .gtb-carousel-360__card:nth-child(2) {
-    transform: rotateY(90deg) translateZ(160px) rotateY(-90deg);
+    transform: rotateY(90deg) translateZ(150px) rotateY(-90deg);
   }
   .gtb-carousel-360__card:nth-child(3) {
-    transform: rotateY(180deg) translateZ(160px) rotateY(-180deg);
+    transform: rotateY(180deg) translateZ(150px) rotateY(-180deg);
   }
   .gtb-carousel-360__card:nth-child(4) {
-    transform: rotateY(270deg) translateZ(160px) rotateY(-270deg);
+    transform: rotateY(270deg) translateZ(150px) rotateY(-270deg);
+  }
+}
+
+/* ---------- Accessibility ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .gtb-carousel-360__ring {
+    animation: none;
   }
 }
