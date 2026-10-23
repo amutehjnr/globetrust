@@ -1,0 +1,162 @@
+/* Homepage carousel — standalone, does not alter existing styles */
+.gtb-carousel-section {
+  padding: 48px 0 64px;
+}
+
+.gtb-carousel {
+  position: relative;
+  width: min(1440px, calc(100% - 48px));
+  margin-inline: auto;
+  border-radius: 17px;
+  overflow: hidden;
+  border: 1px solid rgba(151, 115, 59, 0.22);
+  background: #fffdf9;
+  box-shadow: 0 18px 55px rgba(52, 37, 17, 0.09);
+}
+
+.gtb-carousel__track {
+  display: flex;
+  transition: transform 0.45s ease;
+  will-change: transform;
+}
+
+.gtb-carousel__slide {
+  flex: 0 0 100%;
+  min-height: 280px;
+  padding: clamp(28px, 5vw, 48px);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  background:
+    radial-gradient(ellipse at 90% 20%, rgba(222, 185, 113, 0.2), transparent 40%),
+    linear-gradient(115deg, #fffdf9, #f6efe1);
+}
+
+.gtb-carousel__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #8f6122;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.gtb-carousel__title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 500;
+  line-height: 1.15;
+  color: #102238;
+  margin: 0 0 12px;
+}
+
+.gtb-carousel__title em {
+  color: #8f6122;
+  font-style: italic;
+}
+
+.gtb-carousel__text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #505965;
+  max-width: 42ch;
+  margin: 0 0 20px;
+}
+
+.gtb-carousel__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #c99b50, #a9762d);
+  color: #fffdf8;
+  text-decoration: none;
+  border: 1px solid #b98b43;
+}
+
+.gtb-carousel__mark {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 500 36px "Playfair Display", Georgia, serif;
+  color: #f4d58c;
+  background: radial-gradient(circle at 30% 25%, #e7c779, #b17a30 40%, #2a3340);
+  box-shadow: 0 12px 28px rgba(113, 75, 19, 0.25);
+  flex-shrink: 0;
+}
+
+.gtb-carousel__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 20px 20px;
+  background: rgba(255, 253, 249, 0.95);
+  border-top: 1px solid rgba(125, 94, 49, 0.15);
+}
+
+.gtb-carousel__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #c8a56e;
+  background: #fffdf9;
+  color: #563b1d;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.gtb-carousel__btn:hover {
+  background: #f8e6bd;
+  transform: translateY(-1px);
+}
+
+.gtb-carousel__dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gtb-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background: #d4c4a8;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.gtb-carousel__dot[aria-current="true"] {
+  background: #8f6122;
+  transform: scale(1.25);
+}
+
+@media (max-width: 600px) {
+  .gtb-carousel {
+    width: calc(100% - 28px);
+  }
+  .gtb-carousel__slide {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    text-align: left;
+  }
+  .gtb-carousel__mark {
+    order: -1;
+    width: 64px;
+    height: 64px;
+    font-size: 26px;
+  }
+}
