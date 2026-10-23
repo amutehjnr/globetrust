@@ -1,56 +1,87 @@
 (() => {
   'use strict';
 
-  const root = document.querySelector('[data-gtb-carousel-360]');
+  const root = document.querySelector('[data-gtb-carousel]');
   if (!root) return;
 
-  const ring = root.querySelector('.gtb-carousel-360__ring');
-  const cards = Array.from(root.querySelectorAll('.gtb-carousel-360__card'));
-  if (!ring || cards.length === 0) return;
+  const track = root.querySelector('.gtb-carousel__track');
+  const slides = Array.from(root.querySelectorAll('.gtb-carousel__slide'));
+  const prevBtn = root.querySelector('[data-carousel-prev]');
+  const nextBtn = root.querySelector('[data-carousel-next]');
+  const dotsWrap = root.querySelector('.gtb-carousel__dots');
+  if (!track || slides.length === 0) return;
 
-  const n = cards.length;
-  const angleStep = 360 / n;
-  const radius = Math.min(280, Math.max(160, window.innerWidth * 0.26));
+  let index = 0;
+  let timer = null;
+  const INTERVAL_MS = 5500;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Continuous auto spin — starts immediately, no click needed
-  const DEGREES_PER_SEC = 22; // ~16s per full 360°
-  let rotation = 0;
-  let lastTs = null;
-  let rafId = null;
+  function goTo(i) {
+    index = (i + slides.length) % slides.length;
+    track.style.transform = `translateX(-${index * 100}%)`;
+    if (dotsWrap) {
+      dotsWrap.querySelectorAll('.gtb-carousel__dot').forEach((dot, di) => {
+        dot.setAttribute('aria-current', di === index ? 'true' : 'false');
+      });
+    }
+    slides.forEach((slide, si) => {
+      slide.setAttribute('aria-hidden', si === index ? 'false' : 'true');
+    });
+  }
 
-  cards.forEach((card, i) => {
-    const a = i * angleStep;
-    card.style.transform =
-      `rotateY(${a}deg) translateZ(${radius}px) rotateY(${-a}deg)`;
-    card.setAttribute('aria-hidden', 'true');
+  function next() { goTo(index + 1); }
+  function prev() { goTo(index - 1); }
+
+  function startAuto() {
+    if (reduceMotion || slides.length < 2) return;
+    stopAuto();
+    timer = setInterval(next, INTERVAL_MS);
+  }
+
+  function stopAuto() {
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+
+  // Dots
+  if (dotsWrap) {
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'gtb-carousel__dot';
+      dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+      dot.addEventListener('click', () => {
+        goTo(i);
+        startAuto();
+      });
+      dotsWrap.appendChild(dot);
+    });
+  }
+
+  prevBtn?.addEventListener('click', () => { prev(); startAuto(); });
+  nextBtn?.addEventListener('click', () => { next(); startAuto(); });
+
+  root.addEventListener('mouseenter', stopAuto);
+  root.addEventListener('mouseleave', startAuto);
+  root.addEventListener('focusin', stopAuto);
+  root.addEventListener('focusout', (e) => {
+    if (!root.contains(e.relatedTarget)) startAuto();
   });
 
-  function paint() {
-    ring.style.transform =
-      `translateZ(-${radius * 0.12}px) rotateY(${rotation}deg)`;
-  }
+  // Touch swipe
+  let touchX = null;
+  track.addEventListener('touchstart', (e) => {
+    touchX = e.changedTouches[0].screenX;
+    stopAuto();
+  }, { passive: true });
+  track.addEventListener('touchend', (e) => {
+    if (touchX == null) return;
+    const dx = e.changedTouches[0].screenX - touchX;
+    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+    touchX = null;
+    startAuto();
+  }, { passive: true });
 
-  function tick(ts) {
-    if (lastTs == null) lastTs = ts;
-    const dt = Math.min(0.05, (ts - lastTs) / 1000); // clamp large gaps
-    lastTs = ts;
-
-    rotation -= DEGREES_PER_SEC * dt;
-    paint();
-    rafId = requestAnimationFrame(tick);
-  }
-
-  // Accessibility: do not animate if user prefers reduced motion
-  if (reduceMotion) {
-    paint();
-    return;
-  }
-
-  paint();
-  rafId = requestAnimationFrame(tick); // auto-start — no button required
-
-  window.addEventListener('beforeunload', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-  }, { once: true });
+  goTo(0);
+  startAuto();
 })();
