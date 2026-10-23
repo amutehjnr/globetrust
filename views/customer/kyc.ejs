@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Identity verification · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/customer-nav') %>
+    <div class="portal-main">
+      <h1>Identity verification</h1>
+      <div class="alert alert-info">
+        Upload clear scans of official documents only. Files are stored privately for review.
+        Production deployments must use bank-approved private document storage — not public URLs.
+      </div>
+      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
+      <% if (success) { %><div class="alert alert-ok"><%= success %></div><% } %>
+      <form method="post" action="/app/kyc" enctype="multipart/form-data" class="form-grid" style="margin:1.25rem 0 2rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+          <label>Document type</label>
+          <select name="documentType" required>
+            <option value="passport">Passport</option>
+            <option value="national_id">National ID</option>
+            <option value="drivers_license">Driver’s licence</option>
+            <option value="proof_of_address">Proof of address</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>File (JPEG, PNG, or PDF · max 5 MB)</label>
+          <input type="file" name="document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" required>
+        </div>
+        <button class="btn btn-navy" type="submit">Submit for review</button>
+      </form>
+      <h2 style="color:var(--navy);font-size:1.1rem;">Your submissions</h2>
+      <% if (!docs.length) { %>
+        <p style="color:var(--text-muted);">No documents submitted yet.</p>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Type</th><th>Status</th><th>Submitted</th><th>Reviewed</th></tr></thead>
+            <tbody>
+              <% docs.forEach(function(d) { %>
+                <tr>
+                  <td><%= d.documentType %></td>
+                  <td><span class="badge badge-<%= d.verificationStatus === 'approved' ? 'approved' : d.verificationStatus === 'rejected' ? 'rejected' : 'pending' %>"><%= d.verificationStatus %></span></td>
+                  <td><%= d.createdAt %></td>
+                  <td><%= d.reviewedAt || '—' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

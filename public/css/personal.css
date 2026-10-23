@@ -1,0 +1,881 @@
+/* =========================================================
+   GLOBE TRUST BANK — PERSONAL BANKING PAGE
+   File: public/css/personal.css
+   Shared header/footer remain in site.css
+   ========================================================= */
+
+:root {
+  --personal-ivory: #f8f6f0;
+  --personal-white: #ffffff;
+  --personal-navy: #101f35;
+  --personal-navy-deep: #0a1729;
+  --personal-gold: #c7a45b;
+  --personal-gold-light: #dfc98e;
+  --personal-text: #243247;
+  --personal-muted: #6e7785;
+  --personal-border: rgba(16, 31, 53, 0.13);
+  --personal-radius: 5px;
+}
+
+/* ---------- PAGE BASE ---------- */
+
+body:has(.account-grid) {
+  background: var(--personal-ivory);
+}
+
+.about-hero,
+.about-section,
+.about-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.about-hero .container,
+.about-section .container,
+.about-cta .container {
+  width: min(1180px, calc(100% - 64px));
+  margin-inline: auto;
+}
+
+.about-section-light {
+  background: var(--personal-white);
+}
+
+/* ---------- HERO ---------- */
+
+.about-hero {
+  padding: clamp(76px, 9vw, 124px) 0 clamp(78px, 9vw, 112px);
+  background:
+    radial-gradient(
+      ellipse at 83% 12%,
+      rgba(199, 164, 91, 0.14),
+      transparent 39%
+    ),
+    var(--personal-ivory);
+}
+
+.about-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(42px, 7vw, 90px);
+}
+
+.about-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 570px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 23px;
+  color: #9b7936;
+  font-family: "Inter", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.19em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 27px;
+  height: 1px;
+  background: var(--personal-gold);
+}
+
+.display {
+  margin: 0;
+  color: var(--personal-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.8rem, 5.2vw, 5rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.display em,
+.display-md em {
+  color: #a98743;
+  font-weight: 500;
+}
+
+.lead {
+  color: var(--personal-text);
+  font-size: clamp(1rem, 1.3vw, 1.08rem);
+  font-weight: 400;
+  line-height: 1.9;
+}
+
+.about-hero-copy > .lead {
+  max-width: 490px;
+  margin: 25px 0 0;
+}
+
+.hero-actions {
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 23px;
+  border: 1px solid transparent;
+  border-radius: var(--personal-radius);
+  font-family: "Inter", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--personal-gold);
+  outline-offset: 4px;
+}
+
+.btn-gold {
+  background: var(--personal-gold);
+  color: var(--personal-navy-deep);
+}
+
+.btn-gold:hover {
+  background: var(--personal-gold-light);
+  color: var(--personal-navy-deep);
+}
+
+.btn-outline {
+  border-color: rgba(16, 31, 53, 0.3);
+  background: transparent;
+  color: var(--personal-navy);
+}
+
+.btn-outline:hover {
+  border-color: var(--personal-navy);
+  background: var(--personal-navy);
+  color: var(--personal-white);
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+}
+
+.btn-navy {
+  background: var(--personal-navy);
+  color: var(--personal-white);
+}
+
+.btn-navy:hover {
+  background: #1c3555;
+  color: var(--personal-white);
+}
+
+.btn-ghost {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: transparent;
+  color: var(--personal-white);
+}
+
+.btn-ghost:hover {
+  border-color: var(--personal-gold);
+  background: var(--personal-gold);
+  color: var(--personal-navy);
+}
+
+/* ---------- HERO IMAGE ---------- */
+
+.about-hero-photo {
+  position: relative;
+  min-width: 0;
+  padding: 0 0 28px 28px;
+}
+
+.about-hero-photo::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: 12px;
+  width: 68%;
+  height: 65%;
+  border-top: 1px solid rgba(199, 164, 91, 0.75);
+  border-left: 1px solid rgba(199, 164, 91, 0.75);
+  pointer-events: none;
+}
+
+.about-hero-photo img {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center;
+  background: #e9e3d7;
+  box-shadow: 0 24px 65px rgba(16, 31, 53, 0.14);
+}
+
+.about-hero-photo-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  width: min(330px, 88%);
+  flex-direction: column;
+  gap: 9px;
+  padding: 22px 25px;
+  background: var(--personal-navy);
+  color: var(--personal-white);
+  box-shadow: 0 12px 32px rgba(10, 23, 41, 0.15);
+}
+
+.about-hero-photo-caption span {
+  color: var(--personal-gold-light);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.about-hero-photo-caption strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ---------- SECTION HEADINGS ---------- */
+
+.about-section {
+  padding: clamp(76px, 9vw, 112px) 0;
+}
+
+.display-md {
+  margin: 0;
+  color: var(--personal-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.6rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+}
+
+.section-intro {
+  max-width: 720px;
+  margin-bottom: 54px;
+}
+
+.section-intro > .lead {
+  margin-bottom: 0;
+}
+
+/* ---------- ACCOUNT CARDS ---------- */
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 22px;
+}
+
+.account-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 34px 27px 28px;
+  border: 1px solid var(--personal-border);
+  background: var(--personal-white);
+  box-shadow: 0 12px 35px rgba(16, 31, 53, 0.045);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+.account-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(199, 164, 91, 0.6);
+  box-shadow: 0 20px 45px rgba(16, 31, 53, 0.1);
+}
+
+.account-card-featured {
+  border: 1px solid rgba(199, 164, 91, 0.75);
+  box-shadow: 0 16px 42px rgba(16, 31, 53, 0.085);
+}
+
+.account-card-featured::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  left: -1px;
+  height: 4px;
+  background: var(--personal-gold);
+}
+
+.account-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 7px 10px;
+  border: 1px solid rgba(16, 31, 53, 0.12);
+  background: #f4f2ec;
+  color: var(--personal-navy);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.account-badge-gold {
+  border-color: rgba(199, 164, 91, 0.4);
+  background: rgba(199, 164, 91, 0.15);
+  color: #826329;
+}
+
+.account-card h3 {
+  margin: 0 0 14px;
+  color: var(--personal-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.account-desc {
+  min-height: 100px;
+  margin: 0;
+  color: var(--personal-muted);
+  font-size: 0.87rem;
+  line-height: 1.85;
+}
+
+.account-rate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 26px 0 23px;
+  padding: 22px 0;
+  border-top: 1px solid var(--personal-border);
+  border-bottom: 1px solid var(--personal-border);
+}
+
+.rate-value {
+  color: var(--personal-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.rate-label {
+  color: var(--personal-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.account-features {
+  display: grid;
+  gap: 13px;
+  margin: 0 0 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.account-features li {
+  position: relative;
+  padding-left: 25px;
+  color: var(--personal-text);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.account-features li::before {
+  content: "✓";
+  position: absolute;
+  top: 1px;
+  left: 0;
+  color: #a18240;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.account-card > .btn {
+  margin-top: auto;
+}
+
+/* ---------- DARK EVERYDAY FEATURES ---------- */
+
+.about-section-dark {
+  background:
+    radial-gradient(
+      ellipse at 8% 90%,
+      rgba(199, 164, 91, 0.1),
+      transparent 35%
+    ),
+    var(--personal-navy);
+  color: var(--personal-white);
+}
+
+.eyebrow-light {
+  color: var(--personal-gold-light);
+}
+
+.about-section-dark .display-md {
+  color: var(--personal-white);
+}
+
+.about-section-dark .display-md em {
+  color: var(--personal-gold-light);
+}
+
+.about-section-dark .section-intro > .lead {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.17);
+  border-left: 1px solid rgba(255, 255, 255, 0.17);
+}
+
+.feature-card {
+  min-width: 0;
+  padding: 31px 28px 34px;
+  border-right: 1px solid rgba(255, 255, 255, 0.17);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.17);
+  transition: background-color 180ms ease;
+}
+
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.feature-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  margin-bottom: 25px;
+  border: 1px solid rgba(199, 164, 91, 0.48);
+  background: rgba(199, 164, 91, 0.09);
+  color: var(--personal-gold-light);
+}
+
+.feature-icon svg {
+  display: block;
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.feature-card h4 {
+  margin: 0 0 12px;
+  color: var(--personal-white);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.feature-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.85rem;
+  line-height: 1.85;
+}
+
+/* ---------- RATES & FEES ---------- */
+
+.split-content {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: clamp(42px, 8vw, 100px);
+}
+
+.split-label {
+  min-width: 0;
+}
+
+.split-body {
+  min-width: 0;
+  color: var(--personal-muted);
+  font-size: 0.93rem;
+  line-height: 1.9;
+}
+
+.split-body > .lead {
+  margin: 0 0 28px;
+  color: var(--personal-text);
+  font-size: 1.03rem;
+  line-height: 1.85;
+}
+
+.rates-table {
+  border-top: 1px solid var(--personal-border);
+}
+
+.rate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--personal-border);
+}
+
+.rate-row-label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rate-row-label strong {
+  color: var(--personal-navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.rate-row-label span {
+  color: var(--personal-muted);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.rate-row-value {
+  flex: 0 0 auto;
+  color: var(--personal-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* ---------- CTA ---------- */
+
+.about-cta {
+  padding: clamp(76px, 9vw, 112px) 0;
+  background:
+    radial-gradient(
+      ellipse at 85% 10%,
+      rgba(199, 164, 91, 0.15),
+      transparent 40%
+    ),
+    var(--personal-ivory);
+}
+
+.about-cta-inner {
+  max-width: 800px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.about-cta-inner .eyebrow {
+  justify-content: center;
+}
+
+.about-cta-inner .display-md {
+  font-size: clamp(2.2rem, 4.6vw, 3.7rem);
+}
+
+.about-cta-inner > p {
+  max-width: 590px;
+  margin: 23px auto 0;
+  color: var(--personal-muted);
+  font-size: 0.96rem;
+  line-height: 1.9;
+}
+
+.about-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+/* ---------- TABLET ---------- */
+
+@media (max-width: 960px) {
+  .about-hero .container,
+  .about-section .container,
+  .about-cta .container {
+    width: min(100% - 48px, 800px);
+  }
+
+  .about-hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: 34px;
+  }
+
+  .display {
+    font-size: clamp(2.6rem, 5.5vw, 4rem);
+  }
+
+  .about-hero-photo {
+    padding-left: 18px;
+  }
+
+  .account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .account-desc {
+    min-height: auto;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .split-content {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 36px;
+  }
+}
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 680px) {
+  .about-hero .container,
+  .about-section .container,
+  .about-cta .container {
+    width: calc(100% - 40px);
+  }
+
+  .about-hero {
+    padding: 60px 0 72px;
+  }
+
+  .about-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .display {
+    font-size: clamp(2.65rem, 10vw, 3.8rem);
+    line-height: 1.1;
+  }
+
+  .about-hero-copy > .lead {
+    margin-top: 21px;
+    font-size: 0.97rem;
+    line-height: 1.85;
+  }
+
+  .hero-actions {
+    margin-top: 26px !important;
+    gap: 10px !important;
+  }
+
+  .hero-actions .btn {
+    flex: 1 1 155px;
+  }
+
+  .about-hero-photo {
+    width: calc(100% - 10px);
+    margin-left: 10px;
+    padding: 0 0 22px 14px;
+  }
+
+  .about-hero-photo::before {
+    top: -10px;
+    left: 5px;
+  }
+
+  .about-hero-photo img {
+    aspect-ratio: 5 / 4;
+  }
+
+  .about-hero-photo-caption {
+    width: min(290px, 90%);
+    padding: 16px 18px;
+  }
+
+  .about-section {
+    padding: 68px 0;
+  }
+
+  .section-intro {
+    margin-bottom: 36px !important;
+  }
+
+  .display-md {
+    font-size: clamp(2.15rem, 8vw, 3rem);
+  }
+
+  .account-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .account-card,
+  .account-card:last-child {
+    grid-column: auto;
+    padding: 29px 24px 25px;
+  }
+
+  .account-card h3 {
+    font-size: 1.45rem;
+  }
+
+  .account-rate {
+    margin: 22px 0;
+    padding: 19px 0;
+  }
+
+  .rate-value {
+    font-size: 2.3rem;
+  }
+
+  .account-features {
+    gap: 11px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
+    padding: 26px 23px 28px;
+  }
+
+  .feature-icon {
+    margin-bottom: 19px;
+  }
+
+  .feature-card h4 {
+    font-size: 1.2rem;
+  }
+
+  .split-content {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .split-body > .lead {
+    font-size: 0.98rem;
+  }
+
+  .rate-row {
+    gap: 14px;
+    padding: 18px 0;
+  }
+
+  .rate-row-label strong {
+    font-size: 0.82rem;
+  }
+
+  .rate-row-label span {
+    font-size: 0.72rem;
+  }
+
+  .rate-row-value {
+    font-size: 1.25rem;
+  }
+
+  .about-cta {
+    padding: 68px 0;
+  }
+
+  .about-cta-inner .display-md {
+    font-size: clamp(2.1rem, 8vw, 2.9rem);
+  }
+
+  .about-cta-inner > p {
+    font-size: 0.92rem;
+  }
+
+  .about-cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .about-cta-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ---------- SMALL PHONES ---------- */
+
+@media (max-width: 380px) {
+  .about-hero .container,
+  .about-section .container,
+  .about-cta .container {
+    width: calc(100% - 32px);
+  }
+
+  .display {
+    font-size: 2.45rem;
+  }
+
+  .display-md {
+    font-size: 2rem;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .account-card,
+  .account-card:last-child {
+    padding-inline: 19px;
+  }
+
+  .rate-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ---------- ACCESSIBILITY ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .account-card,
+  .feature-card {
+    transition: none;
+  }
+
+  .btn:hover,
+  .account-card:hover {
+    transform: none;
+  }
+}

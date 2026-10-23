@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transfers · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/customer-nav') %>
+    <div class="portal-main">
+      <div class="portal-header-row">
+        <h1>Transfer requests</h1>
+        <span class="badge badge-demo">Sandbox only</span>
+      </div>
+      <div class="alert alert-info">
+        This form creates a <strong>workflow request</strong> and calls the sandbox adapter.
+        A green status here is not proof of real-world settlement.
+      </div>
+      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
+      <% if (success) { %><div class="alert alert-ok"><%= success %></div><% } %>
+
+      <form method="post" action="/app/transfers" class="form-grid" style="margin:1.25rem 0 2rem;max-width:32rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="idempotencyKey" value="<%= idempotencyKey %>">
+        <div>
+          <label>From account</label>
+          <select name="sourceAccountLinkId" required>
+            <% links.forEach(function(l) { %>
+              <option value="<%= l.id %>"><%= l.displayLabel %> (<%= l.currencyCode %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input name="amount" required placeholder="100.00" inputmode="decimal">
+        </div>
+        <div>
+          <label>Destination account reference</label>
+          <input name="destinationAccountRef" required placeholder="Sandbox beneficiary ref" minlength="4">
+        </div>
+        <div>
+          <label>Narrative (optional)</label>
+          <input name="narrative" maxlength="140">
+        </div>
+        <button class="btn btn-navy" type="submit">Submit transfer request</button>
+      </form>
+
+      <h2 style="color:var(--navy);font-size:1.1rem;">Recent requests</h2>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>When</th><th>Amount</th><th>Status</th><th>Provider ref</th></tr>
+          </thead>
+          <tbody>
+            <% if (!history.length) { %>
+              <tr><td colspan="4">No transfer requests yet.</td></tr>
+            <% } %>
+            <% history.forEach(function(h) { %>
+              <tr>
+                <td><%= h.createdAt %></td>
+                <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
+                <td>
+                  <span class="badge badge-<%= h.status === 'succeeded' ? 'approved' : h.status === 'failed' ? 'rejected' : 'pending' %>">
+                    <%= h.status %>
+                  </span>
+                  <% if (h.failureCode) { %><small> <%= h.failureCode %></small><% } %>
+                </td>
+                <td><code style="font-size:0.8rem;"><%= h.externalReference || '—' %></code></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

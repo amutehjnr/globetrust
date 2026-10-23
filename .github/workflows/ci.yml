@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Syntax and security smoke
+        run: npm run check
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      - name: Docker build
+        run: docker build -t globe-trust-bank:ci .

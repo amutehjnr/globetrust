@@ -1,0 +1,15 @@
+<aside class="portal-nav" aria-label="Customer navigation">
+  <div style="padding:0.5rem 0.75rem 1rem;font-weight:700;letter-spacing:0.04em;color:#C3B49C;">My banking</div>
+  <a href="/app" <%= path === '/app' ? 'aria-current="page"' : '' %>>Overview</a>
+  <a href="/app/accounts" <%= path === '/app/accounts' ? 'aria-current="page"' : '' %>>Accounts</a>
+  <a href="/app/transfers" <%= path === '/app/transfers' ? 'aria-current="page"' : '' %>>Transfers</a>
+  <a href="/app/support" <%= path === '/app/support' ? 'aria-current="page"' : '' %>>Support</a>
+  <a href="/app/kyc" <%= path === '/app/kyc' ? 'aria-current="page"' : '' %>>Identity (KYC)</a>
+  <a href="/app/profile" <%= path === '/app/profile' ? 'aria-current="page"' : '' %>>Profile</a>
+  <a href="/mfa/enrol">Authenticator</a>
+  <div class="nav-label">Session</div>
+  <form method="post" action="/sign-out">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-ghost" style="width:100%;justify-content:flex-start;border:0;">Sign out</button>
+  </form>
+</aside>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Globe Trust Bank — secure digital banking experience.' %>">
+  <title><%= title %> · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main id="main">
+    <%- body %>
+  </main>
+  <%- include('../partials/footer') %>
+  <% if (typeof scripts !== 'undefined' && scripts) { %>
+    <% scripts.forEach(function(src) { %>
+      <script src="<%= src %>" defer></script>
+    <% }) %>
+  <% } %>
+</body>
+</html>

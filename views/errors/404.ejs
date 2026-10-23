@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title || 'Page not found' %> · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <div class="error-page">
+    <div>
+      <h1>404</h1>
+      <p><%= typeof message !== 'undefined' && message ? message : "We couldn't find that page." %></p>
+      <p>
+        <a class="btn btn-navy" href="/">Home</a>
+        <a class="btn btn-outline" href="/admin/kyc" style="margin-left:0.5rem;">KYC queue</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

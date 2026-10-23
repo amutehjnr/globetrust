@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My banking · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="container page-hero">
+    <h1>Welcome</h1>
+    <p class="prose">Signed in as <strong><%= currentUser.email %></strong></p>
+    <p class="prose">Roles: <%= (currentUser.roles || []).join(', ') || 'none' %></p>
+    <% if (typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa) { %>
+      <div class="notice">
+        Multi-factor authentication is required for this account.
+        <a href="/mfa/enrol"><strong>Set up your authenticator now</strong></a>
+      </div>
+    <% } else { %>
+      <p class="prose" style="font-size:0.9rem;"><a href="/mfa/enrol">Authenticator settings</a></p>
+    <% } %>
+    <div class="notice">
+      Balances and transfers are not shown here until authorised core-banking integration is configured.
+      Figures on this screen must never be treated as live funds.
+    </div>
+    <form method="post" action="/sign-out" style="margin-top:1.5rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-outline" type="submit">Sign out</button>
+    </form>
+  </main>
+  <%- include('../partials/footer') %>
+</body>
+</html>

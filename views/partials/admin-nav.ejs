@@ -1,0 +1,14 @@
+<aside class="portal-nav" aria-label="Admin navigation">
+  <div style="padding:0.5rem 0.75rem 1rem;font-weight:700;letter-spacing:0.04em;color:#C3B49C;">Administration</div>
+  <a href="/admin" <%= path === '/admin' ? 'aria-current="page"' : '' %>>Overview</a>
+  <a href="/admin/customers" <%= path === '/admin/customers' ? 'aria-current="page"' : '' %>>Customers</a>
+  <a href="/admin/support" <%= path === '/admin/support' ? 'aria-current="page"' : '' %>>Support inbox</a>
+  <a href="/admin/kyc" <%= path === '/admin/kyc' ? 'aria-current="page"' : '' %>>KYC queue</a>
+  <a href="/admin/audit" <%= path === '/admin/audit' ? 'aria-current="page"' : '' %>>Audit log</a>
+  <div class="nav-label">Session</div>
+  <a href="/app">Customer view</a>
+  <form method="post" action="/sign-out">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-ghost" style="width:100%;justify-content:flex-start;border:0;">Sign out</button>
+  </form>
+</aside>

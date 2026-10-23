@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business banking · Globe Trust Bank</title>
+  <meta name="description" content="Operational banking for authorised business users — clear roles, controls, and reliable infrastructure.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/business.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main>
+
+    <!-- ========== HERO ========== -->
+    <section class="about-hero">
+      <div class="container">
+        <div class="about-hero-grid">
+          <div class="about-hero-copy">
+            <span class="eyebrow">For business</span>
+            <h1 class="display">
+              Operational banking,<br><em>built for teams.</em>
+            </h1>
+            <p class="lead">
+              Tools for authorised business users, with clear roles and
+              operational controls. Every payment is traceable, every
+              approver is accounted for, every action is logged.
+            </p>
+            <div class="hero-actions" style="margin-top: 2rem; display: flex; gap: 0.85rem; flex-wrap: wrap;">
+              <a href="/contact" class="btn btn-gold">Speak to our team →</a>
+              <a href="#capabilities" class="btn btn-outline">See capabilities</a>
+            </div>
+          </div>
+          <div class="about-hero-photo">
+            <img
+              src="/images/business-hero.jpg"
+              alt="Business banking at Globe Trust Bank"
+              width="720" height="540"
+              loading="eager"
+              decoding="async"
+            >
+            <div class="about-hero-photo-caption">
+              <span>FOR AUTHORISED USERS</span>
+              <strong>Roles · Controls · Audit trail</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CAPABILITIES ========== -->
+    <section class="about-section about-section-light" id="capabilities">
+      <div class="container">
+        <div class="section-intro">
+          <span class="eyebrow">What you can do</span>
+          <h2 class="display-md">
+            Multi-user access,<br><em>with approval steps.</em>
+          </h2>
+          <p class="lead" style="max-width: 640px; margin-top: 1.25rem; color: var(--text-muted);">
+            Payments above a threshold require a second pair of eyes.
+            Access is scoped by role, and every action is recorded.
+          </p>
+        </div>
+
+        <div class="values-row values-row-light">
+          <article class="value-block value-block-light">
+            <div class="value-number">01</div>
+            <h3>Multi-user access</h3>
+            <p>Invite authorised colleagues with scoped permissions. Owner,
+              approver, and initiator roles are separated by design.</p>
+          </article>
+
+          <article class="value-block value-block-light">
+            <div class="value-number">02</div>
+            <h3>Payment approvals</h3>
+            <p>Payments above your configured threshold require approval
+              from a second authorised user before they leave your account.</p>
+          </article>
+
+          <article class="value-block value-block-light">
+            <div class="value-number">03</div>
+            <h3>Audit trail</h3>
+            <p>Every action — from login to payment to permission change —
+              is logged with a timestamp and a user reference.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CONTROLS (DARK) ========== -->
+    <section class="about-section about-section-dark">
+      <div class="container">
+        <div class="split-content">
+          <div class="split-label">
+            <span class="eyebrow eyebrow-light">Controls</span>
+            <h2 class="display-md">
+              Infrastructure<br>that respects<br><em>your treasury team.</em>
+            </h2>
+          </div>
+          <div class="split-body" style="color: rgba(255,255,255,0.75);">
+            <p class="lead" style="color: var(--white);">
+              Business banking at Globe Trust is built around the
+              operations that matter — not just the interface.
+            </p>
+            <p style="color: rgba(255,255,255,0.7);">
+              Payment limits can be configured per-user, per-account, and
+              per-period. Authorisation workflows can require one, two, or
+              three approvers depending on transaction size.
+            </p>
+            <p style="color: rgba(255,255,255,0.7);">
+              If a payment looks unusual — different beneficiary, unusual
+              amount, off-hours — the system pauses it and notifies your
+              designated approver before anything moves.
+            </p>
+            <a href="/contact" class="btn btn-ghost" style="margin-top: 1rem;">Talk to a specialist →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PLATFORM STATUS ========== -->
+    <section class="about-section about-section-light">
+      <div class="container">
+        <div class="split-content split-content-reverse">
+          <div class="split-label">
+            <span class="eyebrow">Platform status</span>
+            <h2 class="display-md">
+              Phase 1 foundation,<br><em>bank-approved integrations.</em>
+            </h2>
+          </div>
+          <div class="split-body">
+            <p class="lead">
+              This page is part of the Phase 1 public website foundation.
+            </p>
+            <p>
+              Full product detail and live business services will follow
+              after bank-approved integrations are completed. Until then,
+              the interface you see here is the real one — not a mockup —
+              with payments, transfers, and multi-user features made
+              available as each integration is enabled.
+            </p>
+
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-dot status-dot-active"></span>
+                <div>
+                  <strong>Public website</strong>
+                  <span>Live</span>
+                </div>
+              </div>
+              <div class="status-item">
+                <span class="status-dot status-dot-progress"></span>
+                <div>
+                  <strong>Business portal preview</strong>
+                  <span>In rollout</span>
+                </div>
+              </div>
+              <div class="status-item">
+                <span class="status-dot status-dot-pending"></span>
+                <div>
+                  <strong>Live payments & transfers</strong>
+                  <span>Pending bank approval</span>
+                </div>
+              </div>
+            </div>
+
+            <a href="/" class="btn btn-outline" style="margin-top: 2rem;">Return home →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CTA ========== -->
+    <section class="about-cta">
+      <div class="container">
+        <div class="about-cta-inner">
+          <span class="eyebrow">Ready when you are</span>
+          <h2 class="display-md">
+            Talk to someone who<br>understands <em>business banking.</em>
+          </h2>
+          <p>
+            Our specialists work with treasury teams, finance directors,
+            and business owners every day. No scripts — just clear answers.
+          </p>
+          <div class="about-cta-actions">
+            <a href="/contact" class="btn btn-navy">Speak to a specialist →</a>
+            <a href="/" class="btn btn-ghost">Return home</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

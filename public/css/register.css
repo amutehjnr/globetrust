@@ -1,0 +1,614 @@
+
+/* =========================================================
+   GLOBE TRUST BANK — REGISTRATION PAGE
+   File: public/css/register.css
+   Theme: Ivory / Navy / Gold
+   CSP-friendly: No inline styles required
+   ========================================================= */
+
+:root {
+  --register-navy: #102a43;
+  --register-navy-deep: #091c2e;
+  --register-gold: #c5a15b;
+  --register-gold-light: #e3cb91;
+  --register-ivory: #f8f6f0;
+  --register-white: #ffffff;
+  --register-text: #243746;
+  --register-muted: #687783;
+  --register-border: rgba(16, 42, 67, 0.15);
+}
+
+/* ---------- Page shell ---------- */
+
+body.register-page {
+  min-height: 100vh;
+  background: var(--register-ivory);
+  color: var(--register-text);
+}
+
+.register-page main.register-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 0.82fr);
+  min-height: 760px;
+}
+
+/* ---------- Form panel ---------- */
+
+.register-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(40px, 6vw, 82px) clamp(24px, 6vw, 88px);
+  background:
+    radial-gradient(
+      circle at 10% 90%,
+      rgba(197, 161, 91, 0.09),
+      transparent 32%
+    ),
+    var(--register-ivory);
+}
+
+.register-form-wrap {
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.register-page .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 21px;
+  color: #92743c;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.register-page .eyebrow::before {
+  width: 27px;
+  height: 1px;
+  background: var(--register-gold);
+  content: "";
+}
+
+.register-title {
+  margin: 0;
+  color: var(--register-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.35rem, 3.8vw, 3.35rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.register-subtitle {
+  max-width: 410px;
+  margin: 18px 0 29px;
+  color: var(--register-muted);
+  font-size: 0.94rem;
+  line-height: 1.85;
+}
+
+/* ---------- Error messages ---------- */
+
+.register-page .form-alert {
+  margin: 0 0 20px;
+  padding: 13px 15px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.87rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.register-page .form-alert-error {
+  border-color: #e9b7b7;
+  background: #fff1f0;
+  color: #9b2929;
+}
+
+/* ---------- Form layout ---------- */
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.register-page .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.register-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.register-page .form-group label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--register-navy);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.register-page .form-group input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 15px;
+  border: 1px solid rgba(16, 42, 67, 0.2);
+  border-radius: 4px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--register-navy);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.9rem;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.register-page .form-group input::placeholder {
+  color: #9aa5ad;
+  opacity: 1;
+}
+
+.register-page .form-group input:hover {
+  border-color: rgba(16, 42, 67, 0.4);
+}
+
+.register-page .form-group input:focus {
+  border-color: var(--register-gold);
+  background: var(--register-white);
+  box-shadow: 0 0 0 3px rgba(197, 161, 91, 0.16);
+}
+
+.register-page .form-group input:focus-visible {
+  outline: 2px solid var(--register-gold);
+  outline-offset: 2px;
+}
+
+/* ---------- Optional label and hints ---------- */
+
+.register-page .label-optional {
+  color: var(--register-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.register-page .label-hint {
+  color: var(--register-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+/* ---------- Primary button ---------- */
+
+.register-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 14px 22px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.register-page .btn-block {
+  width: 100%;
+  margin-top: 3px;
+}
+
+.register-page .btn-gold {
+  background: var(--register-gold);
+  color: var(--register-navy-deep);
+}
+
+.register-page .btn-gold:hover {
+  transform: translateY(-1px);
+  background: var(--register-gold-light);
+}
+
+.register-page .btn:active {
+  transform: translateY(0);
+}
+
+.register-page .btn:focus-visible,
+.register-page a:focus-visible {
+  outline: 3px solid var(--register-gold);
+  outline-offset: 4px;
+}
+
+/* ---------- Terms and privacy ---------- */
+
+.register-page .form-terms {
+  margin: -3px 0 0;
+  color: var(--register-muted);
+  font-size: 0.76rem;
+  line-height: 1.85;
+  text-align: center;
+}
+
+.register-page .form-terms a {
+  color: #8b6c32;
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.register-page .form-terms a:hover {
+  color: var(--register-navy);
+  text-decoration: underline;
+}
+
+/* ---------- Existing account link ---------- */
+
+.register-secondary {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.register-secondary p {
+  margin: 0;
+  color: var(--register-muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.register-secondary a {
+  margin-left: 5px;
+  color: #8b6c32;
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+.register-secondary a:hover {
+  color: var(--register-navy);
+  text-decoration: underline;
+}
+
+/* ---------- Brand panel ---------- */
+
+.register-brand-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(40px, 6vw, 80px);
+  overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse at 90% 10%,
+      rgba(197, 161, 91, 0.18),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #153753 0%,
+      var(--register-navy-deep) 75%
+    );
+  color: var(--register-white);
+}
+
+.register-brand-panel::before,
+.register-brand-panel::after {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border: 1px solid rgba(227, 203, 145, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.register-brand-panel::before {
+  top: -170px;
+  right: -150px;
+}
+
+.register-brand-panel::after {
+  right: -80px;
+  bottom: -220px;
+  width: 440px;
+  height: 440px;
+}
+
+.register-brand-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 410px;
+}
+
+.register-brand-mark {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 30px;
+  place-items: center;
+  border: 1px solid rgba(227, 203, 145, 0.8);
+  background: rgba(197, 161, 91, 0.1);
+  color: var(--register-gold-light);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.06em;
+}
+
+.register-brand-inner h2 {
+  margin: 0;
+  color: var(--register-white);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.1rem, 3.3vw, 3.1rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.register-brand-inner > p {
+  max-width: 390px;
+  margin: 19px 0 35px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.93rem;
+  line-height: 1.95;
+}
+
+/* ---------- Registration steps ---------- */
+
+.register-brand-section {
+  margin-top: 34px;
+  padding-top: 25px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.register-brand-section h4 {
+  margin: 0 0 23px;
+  color: var(--register-gold-light);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.register-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: register-step;
+}
+
+.register-steps li {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+}
+
+.register-steps .step-num {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(227, 203, 145, 0.48);
+  border-radius: 50%;
+  color: var(--register-gold-light);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.register-steps li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.register-steps strong {
+  color: var(--register-white);
+  font-size: 0.87rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.register-steps li > div > span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.79rem;
+  line-height: 1.7;
+}
+
+/* ---------- Brand footer ---------- */
+
+.register-brand-footer {
+  margin-top: 42px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.register-brand-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--register-gold-light);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: gap 180ms ease;
+}
+
+.register-brand-footer a:hover {
+  gap: 13px;
+  color: var(--register-white);
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width: 980px) {
+  .register-page main.register-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+  }
+
+  .register-form-panel {
+    padding: 48px 30px;
+  }
+
+  .register-brand-panel {
+    padding: 42px 28px;
+  }
+
+  .register-title {
+    font-size: clamp(2.2rem, 4.2vw, 3rem);
+  }
+
+  .register-brand-inner h2 {
+    font-size: clamp(2rem, 3.7vw, 2.7rem);
+  }
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 700px) {
+  .register-page main.register-shell {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .register-form-panel {
+    padding: 48px 24px 46px;
+  }
+
+  .register-form-wrap {
+    max-width: 480px;
+  }
+
+  .register-title {
+    font-size: clamp(2.4rem, 9vw, 3.25rem);
+  }
+
+  .register-subtitle {
+    margin-bottom: 26px;
+  }
+
+  .register-form {
+    gap: 19px;
+  }
+
+  .register-brand-panel {
+    min-height: 0;
+    padding: 45px 28px;
+  }
+
+  .register-brand-inner {
+    max-width: 480px;
+  }
+
+  .register-brand-mark {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 24px;
+    font-size: 1.4rem;
+  }
+
+  .register-brand-inner h2 {
+    font-size: 2.3rem;
+  }
+
+  .register-brand-inner > p {
+    margin: 16px 0 28px;
+  }
+
+  .register-brand-section {
+    margin-top: 28px;
+  }
+
+  .register-steps {
+    gap: 21px;
+  }
+
+  .register-brand-footer {
+    margin-top: 32px;
+  }
+}
+
+/* ---------- Small phones ---------- */
+
+@media (max-width: 420px) {
+  .register-form-panel {
+    padding: 40px 18px;
+  }
+
+  .register-page .form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 19px;
+  }
+
+  .register-title {
+    font-size: 2.4rem;
+  }
+
+  .register-page .label-hint {
+    line-height: 1.6;
+  }
+
+  .register-page .form-group input {
+    min-height: 50px;
+    padding: 12px;
+  }
+
+  .register-brand-panel {
+    padding: 40px 20px;
+  }
+
+  .register-steps li {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .register-steps .step-num {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .register-page *,
+  .register-page *::before,
+  .register-page *::after {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}

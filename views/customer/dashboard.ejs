@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/customer-nav') %>
+    <div class="portal-main">
+      <div class="portal-header-row">
+        <div>
+          <p class="dash-greeting">Welcome back<%= profile && profile.firstName ? ', ' + profile.firstName : '' %></p>
+          <h1>Dashboard</h1>
+        </div>
+        <span class="badge badge-demo">Sandbox balances — not real funds</span>
+      </div>
+
+      <% if (mustEnrollMfa) { %>
+        <div class="alert alert-err">
+          Multi-factor authentication is required before transfers.
+          <a href="/mfa/enrol"><strong>Set up authenticator</strong></a>
+        </div>
+      <% } %>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Customer reference</div>
+          <div class="value value-sm"><%= profile && profile.customerReference ? profile.customerReference : '—' %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Accounts</div>
+          <div class="value"><%= accounts.length %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">KYC approved</div>
+          <div class="value"><%= kycApproved %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Authenticator</div>
+          <div class="value value-sm">
+            <% if (mfaStatus.enrolled) { %>
+              <span class="badge badge-approved">On</span>
+            <% } else { %>
+              <span class="badge badge-pending">Off</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Accounts</h2>
+            <a href="/app/accounts">View all</a>
+          </div>
+          <% if (!accounts.length) { %>
+            <p class="muted">No linked accounts yet.</p>
+          <% } else { %>
+            <ul class="account-list">
+              <% accounts.forEach(function(a) { %>
+                <li>
+                  <div>
+                    <strong><%= a.displayLabel || a.currencyCode %></strong>
+                    <span class="muted"><%= a.currencyCode %> · <%= a.linkStatus %></span>
+                  </div>
+                  <div class="account-bal">
+                    <% if (a.balance) { %>
+                      <span class="bal-amt"><%= a.balance.available %></span>
+                      <% if (a.balance.isDemo) { %><span class="badge badge-demo">demo</span><% } %>
+                    <% } else { %>
+                      <span class="muted">—</span>
+                    <% } %>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Recent transfers</h2>
+            <a href="/app/transfers">Transfer</a>
+          </div>
+          <% if (!recentTransfers.length) { %>
+            <p class="muted">No transfer requests yet.</p>
+          <% } else { %>
+            <div class="table-wrap" style="border:0;box-shadow:none;">
+              <table class="data">
+                <thead>
+                  <tr><th>When</th><th>Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  <% recentTransfers.forEach(function(h) { %>
+                    <tr>
+                      <td><%= h.createdAt %></td>
+                      <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
+                      <td>
+                        <span class="badge badge-<%= h.status === 'succeeded' ? 'approved' : h.status === 'failed' ? 'rejected' : 'pending' %>">
+                          <%= h.status %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </section>
+
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Identity (KYC)</h2>
+            <a href="/app/kyc">Manage</a>
+          </div>
+          <p class="muted" style="margin-top:0;">
+            <%= kyc.length %> document(s) ·
+            <%= kycPending %> pending ·
+            <%= kycApproved %> approved
+          </p>
+          <% if (kyc.length) { %>
+            <ul class="simple-list">
+              <% kyc.slice(0, 4).forEach(function(d) { %>
+                <li>
+                  <span><%= d.documentType %></span>
+                  <span class="badge badge-<%= d.verificationStatus === 'approved' ? 'approved' : d.verificationStatus === 'rejected' ? 'rejected' : 'pending' %>">
+                    <%= d.verificationStatus %>
+                  </span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Quick actions</h2>
+          </div>
+          <div class="quick-actions">
+            <a class="btn btn-navy" href="/app/transfers">New transfer</a>
+            <a class="btn btn-outline" href="/app/kyc">Upload ID document</a>
+            <a class="btn btn-outline" href="/app/support">Contact support</a>
+            <a class="btn btn-outline" href="/app/profile">Edit profile</a>
+            <% if (!mfaStatus.enrolled) { %>
+              <a class="btn btn-outline" href="/mfa/enrol">Enable MFA</a>
+            <% } %>
+          </div>
+          <div class="alert alert-info" style="margin-top:1rem;margin-bottom:0;">
+            Balances and transfer outcomes shown here use the <strong>sandbox</strong> adapter only.
+            They are not evidence of real settlement.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

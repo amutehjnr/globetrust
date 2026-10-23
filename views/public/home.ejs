@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f0e7">
+  <meta name="description" content="Discover personal banking, business banking and global financial services with GLOBE TRUST BANK.">
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle : 'GLOBE TRUST BANK | Global Banking for a Brighter Tomorrow' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+  <script defer src="/js/site.js"></script>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main id="main">
+    <section class="hero section-shell" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> BANKING WITHOUT BORDERS</p>
+        <h1 id="hero-title">Global Banking<br>for a Brighter<br><em>Tomorrow</em></h1>
+        <p class="hero-description">At Globe Trust Bank, we connect you to a world of opportunities. Secure, innovative and global banking solutions for individuals and businesses, anywhere in the world.</p>
+        <div class="hero-actions">
+          <a class="button button-gold" href="/open-account">Open an Account <span aria-hidden="true">↗</span></a>
+          <a class="button button-outline" href="#services">Explore Our Services</a>
+        </div>
+        <div class="hero-trust"><span class="trust-icon">✓</span><span>Secure by design</span><span class="trust-dot">·</span><span>Built around you</span></div>
+      </div>
+
+      <div class="hero-art" aria-label="Decorative 3D globe and premium bank card">
+        <div class="marble-orb orb-one"></div><div class="marble-orb orb-two"></div>
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div>
+        <div class="currency currency-usd">$</div><div class="currency currency-eur">€</div><div class="currency currency-yen">¥</div><div class="currency currency-pound">£</div>
+        <div id="globe-stage" class="globe-stage"><div class="globe-fallback"><span>G</span></div></div>
+        <div class="globe-caption"><span class="live-dot"></span> CONNECTED ACROSS THE WORLD</div>
+        <div class="bank-card" aria-label="Illustration of a Globe Trust Bank payment card">
+          <div class="card-top"><span class="mini-emblem">◎</span><span>GLOBE TRUST BANK</span><span class="card-contactless">)))</span></div>
+          <div class="card-chip"><span></span><span></span><span></span><span></span></div>
+          <div class="card-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; 3456</div>
+          <div class="card-bottom"><span>YOUR NAME</span><strong>VISA</strong></div>
+        </div>
+        <div class="art-base"></div>
+        <div class="art-spark spark-one">✦</div><div class="art-spark spark-two">✧</div>
+      </div>
+
+      <div class="hero-bottom">
+        <a class="hero-feature" href="#personal"><span class="feature-icon">♙</span><span><strong>Personal Banking</strong><small>Grow your wealth</small></span><b>↗</b></a>
+        <a class="hero-feature" href="#business"><span class="feature-icon">▥</span><span><strong>Business Banking</strong><small>Power your business</small></span><b>↗</b></a>
+        <a class="hero-feature" href="#global"><span class="feature-icon">◎</span><span><strong>Global Transfers</strong><small>Send worldwide</small></span><b>↗</b></a>
+        <a class="hero-feature" href="#security"><span class="feature-icon">♢</span><span><strong>Secure &amp; Trusted</strong><small>Your security matters</small></span><b>↗</b></a>
+      </div>
+    </section>
+
+    <section class="services-section section-shell" id="services">
+      <div class="section-heading">
+        <div><p class="eyebrow">BANKING, REIMAGINED</p><h2>Everything you need.<br><em>All in one place.</em></h2></div>
+        <p>Thoughtfully designed financial services to help you move confidently through a connected world.</p>
+      </div>
+      <div class="service-grid">
+        <a class="service-card" id="personal" href="/personal-banking"><span class="service-icon">↗</span><span class="service-number">01 / PERSONAL</span><h3>Personal Banking</h3><p>Everyday banking, savings and financial tools made to fit your life.</p><span class="text-link">Discover personal banking <b>→</b></span></a>
+        <a class="service-card" id="business" href="/business-banking"><span class="service-icon">▥</span><span class="service-number">02 / BUSINESS</span><h3>Business Banking</h3><p>Flexible business accounts and services for your next stage of growth.</p><span class="text-link">Explore business solutions <b>→</b></span></a>
+        <a class="service-card" id="global" href="/global-transfers"><span class="service-icon">◎</span><span class="service-number">03 / GLOBAL</span><h3>Global Transfers</h3><p>Move money across borders with clear information and secure workflows.</p><span class="text-link">Explore global banking <b>→</b></span></a>
+        <a class="service-card" id="security" href="/security"><span class="service-icon">♢</span><span class="service-number">04 / SECURITY</span><h3>Security First</h3><p>Account safeguards, transaction alerts and support when you need it.</p><span class="text-link">How we protect you <b>→</b></span></a>
+      </div>
+    </section>
+
+    <section class="global-section section-shell">
+      <div class="global-visual">
+        <div class="global-glow"></div><div class="global-grid"></div>
+        <div class="global-copy"><p class="eyebrow light">YOUR WORLD, CONNECTED</p><h2>A global bank.<br><em>A local touch.</em></h2><p>Wherever life takes you, banking should move with you. Discover a more connected way to manage your financial world.</p><a class="button button-light" href="#global">Explore global banking <span>↗</span></a></div>
+        <div class="global-mini-globe" aria-hidden="true"><div class="mini-globe-core">◎</div><span class="mini-orbit mini-orbit-1"></span><span class="mini-orbit mini-orbit-2"></span><span class="mini-orbit mini-orbit-3"></span><span class="mini-node node-1"></span><span class="mini-node node-2"></span><span class="mini-node node-3"></span></div>
+        <div class="global-stats"><div><strong>Global reach</strong><span>Cross-border possibilities</span></div><div><strong>Multi-currency</strong><span>Designed for global lives</span></div><div><strong>Always connected</strong><span>Digital access, wherever available</span></div></div>
+      </div>
+    </section>
+
+    <section class="why-section section-shell" id="about">
+      <div class="why-intro"><p class="eyebrow">THE GLOBE TRUST DIFFERENCE</p><h2>Confidence in every<br><em>connection.</em></h2><p>Banking should feel clear, secure and personal. We're building an experience that puts your financial life first.</p><a class="text-link" href="/about">Get to know us <b>→</b></a></div>
+      <div class="why-list">
+        <article class="why-item"><span class="why-icon">◎</span><div><h3>Global perspective</h3><p>Financial tools designed for people and businesses with international ambitions.</p></div><span class="why-arrow">↗</span></article>
+        <article class="why-item"><span class="why-icon">♢</span><div><h3>Security at every step</h3><p>Thoughtful safeguards and clear account activity help you stay informed.</p></div><span class="why-arrow">↗</span></article>
+        <article class="why-item"><span class="why-icon">◈</span><div><h3>Clear, considered service</h3><p>Simple digital experiences with support pathways when you need a person.</p></div><span class="why-arrow">↗</span></article>
+        <article class="why-item"><span class="why-icon">◷</span><div><h3>Support that stays close</h3><p>Find answers and contact support through our available service channels.</p></div><span class="why-arrow">↗</span></article>
+      </div>
+    </section>
+
+    <section class="cta-section section-shell" id="contact">
+      <div class="cta-content"><p class="eyebrow light">YOUR NEXT CHAPTER STARTS HERE</p><h2>Make room for<br><em>what's possible.</em></h2><p>Take the next step towards a more connected banking experience.</p><div class="hero-actions"><a class="button button-light" href="/open-account">Open an Account <span>↗</span></a><a class="button button-ghost-light" href="/contact">Talk to our team</a></div></div>
+      <div class="cta-seal" aria-hidden="true"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="88"/><circle cx="100" cy="100" r="72"/><ellipse cx="100" cy="100" rx="35" ry="72"/><path d="M28 100h144M100 28v144M49 49l102 102M151 49 49 151"/></svg><span>TRUST<br>THAT MOVES<br>WITH YOU</span></div>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

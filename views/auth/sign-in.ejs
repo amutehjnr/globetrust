@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="container page-hero" style="max-width:28rem;">
+    <h1>Sign in</h1>
+    <p class="prose">Access your online banking session. Use only official bank channels.</p>
+    <% if (error) { %><div class="notice" style="border-left-color:#8B3A3A;color:#8B3A3A;"><%= error %></div><% } %>
+    <form method="post" action="/sign-in" class="prose" style="margin-top:1.25rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="next" value="<%= next %>">
+      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">Email</label>
+      <input name="email" type="email" required autocomplete="username" style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;">
+      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">Password</label>
+      <input name="password" type="password" required autocomplete="current-password" style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;">
+      <button class="btn btn-navy" type="submit" style="width:100%;">Sign in</button>
+    </form>
+    <p class="prose" style="margin-top:1.25rem;font-size:0.9rem;">
+      <a href="/forgot-password">Forgot password?</a> · <a href="/register">Register</a>
+    </p>
+  </main>
+  <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up authenticator · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="container page-hero" style="max-width:32rem;">
+    <h1>Set up authenticator</h1>
+    <p class="prose">
+      Use an authenticator app (for example Microsoft Authenticator, Google Authenticator, or 1Password).
+      Scan the code or enter the secret manually, then confirm with a 6-digit code.
+    </p>
+    <% if (error) { %><div class="notice" style="border-left-color:#8B3A3A;color:#8B3A3A;"><%= error %></div><% } %>
+
+    <% if (qrDataUrl) { %>
+      <p style="text-align:center;margin:1.25rem 0;">
+        <img src="<%= qrDataUrl %>" width="220" height="220" alt="QR code for authenticator setup">
+      </p>
+    <% } %>
+
+    <div class="notice">
+      <strong>Manual secret</strong><br>
+      <code style="word-break:break-all;font-size:0.95rem;"><%= secret %></code>
+    </div>
+
+    <form method="post" action="/mfa/enrol" style="margin-top:1.25rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">6-digit code</label>
+      <input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"
+        style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;letter-spacing:0.2em;font-size:1.1rem;">
+      <button class="btn btn-navy" type="submit" style="width:100%;">Confirm and enable</button>
+    </form>
+    <p class="prose" style="font-size:0.85rem;margin-top:1rem;">
+      Never share this secret or codes with anyone. Bank staff will not ask for your authenticator codes by phone or chat.
+    </p>
+  </main>
+  <%- include('../partials/footer') %>
+</body>
+</html>

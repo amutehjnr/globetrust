@@ -1,0 +1,745 @@
+
+/* =========================================================
+   GLOBE TRUST BANK — SECURITY CENTRE
+   File: public/css/security.css
+   Theme: Ivory / Navy / Gold
+   ========================================================= */
+
+:root {
+  --security-navy: #102a43;
+  --security-navy-deep: #091c2e;
+  --security-gold: #c5a15b;
+  --security-gold-light: #e3cb91;
+  --security-ivory: #f8f6f0;
+  --security-white: #ffffff;
+  --security-text: #243746;
+  --security-muted: #687783;
+  --security-border: rgba(16, 42, 67, 0.12);
+  --security-radius: 6px;
+  --security-shadow: 0 16px 45px rgba(9, 28, 46, 0.08);
+}
+
+/* ---------- General page ---------- */
+
+body:has(.never-ask-grid) {
+  background: var(--security-ivory);
+}
+
+body:has(.never-ask-grid) main {
+  overflow: hidden;
+}
+
+body:has(.never-ask-grid) .container {
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+/* ---------- Hero ---------- */
+
+body:has(.never-ask-grid) .about-hero {
+  position: relative;
+  padding: clamp(76px, 9vw, 120px) 0;
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(197, 161, 91, 0.12),
+      transparent 32%
+    ),
+    var(--security-ivory);
+}
+
+body:has(.never-ask-grid) .about-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.92fr;
+  align-items: center;
+  gap: clamp(42px, 7vw, 88px);
+}
+
+body:has(.never-ask-grid) .about-hero-copy {
+  max-width: 590px;
+}
+
+body:has(.never-ask-grid) .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: #92743c;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+body:has(.never-ask-grid) .eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--security-gold);
+}
+
+body:has(.never-ask-grid) .display {
+  margin: 0;
+  color: var(--security-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(3rem, 5.4vw, 5.2rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+body:has(.never-ask-grid) .display em,
+body:has(.never-ask-grid) .display-md em {
+  color: #a98542;
+  font-weight: 500;
+}
+
+body:has(.never-ask-grid) .lead {
+  max-width: 560px;
+  margin: 24px 0 0;
+  color: var(--security-muted);
+  font-size: 1.02rem;
+  line-height: 1.9;
+}
+
+body:has(.never-ask-grid) .hero-actions {
+  align-items: center;
+}
+
+body:has(.never-ask-grid) .btn {
+  min-height: 49px;
+  padding: 14px 23px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+body:has(.never-ask-grid) .btn:hover {
+  transform: translateY(-2px);
+}
+
+body:has(.never-ask-grid) .btn-gold {
+  background: var(--security-gold);
+  color: var(--security-navy-deep);
+}
+
+body:has(.never-ask-grid) .btn-gold:hover {
+  background: var(--security-gold-light);
+}
+
+body:has(.never-ask-grid) .btn-outline {
+  border-color: rgba(16, 42, 67, 0.28);
+  background: transparent;
+  color: var(--security-navy);
+}
+
+body:has(.never-ask-grid) .btn-outline:hover {
+  border-color: var(--security-navy);
+  background: rgba(16, 42, 67, 0.05);
+}
+
+/* Hero image */
+
+body:has(.never-ask-grid) .about-hero-photo {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  background: #e8e1d3;
+}
+
+body:has(.never-ask-grid) .about-hero-photo::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border: 1px solid rgba(197, 161, 91, 0.35);
+  content: "";
+  pointer-events: none;
+}
+
+body:has(.never-ask-grid) .about-hero-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+body:has(.never-ask-grid) .about-hero-photo-caption {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 19px 22px;
+  border-left: 3px solid var(--security-gold);
+  background: rgba(9, 28, 46, 0.94);
+  color: white;
+}
+
+body:has(.never-ask-grid) .about-hero-photo-caption span {
+  color: var(--security-gold-light);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+body:has(.never-ask-grid) .about-hero-photo-caption strong {
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ---------- Dark sections ---------- */
+
+body:has(.never-ask-grid) .about-section {
+  padding: clamp(70px, 8vw, 108px) 0;
+}
+
+body:has(.never-ask-grid) .about-section-dark {
+  background:
+    radial-gradient(
+      ellipse at 85% 10%,
+      rgba(197, 161, 91, 0.09),
+      transparent 40%
+    ),
+    var(--security-navy-deep);
+  color: var(--security-white);
+}
+
+body:has(.never-ask-grid) .eyebrow-light {
+  color: var(--security-gold-light);
+}
+
+body:has(.never-ask-grid) .display-md {
+  margin: 0;
+  color: var(--security-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.35rem, 4vw, 3.8rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+}
+
+body:has(.never-ask-grid) .about-section-dark .display-md {
+  color: white;
+}
+
+body:has(.never-ask-grid) .about-section-dark .display-md em {
+  color: var(--security-gold-light);
+}
+
+body:has(.never-ask-grid) .about-section-dark .lead {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- What we will never ask ---------- */
+
+body:has(.never-ask-grid) .never-ask-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1fr;
+  align-items: start;
+  gap: clamp(42px, 8vw, 105px);
+}
+
+body:has(.never-ask-grid) .never-ask-copy {
+  position: sticky;
+  top: 35px;
+}
+
+body:has(.never-ask-grid) .never-ask-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+body:has(.never-ask-grid) .never-ask-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: start;
+  gap: 20px;
+  padding: 25px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+body:has(.never-ask-grid) .never-ask-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid rgba(227, 203, 145, 0.5);
+  border-radius: 50%;
+  color: var(--security-gold-light);
+  font-size: 1.1rem;
+}
+
+body:has(.never-ask-grid) .never-ask-item h4 {
+  margin: 1px 0 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+body:has(.never-ask-grid) .never-ask-item p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+body:has(.never-ask-grid) .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: transparent;
+  color: white;
+}
+
+body:has(.never-ask-grid) .btn-ghost:hover {
+  border-color: var(--security-gold-light);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- Protections ---------- */
+
+body:has(.never-ask-grid) .about-section-light {
+  background: var(--security-ivory);
+}
+
+body:has(.never-ask-grid) .section-intro {
+  max-width: 640px;
+  margin-bottom: 56px;
+}
+
+body:has(.never-ask-grid) .protection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+body:has(.never-ask-grid) .protection-card {
+  min-width: 0;
+  padding: 32px 28px;
+  border: 1px solid var(--security-border);
+  background: rgba(255, 255, 255, 0.72);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+body:has(.never-ask-grid) .protection-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(197, 161, 91, 0.65);
+  box-shadow: var(--security-shadow);
+}
+
+body:has(.never-ask-grid) .protection-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 25px;
+  place-items: center;
+  border: 1px solid rgba(197, 161, 91, 0.45);
+  background: rgba(197, 161, 91, 0.09);
+  color: #967638;
+}
+
+body:has(.never-ask-grid) .protection-icon svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+body:has(.never-ask-grid) .protection-card h3 {
+  margin: 0 0 12px;
+  color: var(--security-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+body:has(.never-ask-grid) .protection-card p {
+  margin: 0;
+  color: var(--security-muted);
+  font-size: 0.91rem;
+  line-height: 1.85;
+}
+
+/* ---------- Spotting fraud ---------- */
+
+body:has(.never-ask-grid) .split-content {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  align-items: start;
+  gap: clamp(42px, 8vw, 100px);
+}
+
+body:has(.never-ask-grid) .split-label {
+  max-width: 440px;
+}
+
+body:has(.never-ask-grid) .split-body > .lead {
+  margin-top: 0;
+  margin-bottom: 30px;
+}
+
+body:has(.never-ask-grid) .signs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--security-border);
+}
+
+body:has(.never-ask-grid) .sign-item {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 20px;
+  padding: 25px 0;
+  border-bottom: 1px solid var(--security-border);
+}
+
+body:has(.never-ask-grid) .sign-number {
+  color: #a98542;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+
+body:has(.never-ask-grid) .sign-item h4 {
+  margin: 0 0 8px;
+  color: var(--security-navy);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+body:has(.never-ask-grid) .sign-item p {
+  margin: 0;
+  color: var(--security-muted);
+  font-size: 0.92rem;
+  line-height: 1.85;
+}
+
+/* ---------- Report fraud band ---------- */
+
+body:has(.never-ask-grid) .report-band {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 50px;
+  padding: clamp(30px, 5vw, 65px);
+  border: 1px solid rgba(227, 203, 145, 0.3);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+body:has(.never-ask-grid) .report-band-copy {
+  max-width: 600px;
+}
+
+body:has(.never-ask-grid) .report-band .display-md {
+  font-size: clamp(2.4rem, 4vw, 3.5rem);
+}
+
+body:has(.never-ask-grid) .report-band .lead {
+  max-width: 540px;
+}
+
+body:has(.never-ask-grid) .report-band-action {
+  min-width: 240px;
+}
+
+body:has(.never-ask-grid) .report-phone {
+  display: block;
+  padding: 22px 24px;
+  border-left: 3px solid var(--security-gold);
+  background: rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  transition: background 180ms ease;
+}
+
+body:has(.never-ask-grid) .report-phone:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+body:has(.never-ask-grid) .report-phone-label {
+  margin-bottom: 10px;
+  color: var(--security-gold-light);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+body:has(.never-ask-grid) .report-phone-number {
+  color: white;
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Final CTA ---------- */
+
+body:has(.never-ask-grid) .about-cta {
+  padding: clamp(70px, 8vw, 105px) 0;
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(197, 161, 91, 0.13),
+      transparent 32%
+    ),
+    #eee9dd;
+}
+
+body:has(.never-ask-grid) .about-cta-inner {
+  max-width: 760px;
+}
+
+body:has(.never-ask-grid) .about-cta-inner > p {
+  max-width: 530px;
+  margin: 20px 0 28px;
+  color: var(--security-muted);
+  font-size: 0.98rem;
+  line-height: 1.8;
+}
+
+body:has(.never-ask-grid) .about-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+body:has(.never-ask-grid) .btn-navy {
+  background: var(--security-navy);
+  color: white;
+}
+
+body:has(.never-ask-grid) .btn-navy:hover {
+  background: #1a405f;
+}
+
+body:has(.never-ask-grid) .about-cta .btn-ghost {
+  border-color: rgba(16, 42, 67, 0.3);
+  color: var(--security-navy);
+}
+
+body:has(.never-ask-grid) .about-cta .btn-ghost:hover {
+  border-color: var(--security-navy);
+  background: rgba(16, 42, 67, 0.05);
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width: 980px) {
+  body:has(.never-ask-grid) .about-hero-grid {
+    grid-template-columns: 1fr 0.85fr;
+    gap: 35px;
+  }
+
+  body:has(.never-ask-grid) .display {
+    font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+  }
+
+  body:has(.never-ask-grid) .never-ask-grid,
+  body:has(.never-ask-grid) .split-content {
+    gap: 42px;
+  }
+
+  body:has(.never-ask-grid) .protection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body:has(.never-ask-grid) .report-band {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  body:has(.never-ask-grid) .report-band-action {
+    max-width: 340px;
+  }
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 680px) {
+  body:has(.never-ask-grid) .container {
+    width: calc(100% - 36px);
+  }
+
+  body:has(.never-ask-grid) .about-hero {
+    padding: 60px 0 65px;
+  }
+
+  body:has(.never-ask-grid) .about-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  body:has(.never-ask-grid) .display {
+    font-size: clamp(2.7rem, 11vw, 4rem);
+    line-height: 1.1;
+  }
+
+  body:has(.never-ask-grid) .lead {
+    font-size: 0.96rem;
+    line-height: 1.8;
+  }
+
+  body:has(.never-ask-grid) .hero-actions {
+    gap: 10px !important;
+  }
+
+  body:has(.never-ask-grid) .hero-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  body:has(.never-ask-grid) .about-hero-photo {
+    aspect-ratio: 5 / 4;
+  }
+
+  body:has(.never-ask-grid) .about-hero-photo-caption {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    padding: 14px 16px;
+  }
+
+  body:has(.never-ask-grid) .about-section {
+    padding: 65px 0;
+  }
+
+  body:has(.never-ask-grid) .never-ask-grid,
+  body:has(.never-ask-grid) .split-content {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  body:has(.never-ask-grid) .never-ask-copy {
+    position: static;
+  }
+
+  body:has(.never-ask-grid) .display-md {
+    font-size: clamp(2.25rem, 9vw, 3.2rem);
+  }
+
+  body:has(.never-ask-grid) .never-ask-item {
+    grid-template-columns: 38px 1fr;
+    gap: 15px;
+    padding: 21px 0;
+  }
+
+  body:has(.never-ask-grid) .never-ask-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  body:has(.never-ask-grid) .section-intro {
+    margin-bottom: 35px !important;
+  }
+
+  body:has(.never-ask-grid) .protection-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  body:has(.never-ask-grid) .protection-card {
+    padding: 25px 23px;
+  }
+
+  body:has(.never-ask-grid) .protection-icon {
+    margin-bottom: 19px;
+  }
+
+  body:has(.never-ask-grid) .sign-item {
+    grid-template-columns: 43px 1fr;
+    gap: 14px;
+    padding: 22px 0;
+  }
+
+  body:has(.never-ask-grid) .report-band {
+    padding: 28px 22px;
+  }
+
+  body:has(.never-ask-grid) .report-band-action {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  body:has(.never-ask-grid) .report-phone {
+    padding: 19px 16px;
+  }
+
+  body:has(.never-ask-grid) .report-phone-number {
+    font-size: clamp(1rem, 5vw, 1.25rem);
+  }
+
+  body:has(.never-ask-grid) .about-cta {
+    padding: 65px 0;
+  }
+
+  body:has(.never-ask-grid) .about-cta-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body:has(.never-ask-grid) .about-cta-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ---------- Small phones ---------- */
+
+@media (max-width: 380px) {
+  body:has(.never-ask-grid) .container {
+    width: calc(100% - 28px);
+  }
+
+  body:has(.never-ask-grid) .display {
+    font-size: 2.5rem;
+  }
+
+  body:has(.never-ask-grid) .hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body:has(.never-ask-grid) .hero-actions .btn {
+    width: 100%;
+  }
+
+  body:has(.never-ask-grid) .never-ask-item {
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+  }
+
+  body:has(.never-ask-grid) .never-ask-icon {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ---------- Accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.never-ask-grid) *,
+  body:has(.never-ask-grid) *::before,
+  body:has(.never-ask-grid) *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+body:has(.never-ask-grid) a:focus-visible {
+  outline: 3px solid var(--security-gold);
+  outline-offset: 4px;
+}

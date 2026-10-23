@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin dashboard · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/admin-nav') %>
+    <div class="portal-main">
+      <div class="portal-header-row">
+        <div>
+          <p class="dash-greeting">Operations overview</p>
+          <h1>Admin dashboard</h1>
+        </div>
+        <span class="badge badge-demo">Staff only</span>
+      </div>
+
+      <% if (typeof message !== 'undefined' && message) { %><div class="alert alert-ok"><%= message %></div><% } %>
+      <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-err"><%= error %></div><% } %>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Users</div>
+          <div class="value"><%= counts.users %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pending KYC</div>
+          <div class="value"><%= counts.pendingKyc %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active account links</div>
+          <div class="value"><%= counts.activeAccountLinks %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Open support</div>
+          <div class="value"><%= counts.openSupport %></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Transfers (7 days)</div>
+          <div class="value"><%= counts.transfersLast7Days %></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- Registrations bar chart -->
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>New users (7 days)</h2>
+          </div>
+          <% 
+            const reg = registrationsLast7 || [];
+            const maxReg = Math.max(1, ...reg.map(r => r.count));
+            const barW = 28;
+            const gap = 12;
+            const chartH = 120;
+            const chartW = reg.length * (barW + gap);
+          %>
+          <svg class="chart-svg" viewBox="0 0 <%= Math.max(chartW, 200) %> <%= chartH + 28 %>" role="img" aria-label="Registrations last 7 days">
+            <% reg.forEach(function(r, i) { 
+              const h = Math.round((r.count / maxReg) * chartH);
+              const x = i * (barW + gap);
+              const y = chartH - h;
+            %>
+              <rect x="<%= x %>" y="<%= y %>" width="<%= barW %>" height="<%= h %>" rx="4" fill="#263653"></rect>
+              <text x="<%= x + barW/2 %>" y="<%= chartH + 14 %>" text-anchor="middle" font-size="9" fill="#687080">
+                <%= r.date.slice(5) %>
+              </text>
+              <% if (r.count > 0) { %>
+                <text x="<%= x + barW/2 %>" y="<%= y - 4 %>" text-anchor="middle" font-size="10" fill="#172440" font-weight="600">
+                  <%= r.count %>
+                </text>
+              <% } %>
+            <% }) %>
+          </svg>
+        </section>
+
+        <!-- KYC status donut-ish via CSS bars -->
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>KYC by status</h2>
+            <a href="/admin/kyc">Queue</a>
+          </div>
+          <% 
+            const kycKeys = ['pending','approved','rejected','expired'];
+            const kycTotal = kycKeys.reduce((s,k) => s + (kycByStatus[k] || 0), 0) || 1;
+          %>
+          <ul class="chart-bars">
+            <% kycKeys.forEach(function(k) { 
+              const n = kycByStatus[k] || 0;
+              const pct = Math.round((n / kycTotal) * 100);
+            %>
+              <li>
+                <div class="chart-bar-label">
+                  <span><%= k %></span>
+                  <strong><%= n %></strong>
+                </div>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill chart-bar-<%= k %>" style="width:<%= pct %>%"></div>
+                </div>
+              </li>
+            <% }) %>
+          </ul>
+        </section>
+
+        <!-- User status -->
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Users by status</h2>
+            <a href="/admin/customers">Search</a>
+          </div>
+          <% 
+            const uKeys = Object.keys(usersByStatus || {});
+            const uTotal = uKeys.reduce((s,k) => s + (usersByStatus[k] || 0), 0) || 1;
+          %>
+          <% if (!uKeys.length) { %>
+            <p class="muted">No users yet.</p>
+          <% } else { %>
+            <ul class="chart-bars">
+              <% uKeys.forEach(function(k) { 
+                const n = usersByStatus[k] || 0;
+                const pct = Math.round((n / uTotal) * 100);
+              %>
+                <li>
+                  <div class="chart-bar-label">
+                    <span><%= k %></span>
+                    <strong><%= n %></strong>
+                  </div>
+                  <div class="chart-bar-track">
+                    <div class="chart-bar-fill chart-bar-user" style="width:<%= pct %>%"></div>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+
+        <!-- Transfer status -->
+        <section class="dash-panel">
+          <div class="dash-panel-head">
+            <h2>Transfer requests</h2>
+          </div>
+          <% 
+            const tKeys = Object.keys(transfersByStatus || {});
+            const tTotal = tKeys.reduce((s,k) => s + (transfersByStatus[k] || 0), 0) || 1;
+          %>
+          <% if (!tKeys.length) { %>
+            <p class="muted">No transfer requests yet.</p>
+          <% } else { %>
+            <ul class="chart-bars">
+              <% tKeys.forEach(function(k) { 
+                const n = transfersByStatus[k] || 0;
+                const pct = Math.round((n / tTotal) * 100);
+              %>
+                <li>
+                  <div class="chart-bar-label">
+                    <span><%= k %></span>
+                    <strong><%= n %></strong>
+                  </div>
+                  <div class="chart-bar-track">
+                    <div class="chart-bar-fill chart-bar-tx" style="width:<%= pct %>%"></div>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+      </div>
+
+      <!-- Pending KYC table -->
+      <section class="dash-panel" style="margin-top:1.15rem;">
+        <div class="dash-panel-head">
+          <h2>Pending KYC</h2>
+          <a href="/admin/kyc">Open full queue</a>
+        </div>
+        <% if (!pendingKycPreview.length) { %>
+          <p class="muted">No documents waiting for review.</p>
+        <% } else { %>
+          <div class="table-wrap" style="border:0;">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Document</th>
+                  <th>Submitted</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% pendingKycPreview.forEach(function(d) { %>
+                  <tr>
+                    <td>
+                      <%= d.customerReference || '—' %><br>
+                      <small><%= [d.firstName, d.lastName].filter(Boolean).join(' ') %></small>
+                    </td>
+                    <td><%= d.email %></td>
+                    <td><%= d.documentType %></td>
+                    <td><%= d.createdAt %></td>
+                    <td>
+                      <div class="kyc-actions">
+                        <a class="btn btn-outline" style="padding:0.35rem 0.65rem;font-size:0.78rem;" href="/admin/kyc/documents/<%= d.id %>" target="_blank" rel="noopener">View</a>
+                        <a class="btn btn-outline" style="padding:0.35rem 0.65rem;font-size:0.78rem;" href="/admin/kyc/<%= d.id %>/review">Review…</a>
+                        <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <input type="hidden" name="returnTo" value="dashboard">
+                          <button class="btn btn-navy" name="decision" value="approved" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;">Approve</button>
+                        </form>
+                        <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <input type="hidden" name="returnTo" value="dashboard">
+                          <input type="hidden" name="reason" value="Rejected from dashboard">
+                          <button class="btn btn-outline" name="decision" value="rejected" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+
+      <p style="margin-top:1.25rem;">
+        <a class="btn btn-navy" href="/admin/kyc">KYC queue</a>
+        <a class="btn btn-outline" href="/admin/support" style="margin-left:0.5rem;">Support inbox</a>
+        <a class="btn btn-outline" href="/admin/customers" style="margin-left:0.5rem;">Customers</a>
+        <a class="btn btn-outline" href="/admin/audit" style="margin-left:0.5rem;">Audit log</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

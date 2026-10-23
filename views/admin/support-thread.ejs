@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conversation · Admin</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+  <style>
+    .chat-log { background:#FFFDF9; border:1px solid #E4E0D8; border-radius:12px; padding:1rem; min-height:280px; max-height:420px; overflow-y:auto; }
+    .msg { margin-bottom:0.75rem; max-width:85%; }
+    .msg.me { margin-left:auto; text-align:right; }
+    .msg .bubble { display:inline-block; padding:0.55rem 0.85rem; border-radius:12px; background:#E4E0D8; text-align:left; }
+    .msg.me .bubble { background:#263653; color:#FFFDF9; }
+  </style>
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/admin-nav') %>
+    <div class="portal-main">
+      <p><a href="/admin/support">← Inbox</a></p>
+      <h1><%= conversation.subject || 'Conversation' %></h1>
+      <div id="chat-log" class="chat-log" data-conversation="<%= conversation.id %>" data-user="<%= userId %>">
+        <% messages.forEach(function(m) { %>
+          <div class="msg <%= m.senderUserId === userId ? 'me' : '' %>">
+            <div class="bubble"><%= m.text %></div>
+          </div>
+        <% }) %>
+      </div>
+      <form id="chat-form" method="post" action="/admin/support/<%= conversation.id %>/messages" class="form-grid" style="margin-top:1rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input name="text" id="chat-input" required maxlength="2000" placeholder="Reply as agent">
+        <button class="btn btn-navy" type="submit">Send</button>
+      </form>
+      <p id="socket-status" style="font-size:0.8rem;color:#687080;">Connecting…</p>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/support-chat.js" defer></script>
+</body>
+</html>

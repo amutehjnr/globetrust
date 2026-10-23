@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security centre · Globe Trust Bank</title>
+  <meta name="description" content="How Globe Trust Bank protects your account, and how to spot and report fraud. We will never ask for your password or one-time codes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main>
+
+    <!-- ========== HERO ========== -->
+    <section class="about-hero">
+      <div class="container">
+        <div class="about-hero-grid">
+          <div class="about-hero-copy">
+            <span class="eyebrow">Security centre</span>
+            <h1 class="display">
+              Security you can<br><em>see and trust.</em>
+            </h1>
+            <p class="lead">
+              Practical protections: strong authentication, session control,
+              and careful verification. And clear guidance on what we'll never
+              ask you for — so you can spot fraud the moment it appears.
+            </p>
+            <div class="hero-actions" style="margin-top: 2rem; display: flex; gap: 0.85rem; flex-wrap: wrap;">
+              <a href="#report" class="btn btn-gold">Report fraud now →</a>
+              <a href="#protections" class="btn btn-outline">See our protections</a>
+            </div>
+          </div>
+          <div class="about-hero-photo">
+            <img
+              src="/images/security-hero.jpg"
+              alt="Globe Trust Bank security"
+              width="720" height="540"
+              loading="eager"
+              decoding="async"
+            >
+            <div class="about-hero-photo-caption">
+              <span>PROTECTED 24/7</span>
+              <strong>2FA · Session control · Fraud alerts</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== WHAT WE'LL NEVER ASK ========== -->
+    <section class="about-section about-section-dark">
+      <div class="container">
+        <div class="never-ask-grid">
+          <div class="never-ask-copy">
+            <span class="eyebrow eyebrow-light">The most important thing on this page</span>
+            <h2 class="display-md">
+              We will <em>never</em><br>ask you for:
+            </h2>
+            <p class="lead" style="color: rgba(255,255,255,0.75); margin-top: 1.25rem;">
+              Whatever the caller claims, whatever the email says, whatever the
+              letter looks like — if someone asks for any of these, it isn't us.
+            </p>
+            <a href="#report" class="btn btn-ghost" style="margin-top: 1rem;">Report it →</a>
+          </div>
+
+          <div class="never-ask-list">
+            <div class="never-ask-item">
+              <div class="never-ask-icon">✕</div>
+              <div>
+                <h4>Your password</h4>
+                <p>Not by phone, not by email, not by text. Ever.</p>
+              </div>
+            </div>
+            <div class="never-ask-item">
+              <div class="never-ask-icon">✕</div>
+              <div>
+                <h4>Your full card number</h4>
+                <p>The last 4 digits, yes. The full 16, no.</p>
+              </div>
+            </div>
+            <div class="never-ask-item">
+              <div class="never-ask-icon">✕</div>
+              <div>
+                <h4>A one-time code</h4>
+                <p>Anyone who asks for the code from your phone is a fraudster.</p>
+              </div>
+            </div>
+            <div class="never-ask-item">
+              <div class="never-ask-icon">✕</div>
+              <div>
+                <h4>Money moved to a "safe account"</h4>
+                <p>There is no such thing. This is the classic fraud script.</p>
+              </div>
+            </div>
+            <div class="never-ask-item">
+              <div class="never-ask-icon">✕</div>
+              <div>
+                <h4>Remote access to your device</h4>
+                <p>We will never ask you to install an app to "verify" your account.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PROTECTIONS ========== -->
+    <section class="about-section about-section-light" id="protections">
+      <div class="container">
+        <div class="section-intro" style="max-width: 640px; margin-bottom: 3.5rem;">
+          <span class="eyebrow">What we do</span>
+          <h2 class="display-md">
+            The protections<br><em>built in.</em>
+          </h2>
+          <p class="lead" style="margin-top: 1rem; color: var(--text-muted);">
+            Every session, every transaction, every login — designed so that
+            a stolen password isn't enough.
+          </p>
+        </div>
+
+        <div class="protection-grid">
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <h3>Two-step verification</h3>
+            <p>Every sign-in requires a code from your phone. Your password alone is never enough.</p>
+          </article>
+
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3>Session timeout</h3>
+            <p>Idle sessions log out automatically. If you walk away, the screen locks.</p>
+          </article>
+
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+              </svg>
+            </div>
+            <h3>Real-time alerts</h3>
+            <p>A push notification for every transaction. If it isn't you, you know instantly.</p>
+          </article>
+
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </div>
+            <h3>Device management</h3>
+            <p>See every device signed into your account. Revoke any you don't recognise.</p>
+          </article>
+
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3>Login history</h3>
+            <p>A log of every sign-in — time, device, and location — visible in your account.</p>
+          </article>
+
+          <article class="protection-card">
+            <div class="protection-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+            <h3>Encrypted end-to-end</h3>
+            <p>All traffic between your device and our servers is encrypted with modern TLS.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== HOW TO SPOT FRAUD ========== -->
+    <section class="about-section about-section-light">
+      <div class="container">
+        <div class="split-content">
+          <div class="split-label">
+            <span class="eyebrow">Spotting fraud</span>
+            <h2 class="display-md">
+              Three signs<br><em>something's wrong.</em>
+            </h2>
+          </div>
+          <div class="split-body">
+            <p class="lead">
+              Fraud usually follows a pattern. If you see any of these, stop,
+              hang up, and call us on the number on the back of your card.
+            </p>
+
+            <ol class="signs-list">
+              <li class="sign-item">
+                <div class="sign-number">01</div>
+                <div>
+                  <h4>Urgency</h4>
+                  <p>"Act now or your account will be frozen." Real banks don't rush you. Fraudsters do.</p>
+                </div>
+              </li>
+              <li class="sign-item">
+                <div class="sign-number">02</div>
+                <div>
+                  <h4>Secrecy</h4>
+                  <p>"Don't tell anyone, even the bank staff." If someone asks you to keep a secret, that's the tell.</p>
+                </div>
+              </li>
+              <li class="sign-item">
+                <div class="sign-number">03</div>
+                <div>
+                  <h4>New details</h4>
+                  <p>"Use this new sort code, this new account number, this new payee." Real banks don't change details by phone.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== REPORT FRAUD BAND ========== -->
+    <section class="about-section about-section-dark" id="report">
+      <div class="container">
+        <div class="report-band">
+          <div class="report-band-copy">
+            <span class="eyebrow eyebrow-light">If it's happening now</span>
+            <h2 class="display-md">
+              Call us.<br><em>Immediately.</em>
+            </h2>
+            <p class="lead" style="color: rgba(255,255,255,0.75); margin-top: 1rem;">
+              Our fraud team is available 24/7. If you think your account has
+              been compromised, call now — don't wait.
+            </p>
+          </div>
+          <div class="report-band-action">
+            <a href="tel:+2341234567890" class="report-phone">
+              <div class="report-phone-label">Report fraud, 24/7</div>
+              <div class="report-phone-number">+234 123 456 7890</div>
+            </a>
+            <a href="/contact" class="btn btn-ghost" style="margin-top: 1rem; display: inline-flex;">
+              Or send us a message →
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CTA ========== -->
+    <section class="about-cta">
+      <div class="container">
+        <div class="about-cta-inner">
+          <span class="eyebrow">Learn more</span>
+          <h2 class="display-md">
+            Explore other<br><em>sections.</em>
+          </h2>
+          <p>
+            Personal banking, business banking, or talk to a person.
+          </p>
+          <div class="about-cta-actions">
+            <a href="/personal" class="btn btn-navy">Personal banking →</a>
+            <a href="/contact" class="btn btn-ghost">Contact us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

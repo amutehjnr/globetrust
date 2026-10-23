@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KYC queue · Admin</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/admin-nav') %>
+    <div class="portal-main">
+      <div class="portal-header-row">
+        <h1>KYC review queue</h1>
+        <span class="badge badge-demo"><%= queue.length %> pending</span>
+      </div>
+
+      <% if (message) { %><div class="alert alert-ok"><%= message %></div><% } %>
+      <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-err"><%= error %></div><% } %>
+
+      <% if (!queue.length) { %>
+        <div class="alert alert-info">No pending documents.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Document</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% queue.forEach(function(d) { %>
+                <tr>
+                  <td>
+                    <%= d.customerReference || '—' %><br>
+                    <small><%= [d.firstName, d.lastName].filter(Boolean).join(' ') %></small>
+                  </td>
+                  <td><%= d.email %></td>
+                  <td>
+                    <%= d.documentType %><br>
+                    <a href="/admin/kyc/documents/<%= d.id %>" target="_blank" rel="noopener">View securely</a>
+                  </td>
+                  <td><%= d.createdAt %></td>
+                  <td>
+                    <div class="kyc-actions">
+                      <a class="btn btn-outline" style="padding:0.35rem 0.65rem;font-size:0.78rem;" href="/admin/kyc/<%= d.id %>/review">Review…</a>
+                      <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-navy" name="decision" value="approved" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;">Approve</button>
+                      </form>
+                      <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form" onsubmit="return confirm('Reject this document? You can add a reason on the full review page.');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="reason" value="Rejected from queue">
+                        <button class="btn btn-outline" name="decision" value="rejected" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+      <p class="alert alert-info" style="margin-top:1rem;">
+        Prefer <strong>Review…</strong> when rejecting so you can record a clear reason.
+        View documents only through the secure viewer.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

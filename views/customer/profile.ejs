@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profile · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/customer-nav') %>
+    <div class="portal-main">
+      <h1>Profile</h1>
+      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
+      <% if (success) { %><div class="alert alert-ok"><%= success %></div><% } %>
+      <form method="post" action="/app/profile" class="form-grid" style="margin-top:1rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+          <label>Email (read-only)</label>
+          <input value="<%= profile && profile.email ? profile.email : '' %>" disabled>
+        </div>
+        <div>
+          <label>First name</label>
+          <input name="firstName" required value="<%= profile && profile.firstName ? profile.firstName : '' %>">
+        </div>
+        <div>
+          <label>Middle name</label>
+          <input name="middleName" value="<%= profile && profile.middleName ? profile.middleName : '' %>">
+        </div>
+        <div>
+          <label>Last name</label>
+          <input name="lastName" required value="<%= profile && profile.lastName ? profile.lastName : '' %>">
+        </div>
+        <div>
+          <label>Country code (ISO 3166-1 alpha-2)</label>
+          <input name="countryCode" maxlength="2" placeholder="NG" value="<%= profile && profile.countryCode ? profile.countryCode : '' %>">
+        </div>
+        <div>
+          <label>Preferred locale</label>
+          <input name="preferredLocale" value="<%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>">
+        </div>
+        <button class="btn btn-navy" type="submit">Save profile</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

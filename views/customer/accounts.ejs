@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accounts · Globe Trust Bank</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/customer-nav') %>
+    <div class="portal-main">
+      <div class="portal-header-row">
+        <h1>Accounts</h1>
+        <span class="badge badge-demo">Sandbox balances — not real funds</span>
+      </div>
+      <div class="alert alert-info">
+        Balances below come from the <strong>sandbox</strong> core-banking adapter for development only.
+        Live balances must be loaded from the bank’s authorised systems after approval.
+      </div>
+      <% if (!accounts || !accounts.length) { %>
+        <p>No account links.</p>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Currency</th>
+                <th>Available</th>
+                <th>Ledger</th>
+                <th>Status</th>
+                <th>Provider</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% accounts.forEach(function(a) { %>
+                <tr>
+                  <td><%= a.displayLabel || 'Account' %></td>
+                  <td><%= a.currencyCode %></td>
+                  <td>
+                    <% if (a.balance) { %>
+                      <%= a.balance.available %>
+                      <% if (a.balance.isDemo) { %><span class="badge badge-demo">demo</span><% } %>
+                    <% } else { %>—<% } %>
+                  </td>
+                  <td><%= a.balance ? a.balance.ledger : '—' %></td>
+                  <td><%= a.linkStatus %></td>
+                  <td><%= a.providerCode %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

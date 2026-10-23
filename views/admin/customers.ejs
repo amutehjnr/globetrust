@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customers · Admin</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <%- include('../partials/admin-nav') %>
+    <div class="portal-main">
+      <h1>Customer search</h1>
+      <form method="get" action="/admin/customers" class="form-grid" style="margin:1rem 0;max-width:24rem;">
+        <input name="q" value="<%= q %>" placeholder="Email, name, or reference (min 2 chars)" minlength="2">
+        <button class="btn btn-navy" type="submit">Search</button>
+      </form>
+      <% if (q && q.length >= 2) { %>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Reference</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+            <tbody>
+              <% if (!results.length) { %>
+                <tr><td colspan="4">No matches.</td></tr>
+              <% } %>
+              <% results.forEach(function(c) { %>
+                <tr>
+                  <td><%= c.customerReference || '—' %></td>
+                  <td><%= [c.firstName, c.lastName].filter(Boolean).join(' ') || '—' %></td>
+                  <td><%= c.email %></td>
+                  <td><%= c.status %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

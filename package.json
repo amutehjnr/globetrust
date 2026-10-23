@@ -1,0 +1,45 @@
+{
+  "name": "globe-trust-bank-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modular foundation for a licensed-bank digital customer platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "check": "node --check src/server.js && node --check src/app.js && node tests/security/authz.smoke.js",
+    "test:security": "node tests/security/authz.smoke.js",
+    "ci": "npm run check",
+    "audit:prod": "npm audit --omit=dev --audit-level=high"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "argon2": "^0.41.1",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.7.4",
+    "connect-redis": "^8.0.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.1.0",
+    "multer": "^1.4.5-lts.2",
+    "mysql2": "^3.14.0",
+    "otplib": "^12.0.1",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "qrcode": "^1.5.4",
+    "redis": "^4.7.0",
+    "socket.io": "^4.8.1",
+    "three": "^0.186.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
