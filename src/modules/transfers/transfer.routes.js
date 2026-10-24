@@ -39,7 +39,9 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
         history,
         idempotencyKey,
         error: null,
-        success: null
+        success: null,
+        displayName: (req.session.user.email || 'customer').split('@')[0],
+        initials: (req.session.user.email || 'CU').slice(0, 2).toUpperCase(),
       });
     } catch (err) {
       next(err);

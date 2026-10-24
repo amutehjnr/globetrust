@@ -4,156 +4,183 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard · Globe Trust Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/portal.css">
 </head>
-<body>
-  <div class="portal-shell">
+<body class="db-body">
+<%
+  var firstName = (profile && profile.firstName) ? profile.firstName : 'there';
+  var lastName = (profile && profile.lastName) ? profile.lastName : '';
+  var fullName = (firstName !== 'there' ? firstName + (lastName ? ' ' + lastName : '') : 'Customer');
+  var initials = (firstName !== 'there' ? firstName.charAt(0) : 'C') + (lastName ? lastName.charAt(0) : '');
+  var totalBalance = 0;
+  var checking = null, savings = null, euro = null;
+  if (accounts && accounts.length) {
+    accounts.forEach(function(a) {
+      var n = a.balance && a.balance.available != null ? Number(String(a.balance.available).replace(/[^0-9.-]/g, '')) : 0;
+      if (!isNaN(n)) totalBalance += n;
+      var label = ((a.displayLabel || '') + ' ' + (a.currencyCode || '')).toLowerCase();
+      if (!checking && (label.indexOf('check') >= 0 || a.currencyCode === 'USD')) checking = a;
+      if (!savings && label.indexOf('sav') >= 0) savings = a;
+      if (!euro && a.currencyCode === 'EUR') euro = a;
+    });
+    if (!checking && accounts[0]) checking = accounts[0];
+    if (!savings && accounts[1]) savings = accounts[1];
+  }
+  function fmtMoney(val, code) {
+    if (val == null || val === '') return '—';
+    var s = String(val);
+    if (s.indexOf('$') >= 0 || s.indexOf('€') >= 0 || s.indexOf('£') >= 0) return s;
+    var num = Number(s);
+    if (isNaN(num)) return s;
+    var sym = code === 'EUR' ? '€' : code === 'GBP' ? '£' : '$';
+    return sym + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  var nowStr = new Date().toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit'
+  });
+%>
+  <div class="db-shell">
     <%- include('../partials/customer-nav') %>
-    <div class="portal-main">
-      <div class="portal-header-row">
-        <div>
-          <p class="dash-greeting">Welcome back<%= profile && profile.firstName ? ', ' + profile.firstName : '' %></p>
-          <h1>Dashboard</h1>
-        </div>
-        <span class="badge badge-demo">Sandbox balances — not real funds</span>
-      </div>
 
-      <% if (mustEnrollMfa) { %>
-        <div class="alert alert-err">
-          Multi-factor authentication is required before transfers.
-          <a href="/mfa/enrol"><strong>Set up authenticator</strong></a>
+    <div class="db-main">
+      <header class="db-topbar">
+        <div class="db-search">
+          <span class="db-search__icon" aria-hidden="true">⌕</span>
+          <input type="search" placeholder="Search transactions, payees, or services..." aria-label="Search">
         </div>
-      <% } %>
-
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="label">Customer reference</div>
-          <div class="value value-sm"><%= profile && profile.customerReference ? profile.customerReference : '—' %></div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Accounts</div>
-          <div class="value"><%= accounts.length %></div>
-        </div>
-        <div class="stat-card">
-          <div class="label">KYC approved</div>
-          <div class="value"><%= kycApproved %></div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Authenticator</div>
-          <div class="value value-sm">
-            <% if (mfaStatus.enrolled) { %>
-              <span class="badge badge-approved">On</span>
-            <% } else { %>
-              <span class="badge badge-pending">Off</span>
-            <% } %>
+        <div class="db-topbar__right">
+          <button type="button" class="db-icon-btn" aria-label="Notifications">🔔</button>
+          <div class="db-user">
+            <span class="db-user__avatar"><%= initials.toUpperCase() %></span>
+            <span class="db-user__meta">
+              <strong><%= fullName %></strong>
+              <small>Customer</small>
+            </span>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div class="dash-grid">
-        <section class="dash-panel">
-          <div class="dash-panel-head">
-            <h2>Accounts</h2>
-            <a href="/app/accounts">View all</a>
+      <div class="db-content">
+        <% if (typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa) { %>
+          <div class="db-alert db-alert--err">
+            Multi-factor authentication is required before transfers.
+            <a href="/mfa/enrol"><strong>Set up authenticator</strong></a>
           </div>
-          <% if (!accounts.length) { %>
-            <p class="muted">No linked accounts yet.</p>
-          <% } else { %>
-            <ul class="account-list">
-              <% accounts.forEach(function(a) { %>
-                <li>
-                  <div>
-                    <strong><%= a.displayLabel || a.currencyCode %></strong>
-                    <span class="muted"><%= a.currencyCode %> · <%= a.linkStatus %></span>
-                  </div>
-                  <div class="account-bal">
-                    <% if (a.balance) { %>
-                      <span class="bal-amt"><%= a.balance.available %></span>
-                      <% if (a.balance.isDemo) { %><span class="badge badge-demo">demo</span><% } %>
-                    <% } else { %>
-                      <span class="muted">—</span>
-                    <% } %>
-                  </div>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </section>
+        <% } %>
 
-        <section class="dash-panel">
-          <div class="dash-panel-head">
-            <h2>Recent transfers</h2>
-            <a href="/app/transfers">Transfer</a>
+        <div class="db-greeting">
+          <div>
+            <h1>Welcome back, <%= firstName %>!</h1>
+            <p>Here's your account overview.</p>
           </div>
-          <% if (!recentTransfers.length) { %>
-            <p class="muted">No transfer requests yet.</p>
-          <% } else { %>
-            <div class="table-wrap" style="border:0;box-shadow:none;">
-              <table class="data">
-                <thead>
-                  <tr><th>When</th><th>Amount</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                  <% recentTransfers.forEach(function(h) { %>
-                    <tr>
-                      <td><%= h.createdAt %></td>
-                      <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
-                      <td>
-                        <span class="badge badge-<%= h.status === 'succeeded' ? 'approved' : h.status === 'failed' ? 'rejected' : 'pending' %>">
-                          <%= h.status %>
-                        </span>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
+          <div class="db-greeting__meta">
+            <span><%= nowStr %></span>
+            <span class="db-online"><i></i> Online</span>
+          </div>
+        </div>
+
+        <div class="db-balance-grid">
+          <article class="db-bal-card db-bal-card--total">
+            <div class="db-bal-card__icon">▤</div>
+            <div class="db-bal-card__label">Total Balance</div>
+            <div class="db-bal-card__value"><%= accounts && accounts.length ? fmtMoney(totalBalance, 'USD') : '$0.00' %></div>
+            <div class="db-bal-card__hint">Across linked accounts</div>
+          </article>
+          <article class="db-bal-card">
+            <div class="db-bal-card__icon">▣</div>
+            <div class="db-bal-card__label">Checking Account</div>
+            <div class="db-bal-card__value">
+              <%= checking && checking.balance ? fmtMoney(checking.balance.available, checking.currencyCode) : '—' %>
             </div>
-          <% } %>
-        </section>
+            <div class="db-bal-card__hint">
+              <%= checking ? (checking.currencyCode || 'USD') + (checking.linkStatus ? ' · ' + checking.linkStatus : '') : 'Not linked' %>
+            </div>
+          </article>
+          <article class="db-bal-card">
+            <div class="db-bal-card__icon">◈</div>
+            <div class="db-bal-card__label">Savings Account</div>
+            <div class="db-bal-card__value">
+              <%= savings && savings.balance ? fmtMoney(savings.balance.available, savings.currencyCode) : '—' %>
+            </div>
+            <div class="db-bal-card__hint"><%= savings ? (savings.currencyCode || 'USD') : 'Not linked' %></div>
+          </article>
+          <article class="db-bal-card">
+            <div class="db-bal-card__icon">€</div>
+            <div class="db-bal-card__label">Euro Account</div>
+            <div class="db-bal-card__value">
+              <%= euro && euro.balance ? fmtMoney(euro.balance.available, 'EUR') : '€0.00' %>
+            </div>
+            <div class="db-bal-card__hint"><%= euro ? 'EUR' : 'Optional' %></div>
+          </article>
+        </div>
 
-        <section class="dash-panel">
-          <div class="dash-panel-head">
-            <h2>Identity (KYC)</h2>
-            <a href="/app/kyc">Manage</a>
-          </div>
-          <p class="muted" style="margin-top:0;">
-            <%= kyc.length %> document(s) ·
-            <%= kycPending %> pending ·
-            <%= kycApproved %> approved
-          </p>
-          <% if (kyc.length) { %>
-            <ul class="simple-list">
-              <% kyc.slice(0, 4).forEach(function(d) { %>
-                <li>
-                  <span><%= d.documentType %></span>
-                  <span class="badge badge-<%= d.verificationStatus === 'approved' ? 'approved' : d.verificationStatus === 'rejected' ? 'rejected' : 'pending' %>">
-                    <%= d.verificationStatus %>
-                  </span>
-                </li>
+        <div class="db-mid-grid">
+          <section class="db-panel">
+            <div class="db-panel__head">
+              <h2>Account Overview</h2>
+              <span class="db-chip">Last 6 Months</span>
+            </div>
+            <div class="db-chart" role="img" aria-label="Monthly activity chart">
+              <% var bars = [42, 58, 48, 72, 65, 88]; var months = ['Nov','Dec','Jan','Feb','Mar','Apr']; %>
+              <% bars.forEach(function(h, i) { %>
+                <div class="db-chart__col">
+                  <div class="db-chart__bar" style="height:<%= h %>%"></div>
+                  <span><%= months[i] %></span>
+                </div>
               <% }) %>
-            </ul>
-          <% } %>
+            </div>
+          </section>
+
+          <section class="db-panel">
+            <div class="db-panel__head">
+              <h2>Recent Transactions</h2>
+              <a href="/app/transfers">View all</a>
+            </div>
+            <% if (!recentTransfers || !recentTransfers.length) { %>
+              <p class="db-muted">No recent transfers yet.</p>
+            <% } else { %>
+              <ul class="db-tx-list">
+                <% recentTransfers.forEach(function(h) { %>
+                  <li>
+                    <span class="db-tx-icon">⇄</span>
+                    <div class="db-tx-body">
+                      <strong><%= h.destinationLabel || h.reference || 'Transfer' %></strong>
+                      <small><%= h.createdAt %></small>
+                    </div>
+                    <div class="db-tx-amt">
+                      <strong><%= h.sourceAmount %> <%= h.sourceCurrency %></strong>
+                      <span class="db-badge db-badge--<%= h.status === 'succeeded' ? 'ok' : h.status === 'failed' ? 'err' : 'pending' %>"><%= h.status %></span>
+                    </div>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </section>
+
+          <aside class="db-promo">
+            <p class="db-promo__eyebrow">Global Transfers</p>
+            <h3>Made Easy</h3>
+            <p>Send money to over 200 countries with low fees and great rates.</p>
+            <a class="db-promo__btn" href="/app/transfers">Make a Transfer</a>
+          </aside>
+        </div>
+
+        <section class="db-panel db-quick">
+          <div class="db-quick-grid">
+            <a href="/app/transfers" class="db-quick-item"><span>⇄</span>Send Money</a>
+            <a href="/app/transfers" class="db-quick-item"><span>↻</span>Exchange Currency</a>
+            <a href="/app/support" class="db-quick-item"><span>▤</span>Pay Bills</a>
+            <a href="/app/transfers" class="db-quick-item"><span>▣</span>Top Up Mobile</a>
+            <a href="/app/transfers" class="db-quick-item"><span>↓</span>Request Money</a>
+          </div>
         </section>
 
-        <section class="dash-panel">
-          <div class="dash-panel-head">
-            <h2>Quick actions</h2>
-          </div>
-          <div class="quick-actions">
-            <a class="btn btn-navy" href="/app/transfers">New transfer</a>
-            <a class="btn btn-outline" href="/app/kyc">Upload ID document</a>
-            <a class="btn btn-outline" href="/app/support">Contact support</a>
-            <a class="btn btn-outline" href="/app/profile">Edit profile</a>
-            <% if (!mfaStatus.enrolled) { %>
-              <a class="btn btn-outline" href="/mfa/enrol">Enable MFA</a>
-            <% } %>
-          </div>
-          <div class="alert alert-info" style="margin-top:1rem;margin-bottom:0;">
-            Balances and transfer outcomes shown here use the <strong>sandbox</strong> adapter only.
-            They are not evidence of real settlement.
-          </div>
-        </section>
+        <p class="db-sandbox-note">Sandbox balances — not real funds. Transfer outcomes use the sandbox adapter only.</p>
       </div>
     </div>
   </div>

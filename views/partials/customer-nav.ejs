@@ -1,15 +1,54 @@
-<aside class="portal-nav" aria-label="Customer navigation">
-  <div style="padding:0.5rem 0.75rem 1rem;font-weight:700;letter-spacing:0.04em;color:#C3B49C;">My banking</div>
-  <a href="/app" <%= path === '/app' ? 'aria-current="page"' : '' %>>Overview</a>
-  <a href="/app/accounts" <%= path === '/app/accounts' ? 'aria-current="page"' : '' %>>Accounts</a>
-  <a href="/app/transfers" <%= path === '/app/transfers' ? 'aria-current="page"' : '' %>>Transfers</a>
-  <a href="/app/support" <%= path === '/app/support' ? 'aria-current="page"' : '' %>>Support</a>
-  <a href="/app/kyc" <%= path === '/app/kyc' ? 'aria-current="page"' : '' %>>Identity (KYC)</a>
-  <a href="/app/profile" <%= path === '/app/profile' ? 'aria-current="page"' : '' %>>Profile</a>
-  <a href="/mfa/enrol">Authenticator</a>
-  <div class="nav-label">Session</div>
-  <form method="post" action="/sign-out">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <button type="submit" class="btn btn-ghost" style="width:100%;justify-content:flex-start;border:0;">Sign out</button>
-  </form>
+<aside class="db-sidebar" aria-label="Customer navigation">
+  <a class="db-sidebar__brand" href="/app">
+    <span class="db-sidebar__logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="#c5a15b" stroke-width="1.5"/>
+        <ellipse cx="16" cy="16" rx="6" ry="14" stroke="#c5a15b" stroke-width="1.2"/>
+        <path d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z" stroke="#c5a15b" stroke-width="1.2"/>
+      </svg>
+    </span>
+    <span>
+      <strong>GLOBE TRUST</strong>
+      <small>BANK</small>
+    </span>
+  </a>
+
+  <nav class="db-sidebar__nav">
+    <a href="/app" class="db-nav-item<%= path === '/app' ? ' is-active' : '' %>">
+      <span class="db-nav-icon" aria-hidden="true">⌂</span> Dashboard
+    </a>
+    <a href="/app/accounts" class="db-nav-item<%= path === '/app/accounts' ? ' is-active' : '' %>">
+      <span class="db-nav-icon" aria-hidden="true">▤</span> Accounts
+    </a>
+    <a href="/app/transfers" class="db-nav-item<%= path === '/app/transfers' ? ' is-active' : '' %>">
+      <span class="db-nav-icon" aria-hidden="true">⇄</span> Transfers
+    </a>
+    <a href="/app/accounts" class="db-nav-item">
+      <span class="db-nav-icon" aria-hidden="true">▣</span> Cards
+    </a>
+    <a href="/app/transfers" class="db-nav-item">
+      <span class="db-nav-icon" aria-hidden="true">◎</span> Beneficiaries
+    </a>
+    <a href="/app/accounts" class="db-nav-item">
+      <span class="db-nav-icon" aria-hidden="true">☰</span> Statements
+    </a>
+    <a href="/app/transfers" class="db-nav-item">
+      <span class="db-nav-icon" aria-hidden="true">↻</span> Exchange Rates
+    </a>
+    <a href="/app/support" class="db-nav-item<%= path === '/app/support' ? ' is-active' : '' %>">
+      <span class="db-nav-icon" aria-hidden="true">◇</span> Support
+    </a>
+    <a href="/app/profile" class="db-nav-item<%= path === '/app/profile' ? ' is-active' : '' %>">
+      <span class="db-nav-icon" aria-hidden="true">⚙</span> Settings
+    </a>
+  </nav>
+
+  <div class="db-sidebar__foot">
+    <a href="/app/kyc" class="db-nav-item<%= path === '/app/kyc' ? ' is-active' : '' %>">Identity (KYC)</a>
+    <a href="/mfa/enrol" class="db-nav-item">Authenticator</a>
+    <form method="post" action="/sign-out" class="db-signout">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit">Sign out</button>
+    </form>
+  </div>
 </aside>

@@ -1,0 +1,29 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Beneficiaries</h1>
+    <p>Saved payees for faster transfers.</p>
+  </div>
+  <a class="db-promo__btn" href="/app/transfers" style="align-self:center;">New transfer</a>
+</div>
+
+<section class="db-panel">
+  <% if (!beneficiaries || !beneficiaries.length) { %>
+    <p class="db-muted">No saved beneficiaries yet. When you send a transfer, you can save the payee here.</p>
+  <% } else { %>
+    <ul class="db-tx-list">
+      <% beneficiaries.forEach(function(b) { %>
+        <li>
+          <span class="db-tx-icon">◎</span>
+          <div class="db-tx-body">
+            <strong><%= b.name %></strong>
+            <small><%= b.accountRef %> · <%= b.currency || '' %></small>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('../partials/customer-shell-end') %>

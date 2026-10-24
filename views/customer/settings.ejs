@@ -1,0 +1,68 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Settings</h1>
+    <p>Profile, security, and preferences.</p>
+  </div>
+</div>
+
+<div class="db-mid-grid" style="grid-template-columns:1fr 1fr;">
+  <section class="db-panel">
+    <div class="db-panel__head">
+      <h2>Profile</h2>
+      <a href="/app/profile">Edit</a>
+    </div>
+    <ul class="db-tx-list">
+      <li>
+        <div class="db-tx-body">
+          <strong><%= profile && profile.firstName ? profile.firstName + ' ' + (profile.lastName || '') : '—' %></strong>
+          <small><%= profile && profile.email ? profile.email : '' %></small>
+        </div>
+      </li>
+      <li>
+        <div class="db-tx-body">
+          <strong>Customer reference</strong>
+          <small><%= profile && profile.customerReference ? profile.customerReference : '—' %></small>
+        </div>
+      </li>
+      <li>
+        <div class="db-tx-body">
+          <strong>Country / locale</strong>
+          <small><%= profile && profile.countryCode ? profile.countryCode : '—' %> · <%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %></small>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section class="db-panel">
+    <div class="db-panel__head"><h2>Security</h2></div>
+    <ul class="db-tx-list">
+      <li>
+        <span class="db-tx-icon">⚙</span>
+        <div class="db-tx-body">
+          <strong>Authenticator (MFA)</strong>
+          <small><%= mfaStatus && mfaStatus.enrolled ? 'Enrolled' : 'Not enrolled' %></small>
+        </div>
+        <a href="/mfa/enrol" class="db-chip">Manage</a>
+      </li>
+      <li>
+        <span class="db-tx-icon">⚙</span>
+        <div class="db-tx-body">
+          <strong>Identity (KYC)</strong>
+          <small>Documents & verification</small>
+        </div>
+        <a href="/app/kyc" class="db-chip">Open</a>
+      </li>
+      <li>
+        <span class="db-tx-icon">⚙</span>
+        <div class="db-tx-body">
+          <strong>Password</strong>
+          <small>Use forgot password from sign-in if needed</small>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+
+<%- include('../partials/customer-shell-end') %>

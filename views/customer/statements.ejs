@@ -1,0 +1,42 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Statements</h1>
+    <p>Recent transfer activity (sandbox workflow log).</p>
+  </div>
+</div>
+
+<section class="db-panel">
+  <div class="db-panel__head">
+    <h2>Activity</h2>
+    <span class="db-chip">Last 50</span>
+  </div>
+  <% if (!history || !history.length) { %>
+    <p class="db-muted">No activity yet.</p>
+  <% } else { %>
+    <div class="table-wrap" style="border:0;box-shadow:none;">
+      <table class="data">
+        <thead>
+          <tr><th>When</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
+        </thead>
+        <tbody>
+          <% history.forEach(function(h) { %>
+            <tr>
+              <td><%= h.createdAt %></td>
+              <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
+              <td>
+                <span class="db-badge db-badge--<%= h.status === 'succeeded' ? 'ok' : h.status === 'failed' ? 'err' : 'pending' %>">
+                  <%= h.status %>
+                </span>
+              </td>
+              <td><code style="font-size:0.8rem;"><%= h.externalReference || '—' %></code></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/customer-shell-end') %>

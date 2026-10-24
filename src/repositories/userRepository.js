@@ -46,16 +46,24 @@ function createUserRepository(pool) {
       return { ...mapUser(rows[0]), passwordHash: rows[0].password_hash };
     },
 
-    async createCustomer({ email, passwordHash, firstName, lastName, phoneE164 }) {
+      async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, status }) {
       const userId = newBinaryId();
       const profileRef = `CUS${Date.now().toString(36).toUpperCase()}`;
+      const userStatus = status === 'active' ? 'active' : 'pending';
       const conn = await pool.getConnection();
       try {
         await conn.beginTransaction();
         await conn.query(
-          `INSERT INTO users (id, email, phone_e164, password_hash, status, mfa_required)
-           VALUES (?, ?, ?, ?, 'pending', TRUE)`,
-          [userId, email.toLowerCase(), phoneE164 || null, passwordHash]
+          `INSERT INTO users (id, email, phone_e164, password_hash, status, mfa_required, email_verified_at)
+           VALUES (?, ?, ?, ?, ?, TRUE, ?)`,
+          [
+            userId,
+            email.toLowerCase(),
+            phoneE164 || null,
+            passwordHash,
+            userStatus,
+            userStatus === 'active' ? new Date() : null
+          ]
         );
         const [roleRows] = await conn.query(
           `SELECT id FROM roles WHERE code = 'customer' LIMIT 1`
@@ -72,7 +80,7 @@ function createUserRepository(pool) {
           [userId, profileRef, firstName, lastName]
         );
         await conn.commit();
-        return binaryToUuid(userId);
+        return { id: binaryToUuid(userId), customerReference: profileRef };
       } catch (err) {
         await conn.rollback();
         throw err;

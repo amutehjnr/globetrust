@@ -1,0 +1,42 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Cards</h1>
+    <p>Virtual and physical cards linked to your profile.</p>
+  </div>
+</div>
+
+<div class="db-mid-grid" style="grid-template-columns:1fr 1fr;">
+  <article class="db-panel db-card-visual">
+    <div class="db-plastic">
+      <div class="db-plastic__top">
+        <span>GLOBE TRUST BANK</span>
+        <span>VISA</span>
+      </div>
+      <div class="db-plastic__num">•••• •••• •••• 3456</div>
+      <div class="db-plastic__bot">
+        <span>YOUR NAME</div>
+        <span>09/28</span>
+      </div>
+    </div>
+    <p class="db-muted" style="margin-top:1rem;">Debit · Active · Sandbox preview</p>
+    <div class="db-quick-grid" style="grid-template-columns:1fr 1fr;margin-top:1rem;">
+      <button type="button" class="db-quick-item" disabled><span>❄</span>Freeze</button>
+      <button type="button" class="db-quick-item" disabled><span>◉</span>Limits</button>
+    </div>
+  </article>
+
+  <section class="db-panel">
+    <div class="db-panel__head"><h2>Card controls</h2></div>
+    <ul class="db-tx-list">
+      <li><span class="db-tx-icon">▣</span><div class="db-tx-body"><strong>Online payments</strong><small>Enabled</small></div></li>
+      <li><span class="db-tx-icon">▣</span><div class="db-tx-body"><strong>International</strong><small>Enabled</small></div></li>
+      <li><span class="db-tx-icon">▣</span><div class="db-tx-body"><strong>Contactless</strong><small>Enabled</small></div></li>
+      <li><span class="db-tx-icon">▣</span><div class="db-tx-body"><strong>ATM withdrawals</strong><small>Enabled</small></div></li>
+    </ul>
+    <p class="db-sandbox-note">Card issuance connects to the core after bank approval. This screen is a product preview.</p>
+  </section>
+</div>
+
+<%- include('../partials/customer-shell-end') %>

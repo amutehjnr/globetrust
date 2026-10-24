@@ -18,17 +18,18 @@ function createAuthService({ userRepo, tokenRepo, logger }) {
         err.code = 'EMAIL_TAKEN';
         throw err;
       }
-      const passwordHash = await hashPassword(input.password);
-      const userId = await userRepo.createCustomer({
-        email: input.email,
-        passwordHash,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        phoneE164: input.phoneE164 || null
-      });
-      logger.info({ userId }, 'Customer registered (pending verification)');
-      // Email verification token would be created and sent via approved provider.
-      return { userId, status: 'pending' };
+        const passwordHash = await hashPassword(input.password);
+        const created = await userRepo.createCustomer({
+          email: input.email,
+          passwordHash,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phoneE164: input.phoneE164 || null
+       });
+        const userId = created.id || created;
+        logger.info({ userId }, 'Customer registered (pending verification)');
+        // Email verification token would be created and sent via approved provider.
+        return { userId, status: 'pending' };
     },
 
     async login({ email, password, ip, userAgent }) {

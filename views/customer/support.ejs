@@ -1,47 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Support · Globe Trust Bank</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-  <style>
-    .chat-log { background:#FFFDF9; border:1px solid #E4E0D8; border-radius:12px; padding:1rem; min-height:280px; max-height:420px; overflow-y:auto; }
-    .msg { margin-bottom:0.75rem; max-width:85%; }
-    .msg.me { margin-left:auto; text-align:right; }
-    .msg .bubble { display:inline-block; padding:0.55rem 0.85rem; border-radius:12px; background:#E4E0D8; text-align:left; }
-    .msg.me .bubble { background:#263653; color:#FFFDF9; }
-    .msg time { display:block; font-size:0.7rem; color:#687080; margin-top:0.2rem; }
-  </style>
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/customer-nav') %>
-    <div class="portal-main">
-      <h1>Support</h1>
-      <div class="alert alert-info">
-        Never share passwords, one-time codes, or full card numbers in chat.
-        Staff will not ask for those details.
-      </div>
-      <div id="chat-log" class="chat-log" data-conversation="<%= conversation.id %>" data-user="<%= userId %>">
-        <% messages.forEach(function(m) { %>
-          <div class="msg <%= m.senderUserId === userId ? 'me' : '' %>">
-            <div class="bubble"><%= m.text %></div>
-            <time><%= m.createdAt %></time>
-          </div>
-        <% }) %>
-      </div>
-      <form id="chat-form" method="post" action="/app/support/messages" class="form-grid" style="margin-top:1rem;max-width:100%;">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="hidden" name="conversationId" value="<%= conversation.id %>">
-        <input name="text" id="chat-input" required maxlength="2000" placeholder="Type your message" autocomplete="off">
-        <button class="btn btn-navy" type="submit">Send</button>
-      </form>
-      <p id="socket-status" style="font-size:0.8rem;color:#687080;margin-top:0.5rem;">Connecting…</p>
-    </div>
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Support</h1>
+    <p>Chat with the bank. Never share passwords or full card numbers.</p>
   </div>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/support-chat.js" defer></script>
-</body>
-</html>
+</div>
+
+<section class="db-panel">
+  <div id="chat-log" class="chat-log" data-conversation="<%= conversation.id %>" data-user="<%= userId %>">
+    <% messages.forEach(function(m) { %>
+      <div class="msg <%= m.senderUserId === userId ? 'me' : '' %>">
+        <div class="bubble"><%= m.text %></div>
+        <time><%= m.createdAt %></time>
+      </div>
+    <% }) %>
+  </div>
+  <form id="chat-form" method="post" action="/app/support/messages" class="form-grid" style="margin-top:1rem;max-width:100%;display:grid;grid-template-columns:1fr auto;gap:0.75rem;">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="conversationId" value="<%= conversation.id %>">
+    <input name="text" id="chat-input" required maxlength="2000" placeholder="Type your message" autocomplete="off">
+    <button class="btn btn-navy" type="submit">Send</button>
+  </form>
+  <p id="socket-status" class="db-muted" style="margin-top:0.5rem;">Connecting…</p>
+</section>
+
+<style>
+  .chat-log { background:var(--db-ivory,#f6f3ec); border:1px solid var(--db-border,rgba(15,31,51,.08)); border-radius:12px; padding:1rem; min-height:280px; max-height:420px; overflow-y:auto; }
+  .msg { margin-bottom:0.75rem; max-width:85%; }
+  .msg.me { margin-left:auto; text-align:right; }
+  .msg .bubble { display:inline-block; padding:0.55rem 0.85rem; border-radius:12px; background:#e8e2d6; text-align:left; }
+  .msg.me .bubble { background:#0f1f33; color:#fffdf9; }
+  .msg time { display:block; font-size:0.7rem; color:#6b7a88; margin-top:0.2rem; }
+</style>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/support-chat.js" defer></script>
+
+<%- include('../partials/customer-shell-end') %>

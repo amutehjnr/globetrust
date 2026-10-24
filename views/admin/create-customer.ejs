@@ -1,0 +1,59 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Create customer account</h1>
+    <p>Provision a portal user. Share the temporary password securely.</p>
+  </div>
+  <a href="/admin/customers" class="db-chip">Back to customers</a>
+</div>
+
+<% if (error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+<% if (success) { %><div class="db-alert" style="background:#d8ead8;color:#1e5c2a;"><%= success %></div><% } %>
+
+<section class="db-panel" style="max-width:560px;">
+  <form method="post" action="/admin/customers/new" class="form-grid">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;">
+      <div>
+        <label>First name</label>
+        <input name="firstName" required value="<%= values.firstName || '' %>">
+      </div>
+      <div>
+        <label>Last name</label>
+        <input name="lastName" required value="<%= values.lastName || '' %>">
+      </div>
+    </div>
+
+    <div>
+      <label>Email</label>
+      <input type="email" name="email" required autocomplete="off" value="<%= values.email || '' %>">
+    </div>
+
+    <div>
+      <label>Phone (optional, E.164)</label>
+      <input name="phoneE164" placeholder="+2348012345678" value="<%= values.phoneE164 || '' %>">
+    </div>
+
+    <div>
+      <label>Temporary password</label>
+      <input type="password" name="password" required minlength="12" autocomplete="new-password" placeholder="Min 12 · upper · lower · number">
+    </div>
+
+    <div>
+      <label>Account status</label>
+      <select name="activate">
+        <option value="yes">Active (can sign in immediately)</option>
+        <option value="no">Pending (email verification style)</option>
+      </select>
+    </div>
+
+    <button class="btn btn-navy" type="submit">Create customer account</button>
+  </form>
+  <p class="db-sandbox-note" style="margin-top:1rem;">
+    Admin-only. Password is hashed with Argon2. Tell the customer to change it after first sign-in.
+  </p>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

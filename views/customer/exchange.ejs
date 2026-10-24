@@ -1,0 +1,26 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Exchange rates</h1>
+    <p>Indicative mid-market style rates for planning (not a live quote).</p>
+  </div>
+  <span class="db-chip">Updated periodically</span>
+</div>
+
+<div class="db-balance-grid">
+  <% rates.forEach(function(r) { %>
+    <article class="db-bal-card">
+      <div class="db-bal-card__label"><%= r.pair %></div>
+      <div class="db-bal-card__value" style="font-size:1.2rem;"><%= r.mid %></div>
+      <div class="db-bal-card__hint"><%= r.change %> today</div>
+    </article>
+  <% }) %>
+</div>
+
+<section class="db-panel" style="margin-top:1rem;">
+  <div class="db-panel__head"><h2>Convert</h2></div>
+  <p class="db-muted">Live conversion and booking will use the bank’s treasury rates after go-live. Use <a href="/app/transfers">Transfers</a> for sandbox moves between linked accounts.</p>
+</section>
+
+<%- include('../partials/customer-shell-end') %>

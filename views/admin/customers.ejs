@@ -1,42 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Customers · Admin</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/admin-nav') %>
-    <div class="portal-main">
-      <h1>Customer search</h1>
-      <form method="get" action="/admin/customers" class="form-grid" style="margin:1rem 0;max-width:24rem;">
-        <input name="q" value="<%= q %>" placeholder="Email, name, or reference (min 2 chars)" minlength="2">
-        <button class="btn btn-navy" type="submit">Search</button>
-      </form>
-      <% if (q && q.length >= 2) { %>
-        <div class="table-wrap">
-          <table class="data">
-            <thead><tr><th>Reference</th><th>Name</th><th>Email</th><th>Status</th></tr></thead>
-            <tbody>
-              <% if (!results.length) { %>
-                <tr><td colspan="4">No matches.</td></tr>
-              <% } %>
-              <% results.forEach(function(c) { %>
-                <tr>
-                  <td><%= c.customerReference || '—' %></td>
-                  <td><%= [c.firstName, c.lastName].filter(Boolean).join(' ') || '—' %></td>
-                  <td><%= c.email %></td>
-                  <td><%= c.status %></td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-    </div>
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Customers</h1>
+    <p>Search by email, name, or reference.</p>
   </div>
-</body>
-</html>
+  <a class="db-promo__btn" href="/admin/customers/new">＋ Create account</a>
+</div>
+
+<section class="db-panel">
+  <form method="get" action="/admin/customers" class="form-grid" style="grid-template-columns:1fr auto;max-width:100%;margin-bottom:1rem;">
+    <input type="search" name="q" value="<%= q || '' %>" placeholder="Search email, name, reference (min 2 chars)" style="padding:0.7rem 0.85rem;border-radius:10px;border:1px solid var(--db-border);">
+    <button class="btn btn-navy" type="submit">Search</button>
+  </form>
+
+  <div class="table-wrap" style="border:0;box-shadow:none;">
+    <table class="data">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Reference</th><th>Status</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        <% if (!results || !results.length) { %>
+          <tr><td colspan="5">No customers found.</td></tr>
+        <% } %>
+        <% (results || []).forEach(function(c) { %>
+          <tr>
+            <td><%= c.firstName || '' %> <%= c.lastName || '' %></td>
+            <td><%= c.email %></td>
+            <td><%= c.customerReference || '—' %></td>
+            <td><span class="db-badge db-badge--<%= c.status === 'active' ? 'ok' : 'pending' %>"><%= c.status %></span></td>
+            <td><%= c.createdAt %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

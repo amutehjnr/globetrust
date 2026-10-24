@@ -1,47 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Review KYC · Admin</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/admin-nav') %>
-    <div class="portal-main">
-      <p><a href="/admin/kyc">← Back to queue</a></p>
-      <h1>Review identity document</h1>
+<%- include('../partials/admin-shell-start') %>
 
-      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
-
-      <div class="dash-panel" style="max-width:36rem;margin-bottom:1.25rem;">
-        <p><strong>Document type:</strong> <%= doc.documentType %></p>
-        <p><strong>Status:</strong> <span class="badge badge-<%= doc.verificationStatus === 'pending' ? 'pending' : doc.verificationStatus === 'approved' ? 'approved' : 'rejected' %>"><%= doc.verificationStatus %></span></p>
-        <p><strong>Submitted:</strong> <%= doc.createdAt %></p>
-        <p><strong>Storage:</strong> <%= doc.storageProvider %></p>
-        <p>
-          <a class="btn btn-outline" href="/admin/kyc/documents/<%= doc.id %>" target="_blank" rel="noopener">View document securely</a>
-        </p>
-      </div>
-
-      <% if (doc.verificationStatus === 'pending') { %>
-        <form method="post" action="/admin/kyc/<%= doc.id %>/review" class="form-grid" style="max-width:36rem;">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <div>
-            <label for="reason">Reason (required for rejection)</label>
-            <textarea id="reason" name="reason" rows="3" maxlength="500" placeholder="e.g. Image blurred, document expired, name mismatch…"></textarea>
-          </div>
-          <div class="quick-actions">
-            <button class="btn btn-navy" type="submit" name="decision" value="approved">Approve</button>
-            <button class="btn btn-outline" type="submit" name="decision" value="rejected" style="border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
-          </div>
-        </form>
-      <% } else { %>
-        <div class="alert alert-info">This document is already <strong><%= doc.verificationStatus %></strong> and cannot be changed here.</div>
-      <% } %>
-    </div>
+<p><a href="/admin/kyc">← Back to queue</a></p>
+<div class="db-greeting">
+  <div>
+    <h1>Review identity document</h1>
   </div>
-</body>
-</html>
+</div>
+
+<% if (error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+
+<section class="db-panel" style="max-width:36rem;margin-bottom:1.25rem;">
+  <p><strong>Document type:</strong> <%= doc.documentType %></p>
+  <p><strong>Status:</strong>
+    <span class="db-badge db-badge--<%= doc.verificationStatus === 'pending' ? 'pending' : doc.verificationStatus === 'approved' ? 'ok' : 'err' %>">
+      <%= doc.verificationStatus %>
+    </span>
+  </p>
+  <p><strong>Submitted:</strong> <%= doc.createdAt %></p>
+  <p><strong>Storage:</strong> <%= doc.storageProvider %></p>
+  <p>
+    <a class="btn btn-outline" href="/admin/kyc/documents/<%= doc.id %>" target="_blank" rel="noopener">View document securely</a>
+  </p>
+</section>
+
+<% if (doc.verificationStatus === 'pending') { %>
+  <section class="db-panel" style="max-width:36rem;">
+    <form method="post" action="/admin/kyc/<%= doc.id %>/review" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div>
+        <label for="reason">Reason (required for rejection)</label>
+        <textarea id="reason" name="reason" rows="3" maxlength="500" placeholder="e.g. Image blurred, document expired…"></textarea>
+      </div>
+      <div class="quick-actions">
+        <button class="btn btn-navy" type="submit" name="decision" value="approved">Approve</button>
+        <button class="btn btn-outline" type="submit" name="decision" value="rejected" style="border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
+      </div>
+    </form>
+  </section>
+<% } else { %>
+  <div class="db-alert" style="background:var(--db-ivory);">This document is already <strong><%= doc.verificationStatus %></strong>.</div>
+<% } %>
+
+<%- include('../partials/admin-shell-end') %>

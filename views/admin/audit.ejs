@@ -1,50 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Audit · Admin</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/admin-nav') %>
-    <div class="portal-main">
-      <h1>Audit events</h1>
-      <p class="alert alert-info">Application audit trail only. Core banking ledgers remain authoritative for money movement.</p>
-      <form method="get" action="/admin/audit" class="form-grid" style="grid-template-columns:1fr 1fr auto;max-width:40rem;margin-bottom:1rem;">
-        <input name="action" value="<%= action %>" placeholder="Action contains…">
-        <select name="outcome">
-          <option value="">Any outcome</option>
-          <option value="success" <%= outcome === 'success' ? 'selected' : '' %>>success</option>
-          <option value="failure" <%= outcome === 'failure' ? 'selected' : '' %>>failure</option>
-          <option value="blocked" <%= outcome === 'blocked' ? 'selected' : '' %>>blocked</option>
-        </select>
-        <button class="btn btn-navy" type="submit">Filter</button>
-      </form>
-      <div class="table-wrap">
-        <table class="data">
-          <thead>
-            <tr><th>When</th><th>Action</th><th>Outcome</th><th>Target</th><th>Actor</th></tr>
-          </thead>
-          <tbody>
-            <% if (!events.length) { %>
-              <tr><td colspan="5">No events matched.</td></tr>
-            <% } %>
-            <% events.forEach(function(e) { %>
-              <tr>
-                <td><%= e.createdAt %></td>
-                <td><code><%= e.action %></code></td>
-                <td><%= e.outcome %></td>
-                <td><%= e.targetType || '' %> <%= e.targetReference || '' %></td>
-                <td><small><%= e.actorUserId || '—' %></small></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    </div>
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Audit events</h1>
+    <p>Application audit trail only. Core banking ledgers remain authoritative for money movement.</p>
   </div>
-</body>
-</html>
+</div>
+
+<section class="db-panel">
+  <form method="get" action="/admin/audit" class="form-grid" style="grid-template-columns:1fr 1fr auto;max-width:40rem;margin-bottom:1rem;">
+    <input name="action" value="<%= action %>" placeholder="Action contains…">
+    <select name="outcome">
+      <option value="">Any outcome</option>
+      <option value="success" <%= outcome === 'success' ? 'selected' : '' %>>success</option>
+      <option value="failure" <%= outcome === 'failure' ? 'selected' : '' %>>failure</option>
+      <option value="blocked" <%= outcome === 'blocked' ? 'selected' : '' %>>blocked</option>
+    </select>
+    <button class="btn btn-navy" type="submit">Filter</button>
+  </form>
+  <div class="table-wrap" style="border:0;box-shadow:none;">
+    <table class="data">
+      <thead>
+        <tr><th>When</th><th>Action</th><th>Outcome</th><th>Target</th><th>Actor</th></tr>
+      </thead>
+      <tbody>
+        <% if (!events.length) { %>
+          <tr><td colspan="5">No events matched.</td></tr>
+        <% } %>
+        <% events.forEach(function(e) { %>
+          <tr>
+            <td><%= e.createdAt %></td>
+            <td><code><%= e.action %></code></td>
+            <td><%= e.outcome %></td>
+            <td><%= e.targetType || '' %> <%= e.targetReference || '' %></td>
+            <td><small><%= e.actorUserId || '—' %></small></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

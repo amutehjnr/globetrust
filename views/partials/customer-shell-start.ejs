@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title : 'Portal' %> · Globe Trust Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body class="db-body">
+<div class="db-shell">
+  <%- include('customer-nav') %>
+  <div class="db-main">
+    <header class="db-topbar">
+      <div class="db-search">
+        <span class="db-search__icon" aria-hidden="true">⌕</span>
+        <input type="search" placeholder="Search transactions, payees, or services..." aria-label="Search">
+      </div>
+      <div class="db-topbar__right">
+        <button type="button" class="db-icon-btn" aria-label="Notifications">🔔</button>
+        <div class="db-user">
+          <span class="db-user__avatar"><%= typeof initials !== 'undefined' ? initials : 'C' %></span>
+          <span class="db-user__meta">
+            <strong><%= typeof displayName !== 'undefined' ? displayName : 'Customer' %></strong>
+            <small>Customer</small>
+          </span>
+        </div>
+      </div>
+    </header>
+    <div class="db-content">

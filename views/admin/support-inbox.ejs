@@ -1,39 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Support inbox · Admin</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/admin-nav') %>
-    <div class="portal-main">
-      <h1>Support inbox</h1>
-      <div class="table-wrap">
-        <table class="data">
-          <thead>
-            <tr><th>Customer</th><th>Subject</th><th>Status</th><th>Last message</th><th></th></tr>
-          </thead>
-          <tbody>
-            <% if (!queue.length) { %>
-              <tr><td colspan="5">No open conversations.</td></tr>
-            <% } %>
-            <% queue.forEach(function(c) { %>
-              <tr>
-                <td><%= c.customerName || '—' %><br><small><%= c.customerEmail %></small></td>
-                <td><%= c.subject %></td>
-                <td><%= c.status %></td>
-                <td><%= c.lastMessageAt || c.createdAt %></td>
-                <td><a class="btn btn-navy" style="padding:0.35rem 0.7rem;font-size:0.8rem;" href="/admin/support/<%= c.id %>">Open</a></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    </div>
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Support inbox</h1>
+    <p>Open and waiting conversations.</p>
   </div>
-</body>
-</html>
+</div>
+
+<section class="db-panel">
+  <% if (!queue || !queue.length) { %>
+    <p class="db-muted">No open conversations.</p>
+  <% } else { %>
+    <ul class="db-tx-list">
+      <% queue.forEach(function(c) { %>
+        <li>
+          <span class="db-tx-icon">◇</span>
+          <div class="db-tx-body">
+            <strong><%= c.subject || 'Conversation' %></strong>
+            <small><%= c.status %> · <%= c.updatedAt || c.createdAt || '' %></small>
+          </div>
+          <a class="db-chip" href="/admin/support/<%= c.id %>">Open</a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

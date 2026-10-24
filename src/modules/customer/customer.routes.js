@@ -159,6 +159,92 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   );
 
+   
+  function pageLocals(req, extra = {}) {
+    const u = req.session.user || {};
+    const name = u.email ? String(u.email).split('@')[0] : 'Customer';
+    return {
+      displayName: name,
+      initials: name.slice(0, 2).toUpperCase(),
+      ...extra
+    };
+  }
+
+  router.get('/app/accounts', async (req, res, next) => {
+    try {
+      let accounts = [];
+      if (transferRepo && transferService) {
+        await transferRepo.ensureSandboxLink(req.session.user.id, 'NGN');
+        await transferRepo.ensureSandboxLink(req.session.user.id, 'USD');
+        const links = await transferRepo.listLinksWithExternal(req.session.user.id);
+        accounts = await transferService.getBalancesForLinks(links);
+      }
+      res.render('customer/accounts', pageLocals(req, {
+        title: 'Accounts',
+        path: '/app/accounts',
+        accounts
+      }));
+    } catch (err) { next(err); }
+  });
+
+  router.get('/app/cards', (req, res) => {
+    res.render('customer/cards', pageLocals(req, {
+      title: 'Cards',
+      path: '/app/cards'
+    }));
+  });
+
+  router.get('/app/beneficiaries', (req, res) => {
+    res.render('customer/beneficiaries', pageLocals(req, {
+      title: 'Beneficiaries',
+      path: '/app/beneficiaries',
+      beneficiaries: [] // wire to DB later
+    }));
+  });
+
+  router.get('/app/statements', async (req, res, next) => {
+    try {
+      let history = [];
+      if (transferRepo) {
+        history = await transferRepo.listForUser(req.session.user.id, 50);
+      }
+      res.render('customer/statements', pageLocals(req, {
+        title: 'Statements',
+        path: '/app/statements',
+        history
+      }));
+    } catch (err) { next(err); }
+  });
+
+  router.get('/app/exchange', (req, res) => {
+    res.render('customer/exchange', pageLocals(req, {
+      title: 'Exchange rates',
+      path: '/app/exchange',
+      rates: [
+        { pair: 'USD / NGN', mid: '1,580.00', change: '+0.4%' },
+        { pair: 'GBP / NGN', mid: '2,010.00', change: '-0.2%' },
+        { pair: 'EUR / NGN', mid: '1,720.00', change: '+0.1%' },
+        { pair: 'USD / EUR', mid: '0.92', change: '0.0%' },
+        { pair: 'USD / GBP', mid: '0.79', change: '-0.1%' },
+        { pair: 'EUR / GBP', mid: '0.86', change: '+0.1%' }
+      ]
+    }));
+  });
+
+  router.get('/app/settings', async (req, res, next) => {
+    try {
+      const profile = await customerRepo.getProfile(req.session.user.id);
+      let mfaStatus = { enrolled: false, required: true };
+      if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);
+      res.render('customer/settings', pageLocals(req, {
+        title: 'Settings',
+        path: '/app/settings',
+        profile,
+        mfaStatus
+      }));
+    } catch (err) { next(err); }
+  });
+
   return router;
 }
 
