@@ -395,3 +395,293 @@
     transition: none;
   }
 }
+
+/* ==========================================================================
+   ADDITIONS FOR 404 (SEARCH + HELPFUL LINKS)
+   Append to your existing /css/error-pages.css
+   ========================================================================== */
+
+/* ==========================================================================
+   SEARCH
+   ========================================================================== */
+.err-search {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  max-width: 480px;
+  margin: 0 auto 2rem;
+  padding: 0.4rem;
+  background: #ffffff;
+  border: 1px solid var(--stone, #E4E0D8);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.err-search:focus-within {
+  border-color: var(--champagne-deep, #a89478);
+  box-shadow: 0 0 0 3px rgba(168, 148, 120, 0.15);
+}
+
+.err-search-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted, #6b7a88);
+  flex-shrink: 0;
+  margin: 0.85rem 0.5rem 0 0.85rem;
+}
+
+.err-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 0.7rem 0.4rem;
+  color: var(--navy, #0f1f33);
+}
+
+.err-search input::placeholder {
+  color: var(--text-muted, #6b7a88);
+  opacity: 0.7;
+}
+
+.err-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.err-search-btn {
+  padding: 0 1.15rem;
+  background: var(--navy, #0f1f33);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.err-search-btn:hover {
+  background: #1e3a5f;
+}
+
+/* ==========================================================================
+   HELPFUL LINKS
+   ========================================================================== */
+.err-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.err-link {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.15rem;
+  background: var(--ivory, #F4F0E8);
+  border: 1px solid var(--stone, #E4E0D8);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.err-link:hover {
+  background: #ffffff;
+  border-color: var(--champagne, #C3B49C);
+  transform: translateY(-2px);
+}
+
+.err-link-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(168, 148, 120, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--champagne-deep, #a89478);
+  transition: background 0.2s, color 0.2s;
+}
+
+.err-link-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.err-link:hover .err-link-icon {
+  background: var(--navy, #0f1f33);
+  color: var(--champagne-light, #DCCFB6);
+}
+
+.err-link-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.err-link-body strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--navy, #0f1f33);
+  line-height: 1.3;
+}
+
+.err-link-body span {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7a88);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 600px) {
+  .err-search {
+    flex-wrap: wrap;
+    padding: 0.35rem;
+  }
+
+  .err-search-icon {
+    margin-top: 0.7rem;
+    margin-left: 0.7rem;
+  }
+
+  .err-search input {
+    padding: 0.6rem 0.35rem;
+    font-size: 0.88rem;
+  }
+
+  .err-search-btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    margin-top: 0.25rem;
+  }
+
+  .err-links {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .err-link {
+    padding: 0.85rem 1rem;
+  }
+
+  .err-link-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .err-link-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .err-link-body strong {
+    font-size: 0.85rem;
+  }
+
+  .err-link-body span {
+    font-size: 0.75rem;
+  }
+}
+
+/* ==========================================================================
+   ADDITIONS FOR 500 (REASSURANCE BLOCK + ERROR CONTAINER VARIANT)
+   Append to your existing /css/error-pages.css
+   ========================================================================== */
+
+/* ---------- Amber accent for 500 (instead of champagne for 403/404) ---------- */
+.err-container-error::before {
+  background: linear-gradient(90deg, #dc2626 0%, #f59e0b 100%);
+}
+
+.err-container-error .err-label {
+  color: #b45309;
+}
+
+/* ---------- Reassurance block ---------- */
+.err-reassure {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.15rem 1.35rem;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-left: 3px solid #10b981;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.err-reassure-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #047857;
+}
+
+.err-reassure-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.err-reassure-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.err-reassure-body strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #047857;
+  margin-bottom: 0.25rem;
+  line-height: 1.35;
+}
+
+.err-reassure-body p {
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7a88);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .err-reassure {
+    padding: 0.95rem 1.1rem;
+    gap: 0.7rem;
+  }
+
+  .err-reassure-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .err-reassure-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .err-reassure-body strong {
+    font-size: 0.86rem;
+  }
+
+  .err-reassure-body p {
+    font-size: 0.78rem;
+  }
+}
