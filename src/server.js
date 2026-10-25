@@ -19,7 +19,6 @@ async function start() {
   const port = Number(process.env.PORT || 3000);
   server.listen(port, () => logger.info({ port }, 'Globe Trust Bank app started'));
 
-  // Optional structured heartbeat for log-based monitors
   const heartbeatMs = Number(process.env.HEARTBEAT_MS || 0);
   if (heartbeatMs >= 15000) {
     setInterval(() => {
@@ -45,9 +44,6 @@ async function start() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
-
-const server = http.createServer(app);
-attachSocketServer(server, { supportService: app.get('supportService') });
 
 start().catch((error) => {
   logger.fatal({ err: error }, 'Application failed to start');

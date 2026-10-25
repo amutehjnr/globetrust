@@ -18,13 +18,20 @@ const {
 function createAuthRouter({ authService }) {
   const router = express.Router();
 
+  // Compatibility aliases
+  router.get('/login', (req, res) => {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(302, `/sign-in${q}`);
+  });
+  router.get('/open-account', (_req, res) => res.redirect(302, '/register'));
+
   router.get('/sign-in', (req, res) => {
-    if (req.session?.user) return res.redirect('/app');
+    if (req.session?.user) return res.redirect('/dashboard');
     res.render('auth/sign-in', {
       title: 'Sign in',
       path: '/sign-in',
       error: null,
-      next: req.query.next || '/app'
+      next: req.query.next || '/dashboard'
     });
   });
 
@@ -38,21 +45,30 @@ function createAuthRouter({ authService }) {
         userAgent: req.get('user-agent')
       });
 
-      // Session fixation mitigation
+      const nextUrl =
+        typeof req.body.next === 'string' &&
+        req.body.next.startsWith('/') &&
+        !req.body.next.startsWith('//')
+          ? req.body.next
+          : '/dashboard';
+
       await new Promise((resolve, reject) => {
         req.session.regenerate((err) => (err ? reject(err) : resolve()));
       });
 
       if (result.needsMfa) {
         req.session.pendingMfaUser = result.user;
+        req.session.pendingMfaNext = nextUrl;
         return res.redirect('/mfa/verify');
       }
 
-      req.session.user = result.user;
+      const roles = Array.isArray(result.user.roles) ? result.user.roles : [];
+      if (!roles.includes('customer') && !roles.includes('admin')) {
+        roles.push('customer');
+      }
+
+      req.session.user = { ...result.user, roles };
       req.session.mustEnrollMfa = result.mustEnrollMfa;
-      const nextUrl = typeof req.body.next === 'string' && req.body.next.startsWith('/')
-        ? req.body.next
-        : '/app';
       return res.redirect(nextUrl);
     } catch (err) {
       if (err.status === 400 || err.status === 401 || err.status === 423) {
@@ -60,7 +76,7 @@ function createAuthRouter({ authService }) {
           title: 'Sign in',
           path: '/sign-in',
           error: err.message,
-          next: req.body.next || '/app'
+          next: req.body.next || '/dashboard'
         });
       }
       return next(err);
@@ -68,7 +84,7 @@ function createAuthRouter({ authService }) {
   });
 
   router.get('/register', (req, res) => {
-    if (req.session?.user) return res.redirect('/app');
+    if (req.session?.user) return res.redirect('/dashboard');
     res.render('auth/register', {
       title: 'Register',
       path: '/register',

@@ -127,6 +127,9 @@ function createApp(pool) {
     });
   }
 
+  // Legacy path
+  app.get('/app/dashboard', (_req, res) => res.redirect(302, '/dashboard'));
+
   // Auth routes (includes /sign-in, /register, etc.)
   app.use(createAuthRouter({ authService }));
   app.use(createMfaRouter({ mfaService }));

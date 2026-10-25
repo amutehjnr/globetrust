@@ -24,7 +24,8 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   router.use(requireAuth);
   router.use(requireRole('customer', 'admin', 'support_agent', 'kyc_reviewer', 'operations', 'auditor'));
 
-  router.get('/app', async (req, res, next) => {
+    // Primary customer dashboard
+  router.get('/dashboard', async (req, res, next) => {
     try {
       const userId = req.session.user.id;
       const profile = await customerRepo.getProfile(userId);
@@ -51,7 +52,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
 
       res.render('customer/dashboard', {
         title: 'Dashboard',
-        path: '/app',
+        path: '/dashboard',
         profile,
         accounts,
         recentTransfers,
@@ -65,6 +66,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       next(err);
     }
   });
+
+  // Legacy alias
+  router.get('/app', (_req, res) => res.redirect(302, '/dashboard'));
 
 
   router.get('/app/profile', async (req, res, next) => {
