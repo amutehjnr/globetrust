@@ -34,6 +34,8 @@ const { createAuditRouter } = require('./modules/admin/audit.routes');
 const { createUserRepository } = require('./repositories/userRepository');
 const { createAuthTokenRepository } = require('./repositories/authTokenRepository');
 const { createAuthService } = require('./services/authService');
+const { createEmailService } = require('./services/emailService');
+const { createTransactionAlertService } = require('./services/transactionAlertService');
 
 function createApp(pool) {
   const app = express();
@@ -47,7 +49,9 @@ function createApp(pool) {
   const kycView = createKycViewService({ logger });
   const coreBanking = createCoreBankingAdapter();
   const transferRepo = createTransferRepository(pool);
-  const transferService = createTransferService({ transferRepo, coreBanking, logger });
+  const emailService = createEmailService({ logger });
+  const alertService = createTransactionAlertService({ emailService, userRepo, logger });
+  const transferService = createTransferService({ transferRepo, coreBanking, logger, alertService });
   const supportRepo = createSupportRepository(pool);
   const supportService = createSupportService({ supportRepo });
 

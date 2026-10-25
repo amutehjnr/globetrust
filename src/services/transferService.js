@@ -2,7 +2,7 @@
 
 const { isPositiveAmount, normalizeAmount } = require('../utils/money');
 
-function createTransferService({ transferRepo, coreBanking, logger }) {
+function createTransferService({ transferRepo, coreBanking, logger, alertService }) {
   return {
     async getBalancesForLinks(links) {
       const out = [];
@@ -117,6 +117,22 @@ function createTransferService({ transferRepo, coreBanking, logger }) {
           providerReference: result.providerReference,
           isDemo: true
         });
+
+        // Debit alert (best-effort — never blocks transfer)
+        if (alertService?.notifyTransferSuccess) {
+          try {
+            await alertService.notifyTransferSuccess({
+              userId,
+              amount: normalized,
+              currency: link.currencyCode,
+              narrative: narrative || `TRANSFER to ${destinationAccountRef}`,
+              accountRef: link.externalAccountRef || link.id,
+              direction: 'debit'
+            });
+          } catch (alertErr) {
+            logger?.error?.({ alertErr, requestId }, 'Debit alert failed');
+          }
+        }
       } else {
         await transferRepo.updateStatus(requestId, {
           status: 'failed',
