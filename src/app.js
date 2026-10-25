@@ -41,7 +41,8 @@ function createApp(pool) {
   const app = express();
   const userRepo = createUserRepository(pool);
   const tokenRepo = createAuthTokenRepository(pool);
-  const authService = createAuthService({ userRepo, tokenRepo, logger });
+  const emailService = createEmailService({ logger });
+  const authService = createAuthService({ userRepo, tokenRepo, logger, emailService });
   const mfaService = createMfaService({ pool, logger });
   const customerRepo = createCustomerRepository(pool);
   const adminRepo = createAdminRepository(pool);
@@ -49,7 +50,6 @@ function createApp(pool) {
   const kycView = createKycViewService({ logger });
   const coreBanking = createCoreBankingAdapter();
   const transferRepo = createTransferRepository(pool);
-  const emailService = createEmailService({ logger });
   const alertService = createTransactionAlertService({ emailService, userRepo, logger });
   const transferService = createTransferService({ transferRepo, coreBanking, logger, alertService });
   const supportRepo = createSupportRepository(pool);

@@ -3,7 +3,7 @@
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { randomToken } = require('../utils/ids');
 
-function createAuthService({ userRepo, tokenRepo, logger }) {
+function createAuthService({ userRepo, tokenRepo, logger, emailService }) {
   const GENERIC_AUTH_ERROR = 'Invalid email or password.';
   const MAX_ATTEMPTS = 5;
   const LOCK_MINUTES = 15;
@@ -28,7 +28,15 @@ function createAuthService({ userRepo, tokenRepo, logger }) {
        });
         const userId = created.id || created;
         logger.info({ userId }, 'Customer registered (pending verification)');
-        // Email verification token would be created and sent via approved provider.
+
+        // Welcome email via Resend (best-effort)
+        if (emailService?.sendWelcome) {
+          const name = [input.firstName, input.lastName].filter(Boolean).join(' ') || undefined;
+          emailService
+            .sendWelcome({ to: input.email, customerName: name })
+            .catch((err) => logger.error({ err, userId }, 'Welcome email failed'));
+        }
+
         return { userId, status: 'pending' };
     },
 
@@ -120,8 +128,23 @@ function createAuthService({ userRepo, tokenRepo, logger }) {
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
       await tokenRepo.createPasswordReset(user.id, rawToken, expiresAt, ip);
       logger.info({ userId: user.id }, 'Password reset token created');
-      // In production: send rawToken via approved email provider only.
-      // Dev-only return when explicitly enabled:
+
+      // Send reset link via Resend (best-effort; still return accepted)
+      if (emailService?.sendPasswordReset) {
+        try {
+          const name =
+            [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+            (user.email ? String(user.email).split('@')[0] : undefined);
+          await emailService.sendPasswordReset({
+            to: user.email,
+            customerName: name,
+            rawToken
+          });
+        } catch (err) {
+          logger.error({ err, userId: user.id }, 'Password reset email failed');
+        }
+      }
+
       const payload = { accepted: true };
       if (process.env.AUTH_DEV_EXPOSE_RESET_TOKEN === 'true') {
         payload.devResetToken = rawToken;
