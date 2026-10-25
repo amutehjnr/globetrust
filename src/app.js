@@ -134,7 +134,7 @@ function createApp(pool) {
   app.use(createAuthRouter({ authService }));
   app.use(createMfaRouter({ mfaService }));
   app.use(createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }));
-  app.use(createAdminRouter({ adminRepo, customerRepo, kycView }));
+  app.use(createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }));
   app.use(createTransferRouter({ transferService, transferRepo, coreBanking, mfaService }));
   app.use(createSupportRouter({ supportService, supportRepo }));
   const auditRepo = createAuditRepository(pool);
