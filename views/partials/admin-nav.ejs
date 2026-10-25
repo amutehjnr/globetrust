@@ -1,255 +1,141 @@
-<style>
-  /* ==========================================================================
-   Base sidebar styles
-   ========================================================================== */
-.db-sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 240px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.25rem 1rem;
-  box-sizing: border-box;
-  background: #10131a;
-  color: #d8dbe2;
-  overflow-y: auto;
-  z-index: 1000;
-  transition: transform 0.25s ease;
-}
 
-.db-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-decoration: none;
-  color: inherit;
-}
+<!-- GLOBE TRUST BANK — RESPONSIVE ADMIN SIDEBAR -->
 
-.db-sidebar__brand strong {
-  display: block;
-  letter-spacing: 0.08em;
-  font-size: 0.95rem;
-}
+<link rel="stylesheet" href="/css/admin-sidebar.css">
 
-.db-sidebar__brand small {
-  display: block;
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
-  opacity: 0.6;
-}
+<!-- Mobile hamburger -->
+<button
+  type="button"
+  class="db-hamburger"
+  aria-label="Open navigation menu"
+  aria-controls="db-sidebar"
+  aria-expanded="false"
+>
+  <span aria-hidden="true">☰</span>
+</button>
 
-.db-sidebar__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
+<!-- Mobile backdrop -->
+<button
+  type="button"
+  class="db-sidebar-backdrop"
+  aria-label="Close navigation menu"
+  aria-hidden="true"
+  tabindex="-1"
+></button>
 
-.db-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
-  color: #cfd3dc;
-  text-decoration: none;
-  font-size: 0.9rem;
-  line-height: 1.2;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.db-nav-item:hover {
-  background: rgba(197, 161, 91, 0.12);
-  color: #f2e6cc;
-}
-
-.db-nav-item.is-active {
-  background: rgba(197, 161, 91, 0.18);
-  color: #f2e6cc;
-  border-left: 2px solid #c5a15b;
-}
-
-.db-nav-icon {
-  width: 1.1rem;
-  text-align: center;
-  opacity: 0.8;
-}
-
-.db-sidebar__foot {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 1rem;
-}
-
-.db-signout button {
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: transparent;
-  color: #cfd3dc;
-  font: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.db-signout button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
-
-/* ==========================================================================
-   Hamburger button (hidden on desktop)
-   ========================================================================== */
-.db-hamburger {
-  display: none;
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 1100;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #10131a;
-  color: #f2e6cc;
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-}
-
-.db-hamburger:focus-visible {
-  outline: 2px solid #c5a15b;
-  outline-offset: 2px;
-}
-
-/* ==========================================================================
-   Overlay backdrop (mobile only)
-   ========================================================================== */
-.db-sidebar-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-/* ==========================================================================
-   Phone: off-canvas sidebar + hamburger
-   ========================================================================== */
-@media (max-width: 768px) {
-  .db-hamburger {
-    display: inline-flex;
-  }
-
-  .db-sidebar {
-    width: min(78vw, 280px);
-    transform: translateX(-100%);
-    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.4);
-  }
-
-  /* state controlled by JS toggling a class on <body> (recommended) */
-  body.db-sidebar-open .db-sidebar {
-    transform: translateX(0);
-  }
-
-  body.db-sidebar-open .db-sidebar-backdrop {
-    display: block;
-    opacity: 1;
-  }
-
-  /* Optional: prevent page scroll while menu is open */
-  body.db-sidebar-open {
-    overflow: hidden;
-  }
-}
-
-/* ==========================================================================
-   Pure-CSS fallback using :target (no JS required)
-   Wrap sidebar in #db-sidebar and use href="#db-sidebar"
-   ========================================================================== */
-/*
-.db-sidebar {
-  transform: translateX(-100%);
-}
-#db-sidebar:target {
-  transform: translateX(0);
-}
-*/
-</style>
-
-<button class="db-hamburger" aria-label="Toggle navigation" aria-controls="db-sidebar" aria-expanded="false">☰</button>
-<div class="db-sidebar-backdrop"></div>
-
-<aside class="db-sidebar" aria-label="Admin navigation">
+<!-- Sidebar -->
+<aside
+  id="db-sidebar"
+  class="db-sidebar"
+  aria-label="Admin navigation"
+>
+  <!-- Brand -->
   <a class="db-sidebar__brand" href="/admin">
     <span class="db-sidebar__logo" aria-hidden="true">
-      <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+      <svg
+        viewBox="0 0 32 32"
+        width="28"
+        height="28"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <circle cx="16" cy="16" r="14" stroke="#c5a15b" stroke-width="1.5"/>
         <ellipse cx="16" cy="16" rx="6" ry="14" stroke="#c5a15b" stroke-width="1.2"/>
-        <path d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z" stroke="#c5a15b" stroke-width="1.2"/>
+        <path
+          d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z"
+          stroke="#c5a15b"
+          stroke-width="1.2"
+        />
       </svg>
     </span>
+
     <span>
       <strong>GLOBE TRUST</strong>
       <small>ADMIN</small>
     </span>
   </a>
 
-  <nav class="db-sidebar__nav">
-    <a href="/admin" class="db-nav-item<%= path === '/admin' ? ' is-active' : '' %>">
-      <span class="db-nav-icon">⌂</span> Overview
+  <!-- Navigation -->
+  <nav class="db-sidebar__nav" aria-label="Admin menu">
+
+    <a
+      href="/admin"
+      class="db-nav-item<%= path === '/admin' ? ' is-active' : '' %>"
+      <%= path === '/admin' ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">⌂</span>
+      <span>Overview</span>
     </a>
-    <a href="/admin/customers" class="db-nav-item<%= path === '/admin/customers' ? ' is-active' : '' %>">
-      <span class="db-nav-icon">▤</span> Customers
+
+    <a
+      href="/admin/customers"
+      class="db-nav-item<%= path === '/admin/customers' ? ' is-active' : '' %>"
+      <%= path === '/admin/customers' ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">▤</span>
+      <span>Customers</span>
     </a>
-    <a href="/admin/customers/new" class="db-nav-item<%= path === '/admin/customers' && typeof title !== 'undefined' && title.indexOf('Create') === 0 ? ' is-active' : '' %>">
-      <span class="db-nav-icon">＋</span> Create account
+
+    <a
+      href="/admin/customers/new"
+      class="db-nav-item<%= path === '/admin/customers/new' || (path === '/admin/customers' && typeof title !== 'undefined' && typeof title === 'string' && title.indexOf('Create') === 0) ? ' is-active' : '' %>"
+      <%= path === '/admin/customers/new' || (path === '/admin/customers' && typeof title !== 'undefined' && typeof title === 'string' && title.indexOf('Create') === 0) ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">＋</span>
+      <span>Create account</span>
     </a>
-    <a href="/admin/kyc" class="db-nav-item<%= path === '/admin/kyc' ? ' is-active' : '' %>">
-      <span class="db-nav-icon">☰</span> KYC queue
+
+    <a
+      href="/admin/kyc"
+      class="db-nav-item<%= path === '/admin/kyc' ? ' is-active' : '' %>"
+      <%= path === '/admin/kyc' ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">☰</span>
+      <span>KYC queue</span>
     </a>
-    <a href="/admin/support" class="db-nav-item<%= path === '/admin/support' ? ' is-active' : '' %>">
-      <span class="db-nav-icon">◇</span> Support inbox
+
+    <a
+      href="/admin/support"
+      class="db-nav-item<%= path === '/admin/support' ? ' is-active' : '' %>"
+      <%= path === '/admin/support' ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">◇</span>
+      <span>Support inbox</span>
     </a>
-    <a href="/admin/audit" class="db-nav-item<%= path === '/admin/audit' ? ' is-active' : '' %>">
-      <span class="db-nav-icon">◎</span> Audit log
+
+    <a
+      href="/admin/audit"
+      class="db-nav-item<%= path === '/admin/audit' ? ' is-active' : '' %>"
+      <%= path === '/admin/audit' ? 'aria-current="page"' : '' %>
+    >
+      <span class="db-nav-icon" aria-hidden="true">◎</span>
+      <span>Audit log</span>
     </a>
+
   </nav>
 
+  <!-- Bottom actions -->
   <div class="db-sidebar__foot">
-    <a href="/app" class="db-nav-item">Customer view</a>
+
+    <a href="/app" class="db-nav-item">
+      <span class="db-nav-icon" aria-hidden="true">↗</span>
+      <span>Customer view</span>
+    </a>
+
     <form method="post" action="/sign-out" class="db-signout">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button type="submit">Sign out</button>
+      <input
+        type="hidden"
+        name="_csrf"
+        value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>"
+      >
+
+      <button type="submit">
+        Sign out
+      </button>
     </form>
+
   </div>
 </aside>
 
-<script>
-  const btn = document.querySelector('.db-hamburger');
-const backdrop = document.querySelector('.db-sidebar-backdrop');
-
-function toggleSidebar(open) {
-  document.body.classList.toggle('db-sidebar-open', open);
-  btn.setAttribute('aria-expanded', String(open));
-}
-
-btn.addEventListener('click', () => toggleSidebar(!document.body.classList.contains('db-sidebar-open')));
-backdrop.addEventListener('click', () => toggleSidebar(false));
-
-// close on Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') toggleSidebar(false);
-});
-</script>
+<!-- Load the sidebar controller once per page -->
+<script src="/js/admin-sidebar.js" defer></script>
