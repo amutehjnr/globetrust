@@ -85,8 +85,17 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
         idempotencyKey: crypto.randomBytes(16).toString('hex'),
         error: null,
         success: result.replay
-          ? `Existing request returned (idempotent). Status: ${result.request.status}`
-          : `Transfer request ${result.request.status}. Ref: ${result.request.externalReference || '—'}. Sandbox only — not real funds.`,
+          ? `This transfer was already submitted. Status: ${result.request.status}.`
+          : (() => {
+              const bank = req.body.destinationBankCode
+                ? String(req.body.destinationBankCode).replace(/_/g, ' ')
+                : null;
+              const ref = result.request.externalReference || result.request.id || '—';
+              const status = result.request.status || 'submitted';
+              return bank
+                ? `Transfer ${status} to ${bank}. Reference: ${ref}.`
+                : `Transfer ${status}. Reference: ${ref}.`;
+            })(),
         formValues: {}
       });
       res.render('customer/transfers', locals);

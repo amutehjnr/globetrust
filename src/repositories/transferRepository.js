@@ -172,6 +172,16 @@ function createTransferRepository(pool) {
     },
 
     async ensureSandboxLink(userId, currency = 'NGN') {
+      // Relabel legacy sandbox display names for this user
+      await pool.query(
+        `UPDATE bank_account_links
+         SET display_label = CONCAT('Globe Trust ', currency_code, ' Current')
+         WHERE user_id = ?
+           AND unlinked_at IS NULL
+           AND (display_label LIKE 'Sandbox %' OR display_label IS NULL)`,
+        [uuidToBinary(userId)]
+      );
+
       const [existing] = await pool.query(
         `SELECT id FROM bank_account_links
          WHERE user_id = ? AND provider_code = 'sandbox_core' AND currency_code = ? AND unlinked_at IS NULL
@@ -186,7 +196,7 @@ function createTransferRepository(pool) {
         `INSERT INTO bank_account_links
           (id, user_id, provider_code, external_account_ref, currency_code, display_label, account_type, link_status)
          VALUES (?, ?, 'sandbox_core', ?, ?, ?, 'current', 'active')`,
-        [id, uuidToBinary(userId), ref, currency, `Sandbox ${currency} current`]
+        [id, uuidToBinary(userId), ref, currency, `Globe Trust ${currency} Current`]
       );
       return binaryToUuid(id);
     },

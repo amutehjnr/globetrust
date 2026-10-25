@@ -198,7 +198,7 @@ const COUNTRIES = [
   { code: 'YE', name: 'Yemen' },
   { code: 'ZM', name: 'Zambia' },
   { code: 'ZW', name: 'Zimbabwe' },
-  { code: 'OTHER', name: 'Other / Not listed' }
+  { code: 'OTHER', name: 'Other' }
 ];
 
 COUNTRIES.sort((a, b) => {

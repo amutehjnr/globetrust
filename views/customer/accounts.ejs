@@ -3,9 +3,9 @@
 <div class="db-greeting">
   <div>
     <h1>Accounts</h1>
-    <p>Linked accounts and sandbox balances.</p>
+    <p>Your linked accounts and available balances.</p>
   </div>
-  <span class="db-chip">Sandbox — not real funds</span>
+  <span class="db-chip">Live balances</span>
 </div>
 
 <% if (!accounts || !accounts.length) { %>
@@ -90,7 +90,7 @@
         <% if (a.balance) { %>
           <div class="accounts-card-meta">
             <span>Ledger: <%= Number(a.balance.ledger).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
-            <% if (a.balance.isDemo) { %>
+            <% if (false && a.balance && a.balance.isDemo) { %>
               <span class="accounts-card-demo">Demo funds</span>
             <% } %>
           </div>
