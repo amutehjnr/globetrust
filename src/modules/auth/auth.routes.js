@@ -40,6 +40,12 @@ function createAuthRouter({ authService }) {
     return res.redirect(302, `/sign-in${q}`);
   });
   router.get('/open-account', (_req, res) => res.redirect(302, '/register'));
+  router.get('/auth/login', (req, res) => {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(302, `/sign-in${q}`);
+  });
+  router.get('/auth/forgot-password', (_req, res) => res.redirect(302, '/forgot-password'));
+  router.get('/auth/register', (_req, res) => res.redirect(302, '/register'));
 
   router.get('/sign-in', (req, res) => {
     if (req.session?.user) {
@@ -53,7 +59,7 @@ function createAuthRouter({ authService }) {
     });
   });
 
-  router.post('/sign-in', loginLimiter, requireCsrf, async (req, res, next) => {
+  async function handleSignIn(req, res, next) {
     try {
       const data = parseBody(loginSchema, req.body);
       const result = await authService.login({
@@ -63,13 +69,11 @@ function createAuthRouter({ authService }) {
         userAgent: req.get('user-agent')
       });
 
-      // Session fixation mitigation
       await new Promise((resolve, reject) => {
         req.session.regenerate((err) => (err ? reject(err) : resolve()));
       });
 
       let roles = Array.isArray(result.user.roles) ? [...result.user.roles] : [];
-      // Only default to customer when no roles were assigned
       if (roles.length === 0) {
         roles = ['customer'];
       }
@@ -84,6 +88,12 @@ function createAuthRouter({ authService }) {
 
       req.session.user = { ...result.user, roles };
       req.session.mustEnrollMfa = result.mustEnrollMfa;
+
+      // Ensure session is saved before redirect (critical on serverless)
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => (err ? reject(err) : resolve()));
+      });
+
       return res.redirect(nextUrl);
     } catch (err) {
       if (err.status === 400 || err.status === 401 || err.status === 423) {
@@ -96,7 +106,11 @@ function createAuthRouter({ authService }) {
       }
       return next(err);
     }
-  });
+  }
+
+  // Canonical + legacy form actions (production UI still posts to /auth/login)
+  router.post('/sign-in', loginLimiter, requireCsrf, handleSignIn);
+  router.post('/auth/login', loginLimiter, requireCsrf, handleSignIn);
 
   router.get('/register', (req, res) => {
     if (req.session?.user) {
@@ -110,7 +124,7 @@ function createAuthRouter({ authService }) {
     });
   });
 
-  router.post('/register', registerLimiter, requireCsrf, async (req, res, next) => {
+  async function handleRegister(req, res, next) {
     try {
       const data = parseBody(registerSchema, {
         ...req.body,
@@ -137,27 +151,20 @@ function createAuthRouter({ authService }) {
       }
       return next(err);
     }
-  });
+  }
 
-  router.post('/sign-out', (req, res, next) => {
+  router.post('/register', registerLimiter, requireCsrf, handleRegister);
+  router.post('/auth/register', registerLimiter, requireCsrf, handleRegister);
+
+  router.post('/sign-out', (req, res) => {
     const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
       return res.redirect('/');
     };
-
-    if (!req.session) {
-      return finish();
-    }
-
-    req.session.destroy((err) => {
-      if (err) {
-        return finish();
-      }
-      return finish();
-    });
+    if (!req.session) return finish();
+    req.session.destroy(() => finish());
   });
 
-  // Optional GET fallback (e.g. bookmark / expired form)
   router.get('/sign-out', (req, res) => {
     const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
@@ -177,7 +184,7 @@ function createAuthRouter({ authService }) {
     });
   });
 
-  router.post('/forgot-password', recoveryLimiter, requireCsrf, async (req, res, next) => {
+  async function handleForgot(req, res, next) {
     try {
       const data = parseBody(forgotSchema, req.body);
       const result = await authService.requestPasswordReset(data.email, req.ip);
@@ -200,7 +207,10 @@ function createAuthRouter({ authService }) {
       }
       return next(err);
     }
-  });
+  }
+
+  router.post('/forgot-password', recoveryLimiter, requireCsrf, handleForgot);
+  router.post('/auth/forgot-password', recoveryLimiter, requireCsrf, handleForgot);
 
   router.get('/reset-password', (req, res) => {
     res.render('auth/reset-password', {
