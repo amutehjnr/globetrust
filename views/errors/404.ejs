@@ -3,19 +3,122 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title || 'Page not found' %> · Globe Trust Bank</title>
+  <title><%= typeof title !== 'undefined' && title ? title : 'Page not found' %> · Globe Trust Bank</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="The page you're looking for doesn't exist.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/error-pages.css">
 </head>
-<body>
-  <div class="error-page">
-    <div>
-      <h1>404</h1>
-      <p><%= typeof message !== 'undefined' && message ? message : "We couldn't find that page." %></p>
-      <p>
-        <a class="btn btn-navy" href="/">Home</a>
-        <a class="btn btn-outline" href="/admin/kyc" style="margin-left:0.5rem;">KYC queue</a>
+<body class="err-page">
+  <main class="err-shell">
+    <div class="err-container">
+
+      <!-- ========== ERROR CODE ========== -->
+      <div class="err-code-block">
+        <span class="err-code">404</span>
+        <span class="err-label">Not found</span>
+      </div>
+
+      <!-- ========== COPY ========== -->
+      <h1 class="err-title">
+        <%= typeof message !== 'undefined' && message
+            ? message
+            : "We couldn't find that page." %>
+      </h1>
+      <p class="err-lead">
+        It may have been moved, renamed, or it may never have existed. Here
+        are a few ways to find what you need.
       </p>
+
+      <!-- ========== SEARCH ========== -->
+      <form class="err-search" method="get" action="/search" role="search">
+        <svg class="err-search-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input
+          type="search"
+          name="q"
+          placeholder="Search for a page, product, or help topic…"
+          aria-label="Search site"
+          autocomplete="off"
+        >
+        <button type="submit" class="err-search-btn">
+          Search
+        </button>
+      </form>
+
+      <!-- ========== HELPFUL LINKS ========== -->
+      <div class="err-links">
+        <a href="/" class="err-link">
+          <span class="err-link-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+          </span>
+          <span class="err-link-body">
+            <strong>Homepage</strong>
+            <span>The starting point for everything</span>
+          </span>
+        </a>
+
+        <a href="/personal" class="err-link">
+          <span class="err-link-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </span>
+          <span class="err-link-body">
+            <strong>Personal banking</strong>
+            <span>Accounts, cards, and everyday banking</span>
+          </span>
+        </a>
+
+        <a href="/business" class="err-link">
+          <span class="err-link-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.075c0 1.313-.964 2.425-2.268 2.573a48.53 48.53 0 01-11.964 0A2.599 2.599 0 013.75 18.225V14.15M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+            </svg>
+          </span>
+          <span class="err-link-body">
+            <strong>Business banking</strong>
+            <span>Tools for teams and authorised users</span>
+          </span>
+        </a>
+
+        <a href="/contact" class="err-link">
+          <span class="err-link-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+            </svg>
+          </span>
+          <span class="err-link-body">
+            <strong>Contact us</strong>
+            <span>Speak with a person</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- ========== PRIMARY ACTIONS ========== -->
+      <div class="err-actions">
+        <a href="/" class="err-btn err-btn-primary">
+          Return home
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+        <a href="/contact" class="err-btn err-btn-ghost">Contact support</a>
+      </div>
+
+      <!-- ========== BRAND ========== -->
+      <div class="err-brand">
+        <div class="err-brand-mark">GT</div>
+        <span>Globe Trust Bank</span>
+      </div>
+
     </div>
-  </div>
+  </main>
 </body>
 </html>
