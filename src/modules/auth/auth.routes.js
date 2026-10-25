@@ -139,12 +139,32 @@ function createAuthRouter({ authService }) {
     }
   });
 
-  router.post('/sign-out', requireCsrf, (req, res, next) => {
-    req.session.destroy((err) => {
-      if (err) return next(err);
+  router.post('/sign-out', (req, res, next) => {
+    const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
-      res.redirect('/');
+      return res.redirect('/');
+    };
+
+    if (!req.session) {
+      return finish();
+    }
+
+    req.session.destroy((err) => {
+      if (err) {
+        return finish();
+      }
+      return finish();
     });
+  });
+
+  // Optional GET fallback (e.g. bookmark / expired form)
+  router.get('/sign-out', (req, res) => {
+    const finish = () => {
+      res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
+      return res.redirect('/');
+    };
+    if (!req.session) return finish();
+    req.session.destroy(() => finish());
   });
 
   router.get('/forgot-password', (req, res) => {
