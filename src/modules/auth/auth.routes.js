@@ -60,6 +60,14 @@ function createAuthRouter({ authService }) {
   });
 
   async function handleSignIn(req, res, next) {
+    console.log('[GLOBE_LOGIN] attempt', JSON.stringify({
+      path: req.path || req.url,
+      email: req.body?.email || null,
+      hasPassword: Boolean(req.body?.password),
+      hasCsrf: Boolean(req.body?._csrf),
+      next: req.body?.next || null,
+      hasSession: Boolean(req.session)
+    }));
     try {
       const data = parseBody(loginSchema, req.body);
       const result = await authService.login({
@@ -69,20 +77,33 @@ function createAuthRouter({ authService }) {
         userAgent: req.get('user-agent')
       });
 
+      console.log('[GLOBE_LOGIN] authService.ok', JSON.stringify({
+        userId: result.user?.id,
+        email: result.user?.email,
+        roles: result.user?.roles,
+        needsMfa: result.needsMfa,
+        mustEnrollMfa: result.mustEnrollMfa
+      }));
+
       await new Promise((resolve, reject) => {
         req.session.regenerate((err) => (err ? reject(err) : resolve()));
       });
 
       let roles = Array.isArray(result.user.roles) ? [...result.user.roles] : [];
       if (roles.length === 0) {
+        console.warn('[GLOBE_LOGIN] no roles from DB — defaulting to customer');
         roles = ['customer'];
       }
 
       const nextUrl = safeNextUrl(req.body.next, roles);
+      console.log('[GLOBE_LOGIN] redirect', JSON.stringify({ roles, nextUrl }));
 
       if (result.needsMfa) {
         req.session.pendingMfaUser = { ...result.user, roles };
         req.session.pendingMfaNext = nextUrl;
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => (err ? reject(err) : resolve()));
+        });
         return res.redirect('/mfa/verify');
       }
 
@@ -96,6 +117,14 @@ function createAuthRouter({ authService }) {
 
       return res.redirect(nextUrl);
     } catch (err) {
+      console.error('[GLOBE_LOGIN] failed', JSON.stringify({
+        message: err.message,
+        status: err.status,
+        name: err.name,
+        stack: err.stack
+      }, null, 2));
+      if (err.stack) console.error(err.stack);
+
       if (err.status === 400 || err.status === 401 || err.status === 423) {
         return res.status(err.status).render('auth/sign-in', {
           title: 'Sign in',

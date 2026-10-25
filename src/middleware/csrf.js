@@ -27,6 +27,15 @@ function requireCsrf(req, res, next) {
     req.get('csrf-token');
   const expected = req.session?.csrfToken;
   if (!expected || !token || !timingSafeEqualStr(token, expected)) {
+    console.error('[GLOBE_CSRF] rejected', JSON.stringify({
+      method: req.method,
+      url: req.originalUrl || req.url,
+      hasSession: Boolean(req.session),
+      hasExpected: Boolean(expected),
+      hasToken: Boolean(token),
+      tokenLen: token ? String(token).length : 0,
+      expectedLen: expected ? String(expected).length : 0
+    }));
     const err = new Error('Invalid or missing CSRF token.');
     err.status = 403;
     return next(err);

@@ -111,6 +111,7 @@ function createApp(pool) {
   app.use(createHealthRouter({ pool }));
   app.use(createMetricsRouter());
 
+
   app.get('/', (_req, res) => {
     res.render('public/home', {
       title: 'Home',
@@ -141,12 +142,52 @@ function createApp(pool) {
   app.use(createAuditRouter({ auditRepo }));
   app.set('supportService', supportService);
 
-  app.use((_req, res) => res.status(404).render('errors/404', { title: 'Page not found' }));
+
+  app.use((req, res) => {
+    console.error('[GLOBE_404]', JSON.stringify({
+      method: req.method,
+      url: req.originalUrl || req.url,
+      path: req.path,
+      sessionUser: req.session?.user
+        ? { id: req.session.user.id, email: req.session.user.email, roles: req.session.user.roles }
+        : null,
+      hasSession: Boolean(req.session),
+      csrf: Boolean(req.session?.csrfToken)
+    }));
+    return res.status(404).render('errors/404', { title: 'Page not found' });
+  });
 
   app.use((err, req, res, _next) => {
-    req.log?.error({ err }, 'Unhandled request error');
-    if (res.headersSent) return;
     const status = err.status || 500;
+    console.error('[GLOBE_ERROR]', JSON.stringify({
+      status,
+      message: err.message,
+      name: err.name,
+      code: err.code,
+      stack: err.stack,
+      method: req.method,
+      url: req.originalUrl || req.url,
+      path: req.path,
+      sessionUser: req.session?.user
+        ? { id: req.session.user.id, email: req.session.user.email, roles: req.session.user.roles }
+        : null,
+      bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : []
+    }, null, 2));
+    if (err.stack) console.error(err.stack);
+
+    req.log?.error({ err, status }, 'Unhandled request error');
+    if (res.headersSent) return;
+
+    // Temporary debug: surface message when DEBUG_ERRORS=true (Vercel env)
+    if (process.env.DEBUG_ERRORS === 'true' && status >= 500) {
+      res.status(status);
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.end(
+        `Error ${status}\n${err.message}\n\n${err.stack || ''}\n\n` +
+        `url=${req.originalUrl}\nmethod=${req.method}\n`
+      );
+    }
+
     if (status === 403) {
       return res.status(403).render('errors/403', { title: 'Access denied' });
     }

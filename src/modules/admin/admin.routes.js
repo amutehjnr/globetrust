@@ -29,8 +29,9 @@ const createUserSchema = z.object({
 function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
   const router = express.Router();
 
-  router.use(requireAuth);
-  router.use(requireRole('admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'));
+  // Only protect /admin/* — do not intercept unrelated paths (avoids fallthrough 404s)
+  router.use('/admin', requireAuth);
+  router.use('/admin', requireRole('admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'));
 
   function adminLocals(req, extra = {}) {
     const email = req.session.user?.email || 'admin';
@@ -42,9 +43,18 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
   }
 
   router.get('/admin', async (req, res, next) => {
+    console.log('[GLOBE_ADMIN] GET /admin', JSON.stringify({
+      user: req.session?.user
+        ? { id: req.session.user.id, email: req.session.user.email, roles: req.session.user.roles }
+        : null
+    }));
     try {
       const dash = await adminRepo.dashboardStats();
       const recentCustomers = await adminRepo.listRecentCustomers(12);
+      console.log('[GLOBE_ADMIN] dashboardStats ok', JSON.stringify({
+        users: dash?.counts?.users,
+        recent: Array.isArray(recentCustomers) ? recentCustomers.length : null
+      }));
       res.render('admin/overview', adminLocals(req, {
         title: 'Admin dashboard',
         path: '/admin',
@@ -59,6 +69,8 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
         error: req.query.err || null
       }));
     } catch (err) {
+      console.error('[GLOBE_ADMIN] GET /admin failed', err?.message);
+      console.error(err?.stack || err);
       next(err);
     }
   });
