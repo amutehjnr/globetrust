@@ -7,38 +7,190 @@
   </div>
 </div>
 
-<section class="db-panel">
-  <form method="get" action="/admin/audit" class="form-grid" style="grid-template-columns:1fr 1fr auto;max-width:40rem;margin-bottom:1rem;">
-    <input name="action" value="<%= action %>" placeholder="Action contains…">
-    <select name="outcome">
-      <option value="">Any outcome</option>
-      <option value="success" <%= outcome === 'success' ? 'selected' : '' %>>success</option>
-      <option value="failure" <%= outcome === 'failure' ? 'selected' : '' %>>failure</option>
-      <option value="blocked" <%= outcome === 'blocked' ? 'selected' : '' %>>blocked</option>
-    </select>
-    <button class="btn btn-navy" type="submit">Filter</button>
-  </form>
-  <div class="table-wrap" style="border:0;box-shadow:none;">
-    <table class="data">
-      <thead>
-        <tr><th>When</th><th>Action</th><th>Outcome</th><th>Target</th><th>Actor</th></tr>
-      </thead>
-      <tbody>
-        <% if (!events.length) { %>
-          <tr><td colspan="5">No events matched.</td></tr>
-        <% } %>
-        <% events.forEach(function(e) { %>
-          <tr>
-            <td><%= e.createdAt %></td>
-            <td><code><%= e.action %></code></td>
-            <td><%= e.outcome %></td>
-            <td><%= e.targetType || '' %> <%= e.targetReference || '' %></td>
-            <td><small><%= e.actorUserId || '—' %></small></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+<%
+  /* Compute counts from events */
+  events = Array.isArray(events) ? events : [];
+
+var counts = {
+  total: events.length,
+  success: 0,
+  failure: 0,
+  blocked: 0,
+  other: 0
+};
+  events.forEach(function(e) {
+    var o = String(e.outcome || '').toLowerCase();
+    if (o === 'success') counts.success++;
+    else if (o === 'failure') counts.failure++;
+    else if (o === 'blocked') counts.blocked++;
+    else counts.other++;
+  });
+%>
+
+<!-- ========== FILTER FORM ========== -->
+<section class="audit-filter">
+  <div class="audit-filter-head">
+    <div>
+      <h2>Filter events</h2>
+      <p>Narrow the trail by action or outcome.</p>
+    </div>
   </div>
+
+  <form method="get" action="/admin/audit" class="audit-filter-form">
+    <div class="audit-field">
+      <label for="audit-action">Action contains</label>
+      <input
+        type="text"
+        id="audit-action"
+        name="action"
+        value="<%= action %>"
+        placeholder="e.g. transfer.create, auth.login"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="audit-field">
+      <label for="audit-outcome">Outcome</label>
+      <select id="audit-outcome" name="outcome">
+        <option value="">Any outcome</option>
+        <option value="success" <%= outcome === 'success' ? 'selected' : '' %>>Success</option>
+        <option value="failure" <%= outcome === 'failure' ? 'selected' : '' %>>Failure</option>
+        <option value="blocked" <%= outcome === 'blocked' ? 'selected' : '' %>>Blocked</option>
+      </select>
+    </div>
+
+    <div class="audit-filter-actions">
+      <button class="audit-btn audit-btn-primary" type="submit">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+        </svg>
+        Filter
+      </button>
+      <% if (action || outcome) { %>
+        <a href="/admin/audit" class="audit-btn audit-btn-ghost">Clear</a>
+      <% } %>
+    </div>
+  </form>
+</section>
+
+<!-- ========== SUMMARY ========== -->
+<section class="audit-summary">
+  <div class="audit-summary-item">
+    <span class="audit-summary-label">Total</span>
+    <strong class="audit-summary-value"><%= counts.total %></strong>
+    <span class="audit-summary-hint">events</span>
+  </div>
+  <div class="audit-summary-item">
+    <span class="audit-summary-label">Success</span>
+    <strong class="audit-summary-value audit-summary-value-ok"><%= counts.success %></strong>
+    <span class="audit-summary-hint"><%= counts.total ? Math.round((counts.success / counts.total) * 100) : 0 %>%</span>
+  </div>
+  <div class="audit-summary-item">
+    <span class="audit-summary-label">Failure</span>
+    <strong class="audit-summary-value audit-summary-value-err"><%= counts.failure %></strong>
+    <span class="audit-summary-hint"><%= counts.total ? Math.round((counts.failure / counts.total) * 100) : 0 %>%</span>
+  </div>
+  <div class="audit-summary-item">
+    <span class="audit-summary-label">Blocked</span>
+    <strong class="audit-summary-value audit-summary-value-warn"><%= counts.blocked %></strong>
+    <span class="audit-summary-hint"><%= counts.total ? Math.round((counts.blocked / counts.total) * 100) : 0 %>%</span>
+  </div>
+</section>
+
+<!-- ========== TABLE ========== -->
+<section class="db-panel audit-panel">
+  <div class="audit-panel-head">
+    <h2>Events</h2>
+    <span class="audit-panel-count"><%= events.length %> shown</span>
+  </div>
+
+  <% if (!events || !events.length) { %>
+
+    <!-- ========== EMPTY / NO RESULTS ========== -->
+    <div class="audit-empty">
+      <div class="audit-empty-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+        </svg>
+      </div>
+      <% if (action || outcome) { %>
+        <h3>No events match your filters</h3>
+        <p>Try a different action or outcome, or clear the filters to see all events.</p>
+        <a href="/admin/audit" class="audit-btn audit-btn-primary">Clear filters</a>
+      <% } else { %>
+        <h3>No events yet</h3>
+        <p>Audit events will appear here once the application starts recording activity.</p>
+      <% } %>
+    </div>
+
+  <% } else { %>
+
+    <div class="audit-table-wrap">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Action</th>
+            <th>Outcome</th>
+            <th>Target</th>
+            <th>Actor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% events.forEach(function(e) { %>
+            <%
+              var o = String(e.outcome || '').toLowerCase();
+              var outClass = o === 'success' ? 'ok'
+                            : o === 'failure' ? 'err'
+                            : o === 'blocked' ? 'blocked'
+                            : 'other';
+              var outLabel = o ? o.charAt(0).toUpperCase() + o.slice(1) : 'Unknown';
+            %>
+            <tr>
+              <td class="audit-cell-date">
+                <span class="audit-date-main"><%= e.createdAt ? String(e.createdAt).split(' ')[0] || e.createdAt : '—' %></span>
+                <span class="audit-date-sub"><%= e.createdAt && String(e.createdAt).split(' ')[1] ? String(e.createdAt).split(' ')[1] : '' %></span>
+              </td>
+              <td class="audit-cell-action">
+                <code class="audit-code"><%= e.action %></code>
+              </td>
+              <td>
+                <span class="audit-badge audit-badge-<%= outClass %>">
+                  <span class="audit-badge-dot"></span>
+                  <%= outLabel %>
+                </span>
+              </td>
+              <td class="audit-cell-target">
+                <% if (e.targetType || e.targetReference) { %>
+                  <div class="audit-target">
+                    <% if (e.targetType) { %>
+                      <span class="audit-target-type"><%= e.targetType %></span>
+                    <% } %>
+                    <% if (e.targetReference) { %>
+                      <span class="audit-target-ref"><%= e.targetReference %></span>
+                    <% } %>
+                  </div>
+                <% } else { %>
+                  <span class="audit-target-empty">—</span>
+                <% } %>
+              </td>
+              <td class="audit-cell-actor">
+                <% if (e.actorUserId) { %>
+                  <span class="audit-actor">
+                    <span class="audit-actor-dot"></span>
+                    <%= e.actorUserId %>
+                  </span>
+                <% } else { %>
+                  <span class="audit-target-empty">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  <% } %>
 </section>
 
 <%- include('../partials/admin-shell-end') %>

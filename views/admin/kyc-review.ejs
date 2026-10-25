@@ -1,44 +1,308 @@
-<%- include('../partials/admin-shell-start') %>
+<%- include('../../partials/admin-shell-start') %>
 
-<p><a href="/admin/kyc">← Back to queue</a></p>
 <div class="db-greeting">
   <div>
+    <a href="/admin/kyc" class="kycr-back">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Back to queue
+    </a>
     <h1>Review identity document</h1>
+    <p>Verify the document matches the customer, then record your decision.</p>
   </div>
 </div>
 
-<% if (error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
-
-<section class="db-panel" style="max-width:36rem;margin-bottom:1.25rem;">
-  <p><strong>Document type:</strong> <%= doc.documentType %></p>
-  <p><strong>Status:</strong>
-    <span class="db-badge db-badge--<%= doc.verificationStatus === 'pending' ? 'pending' : doc.verificationStatus === 'approved' ? 'ok' : 'err' %>">
-      <%= doc.verificationStatus %>
-    </span>
-  </p>
-  <p><strong>Submitted:</strong> <%= doc.createdAt %></p>
-  <p><strong>Storage:</strong> <%= doc.storageProvider %></p>
-  <p>
-    <a class="btn btn-outline" href="/admin/kyc/documents/<%= doc.id %>" target="_blank" rel="noopener">View document securely</a>
-  </p>
-</section>
-
-<% if (doc.verificationStatus === 'pending') { %>
-  <section class="db-panel" style="max-width:36rem;">
-    <form method="post" action="/admin/kyc/<%= doc.id %>/review" class="form-grid">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div>
-        <label for="reason">Reason (required for rejection)</label>
-        <textarea id="reason" name="reason" rows="3" maxlength="500" placeholder="e.g. Image blurred, document expired…"></textarea>
-      </div>
-      <div class="quick-actions">
-        <button class="btn btn-navy" type="submit" name="decision" value="approved">Approve</button>
-        <button class="btn btn-outline" type="submit" name="decision" value="rejected" style="border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
-      </div>
-    </form>
-  </section>
-<% } else { %>
-  <div class="db-alert" style="background:var(--db-ivory);">This document is already <strong><%= doc.verificationStatus %></strong>.</div>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+    <span><%= error %></span>
+  </div>
 <% } %>
 
-<%- include('../partials/admin-shell-end') %>
+<%
+  var status = String(doc && doc.verificationStatus || 'pending')
+    .trim()
+    .toLowerCase();
+
+  var isPending = status === 'pending';
+
+  var statusClass = status === 'pending' ? 'pending'
+                  : status === 'approved' ? 'ok'
+                  : status === 'rejected' ? 'err'
+                  : 'other';
+
+  var statusLabel = status
+    ? status.charAt(0).toUpperCase() + status.slice(1)
+    : 'Unknown';
+
+  var typeLabel = {
+    passport: 'Passport',
+    national_id: 'National ID',
+    drivers_license: "Driver's licence",
+    proof_of_address: 'Proof of address',
+    other: 'Other document'
+  }[doc.documentType] ||
+    String(doc.documentType || '—').replace(/_/g, ' ');
+%>
+
+<div class="kycr-layout">
+
+  <!-- ========== LEFT: DOCUMENT INFO ========== -->
+  <div class="kycr-main">
+
+    <!-- Document summary -->
+    <section class="kycr-card">
+      <div class="kycr-card-head">
+        <h2>Document</h2>
+        <span class="kycr-badge kycr-badge-<%= statusClass %>">
+          <span class="kycr-badge-dot"></span>
+          <%= statusLabel %>
+        </span>
+      </div>
+
+      <dl class="kycr-meta">
+        <div class="kycr-meta-row">
+          <dt>Document type</dt>
+          <dd><%= typeLabel %></dd>
+        </div>
+        <div class="kycr-meta-row">
+          <dt>Status</dt>
+          <dd><%= statusLabel %></dd>
+        </div>
+        <div class="kycr-meta-row">
+          <dt>Submitted</dt>
+          <dd><%= doc.createdAt || '—' %></dd>
+        </div>
+        <div class="kycr-meta-row">
+          <dt>Storage</dt>
+          <dd><code class="kycr-code"><%= doc.storageProvider || '—' %></code></dd>
+        </div>
+        <div class="kycr-meta-row">
+          <dt>Document ID</dt>
+          <dd><code class="kycr-code"><%= doc.id %></code></dd>
+        </div>
+      </dl>
+
+      <a
+        class="kycr-view-btn"
+        href="/admin/kyc/documents/<%= doc.id %>"
+        target="_blank"
+        rel="noopener"
+      >
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        View document securely
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="kycr-view-btn-ext">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+        </svg>
+      </a>
+    </section>
+
+    <!-- What happens next -->
+    <section class="kycr-card kycr-card-info">
+      <div class="kycr-card-head">
+        <h2>What happens next</h2>
+      </div>
+      <ul class="kycr-info-list">
+        <li>
+          <div class="kycr-info-icon kycr-info-ok">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <div>
+            <strong>Approve</strong>
+            <span>The customer can proceed with the next onboarding step. Recorded in the audit trail.</span>
+          </div>
+        </li>
+        <li>
+          <div class="kycr-info-icon kycr-info-err">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <div>
+            <strong>Reject</strong>
+            <span>The customer is notified with your reason and asked to resubmit. A clear reason helps them fix the issue.</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- ========== RIGHT: DECISION FORM ========== -->
+  <aside class="kycr-aside">
+
+    <% if (isPending) { %>
+
+      <form method="post" action="/admin/kyc/<%= doc.id %>/review" class="kycr-card kycr-form" id="kycr-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="kycr-card-head">
+          <h2>Your decision</h2>
+          <span class="kycr-form-hint">Recorded in audit trail</span>
+        </div>
+
+        <div class="kycr-field">
+          <label for="kycr-reason">
+            Reason
+            <span class="kycr-reason-tag" id="kycr-reason-tag">optional for approval</span>
+          </label>
+          <textarea
+            id="kycr-reason"
+            name="reason"
+            rows="4"
+            maxlength="500"
+            placeholder="e.g. Image blurred, document expired, name mismatch…"
+          ></textarea>
+          <div class="kycr-reason-meta">
+            <span class="kycr-reason-hint">Be specific — this is shared with the customer on rejection.</span>
+            <span class="kycr-reason-count"><span id="kycr-reason-count">0</span> / 500</span>
+          </div>
+        </div>
+
+        <div class="kycr-decision-grid">
+          <button
+            type="submit"
+            name="decision"
+            value="approved"
+            class="kycr-decision kycr-decision-approve"
+            id="kycr-approve"
+          >
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span>Approve document</span>
+          </button>
+
+          <button
+            type="submit"
+            name="decision"
+            value="rejected"
+            class="kycr-decision kycr-decision-reject"
+            id="kycr-reject"
+          >
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Reject document</span>
+          </button>
+        </div>
+
+        <p class="kycr-form-foot">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          This decision cannot be undone. Contact support if you make a mistake.
+        </p>
+      </form>
+
+    <% } else { %>
+
+      <div class="kycr-card kycr-already">
+        <div class="kycr-already-icon kycr-already-<%= statusClass %>">
+          <% if (status === 'approved') { %>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          <% } else if (status === 'rejected') { %>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          <% } else { %>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          <% } %>
+        </div>
+        <h3>Already <strong><%= status %></strong></h3>
+        <p>
+          <% if (status === 'approved') { %>
+            This document has been approved. No further action is needed.
+          <% } else if (status === 'rejected') { %>
+            This document has been rejected. The customer will be asked to resubmit.
+          <% } else { %>
+            This document is in state "<%= status %>" and cannot be reviewed.
+          <% } %>
+        </p>
+        <a href="/admin/kyc" class="kycr-back-btn">← Back to queue</a>
+      </div>
+
+    <% } %>
+
+  </aside>
+
+</div>
+
+<!-- ========== SCRIPT ========== -->
+<script>
+  (function () {
+    var form = document.getElementById('kycr-form');
+    if (!form) return;
+
+    var reason = document.getElementById('kycr-reason');
+    var reasonTag = document.getElementById('kycr-reason-tag');
+    var countEl = document.getElementById('kycr-reason-count');
+    var approveBtn = document.getElementById('kycr-approve');
+    var rejectBtn = document.getElementById('kycr-reject');
+
+    /* Character counter */
+    reason.addEventListener('input', function () {
+      countEl.textContent = reason.value.length;
+      updateReasonTag();
+    });
+
+    /* Reason tag: show "required" when hover/focus on Reject */
+    function updateReasonTag(activeDecision) {
+      var hasText = reason.value.trim().length > 0;
+      if (activeDecision === 'reject' && !hasText) {
+        reasonTag.textContent = 'required for rejection';
+        reasonTag.classList.add('is-required');
+      } else if (hasText) {
+        reasonTag.textContent = 'provided';
+        reasonTag.classList.remove('is-required');
+      } else {
+        reasonTag.textContent = 'optional for approval';
+        reasonTag.classList.remove('is-required');
+      }
+    }
+
+    rejectBtn.addEventListener('mouseenter', function () { updateReasonTag('reject'); });
+    rejectBtn.addEventListener('focus', function () { updateReasonTag('reject'); });
+    rejectBtn.addEventListener('mouseleave', function () { updateReasonTag(); });
+    approveBtn.addEventListener('mouseenter', function () { updateReasonTag(); });
+    approveBtn.addEventListener('focus', function () { updateReasonTag(); });
+
+    /* Prevent rejecting without a reason (soft — server also validates) */
+    form.addEventListener('submit', function (e) {
+      var submitter = e.submitter;
+      if (submitter && submitter.name === 'decision' && submitter.value === 'rejected') {
+        if (!reason.value.trim()) {
+          e.preventDefault();
+          reason.focus();
+          updateReasonTag('reject');
+          reason.style.borderColor = '#dc2626';
+          reason.style.boxShadow = '0 0 0 3px rgba(220, 38, 38, 0.12)';
+          return false;
+        }
+      }
+    });
+
+    /* Clear error styling on input */
+    reason.addEventListener('input', function () {
+      reason.style.borderColor = '';
+      reason.style.boxShadow = '';
+    });
+
+    updateReasonTag();
+  })();
+</script>
+<script src="/js/admin-kyc-review.js" defer></script>
+
+<%- include('../../partials/admin-shell-end') %>

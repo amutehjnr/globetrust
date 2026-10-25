@@ -1,0 +1,468 @@
+
+/* GLOBE TRUST BANK — KYC Review Queue */
+
+.kycq-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 24px 0;
+}
+
+.kycq-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid #e9e5dc;
+  border-radius: 15px;
+  background: #fffefa;
+  box-shadow: 0 5px 22px rgba(24, 39, 62, 0.04);
+}
+
+.kycq-summary-label {
+  color: #778397;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kycq-summary-value {
+  color: #172b47;
+  font-size: 27px;
+  font-weight: 750;
+  letter-spacing: -0.8px;
+  overflow-wrap: anywhere;
+}
+
+.kycq-summary-value-warn {
+  color: #a77b2e;
+}
+
+.kycq-summary-hint {
+  color: #8791a0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.kycq-panel {
+  overflow: hidden;
+  border: 1px solid #e9e5dc;
+  border-radius: 16px;
+  background: #fffefa;
+  box-shadow: 0 5px 22px rgba(24, 39, 62, 0.04);
+}
+
+.kycq-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #eeeae2;
+}
+
+.kycq-panel-head h2 {
+  margin: 0;
+  color: #172b47;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.kycq-panel-count {
+  padding: 6px 10px;
+  border: 1px solid #e9dfc8;
+  border-radius: 999px;
+  background: #faf5e9;
+  color: #8c6c32;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.kycq-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kycq-item {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.15fr) minmax(145px, 0.85fr) minmax(100px, 0.6fr);
+  align-items: center;
+  gap: 22px;
+  padding: 23px 24px;
+  border-bottom: 1px solid #f0ede6;
+  transition: background 0.2s ease;
+}
+
+.kycq-item:hover {
+  background: #fdfbf6;
+}
+
+.kycq-item:last-child {
+  border-bottom: 0;
+}
+
+.kycq-item.is-urgent {
+  background: #fffaf5;
+  box-shadow: inset 3px 0 #c78b47;
+}
+
+.kycq-customer {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.kycq-avatar {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  border: 1px solid #e7d8b8;
+  border-radius: 13px;
+  background: #f5eddd;
+  color: #80622d;
+  font-size: 13px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.kycq-customer-info,
+.kycq-doc-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.kycq-customer-info > strong,
+.kycq-doc-info > strong {
+  max-width: 100%;
+  color: #20314b;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.kycq-customer-email,
+.kycq-customer-ref {
+  max-width: 100%;
+  color: #7e899a;
+  font-size: 10px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.kycq-customer-ref code {
+  color: #59677c;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.kycq-doc {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.kycq-doc-icon {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  border: 1px solid #eae5d9;
+  border-radius: 11px;
+  background: #f8f5ed;
+  color: #8c7445;
+}
+
+.kycq-doc-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.kycq-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #9a793b;
+  font-size: 10px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.kycq-doc-link:hover {
+  color: #172b47;
+  text-decoration: underline;
+}
+
+.kycq-doc-link svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.kycq-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kycq-time-label {
+  color: #8993a2;
+  font-size: 10px;
+}
+
+.kycq-time-value {
+  color: #34435a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.kycq-time-urgent {
+  color: #b66c30;
+}
+
+.kycq-time-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #b66c30;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.kycq-time-warning svg {
+  width: 13px;
+  height: 13px;
+}
+
+.kycq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1 / -1;
+  padding-top: 15px;
+  border-top: 1px solid #f0ede6;
+}
+
+.kycq-inline {
+  display: inline-flex;
+  margin: 0;
+}
+
+.kycq-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.kycq-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.kycq-btn-ghost {
+  border-color: #e4dfd4;
+  background: #fffefa;
+  color: #47566c;
+}
+
+.kycq-btn-ghost:hover {
+  border-color: #cdbb93;
+  background: #f8f4eb;
+}
+
+.kycq-btn-approve {
+  background: #172b47;
+  color: #fff;
+}
+
+.kycq-btn-approve:hover {
+  background: #263f61;
+}
+
+.kycq-btn-reject {
+  border-color: #f0d5d7;
+  background: #fff7f7;
+  color: #b42332;
+}
+
+.kycq-btn-reject:hover {
+  background: #ffeded;
+}
+
+.kycq-btn:focus-visible,
+.kycq-doc-link:focus-visible {
+  outline: 3px solid rgba(185, 154, 91, 0.3);
+  outline-offset: 3px;
+}
+
+.kycq-panel-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 17px 24px;
+  border-top: 1px solid #eeeae2;
+  background: #fbf9f3;
+  color: #788397;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.kycq-panel-foot svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 1px;
+}
+
+.kycq-panel-foot strong {
+  color: #4b5a70;
+}
+
+.kycq-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 270px;
+  margin-top: 24px;
+  padding: 40px 24px;
+  border: 1px solid #e9e5dc;
+  border-radius: 16px;
+  background: #fffefa;
+  text-align: center;
+}
+
+.kycq-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  border: 1px solid #d8e9dc;
+  border-radius: 18px;
+  background: #edf7ef;
+  color: #28754e;
+}
+
+.kycq-empty-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.kycq-empty h3 {
+  margin: 0 0 9px;
+  color: #172b47;
+  font-size: 19px;
+}
+
+.kycq-empty p {
+  max-width: 360px;
+  margin: 0;
+  color: #7e899a;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+@media (min-width: 1250px) {
+  .kycq-item {
+    grid-template-columns: minmax(200px, 1.2fr) minmax(160px, 0.9fr) minmax(110px, 0.6fr);
+  }
+}
+
+@media (max-width: 1050px) {
+  .kycq-item {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .kycq-time {
+    grid-column: 1 / -1;
+  }
+
+  .kycq-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .kycq-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 18px 0;
+  }
+
+  .kycq-summary-item {
+    padding: 18px;
+  }
+
+  .kycq-summary-value {
+    font-size: 24px;
+  }
+
+  .kycq-panel-head {
+    padding: 18px;
+  }
+
+  .kycq-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 19px 18px;
+  }
+
+  .kycq-time {
+    grid-column: auto;
+  }
+
+  .kycq-actions {
+    grid-column: auto;
+    gap: 8px;
+  }
+
+  .kycq-btn {
+    min-height: 38px;
+    padding: 9px 11px;
+  }
+
+  .kycq-panel-foot {
+    padding: 16px 18px;
+  }
+
+  .kycq-empty {
+    min-height: 230px;
+    padding: 30px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kycq-item,
+  .kycq-btn,
+  .kycq-doc-link {
+    transition: none;
+  }
+}

@@ -1,4 +1,4 @@
-<%- include('../partials/admin-shell-start') %>
+<%- include('../../partials/admin-shell-start') %>
 
 <div class="db-greeting">
   <div>
@@ -7,23 +7,225 @@
   </div>
 </div>
 
-<section class="db-panel">
-  <% if (!queue || !queue.length) { %>
-    <p class="db-muted">No open conversations.</p>
-  <% } else { %>
-    <ul class="db-tx-list">
-      <% queue.forEach(function(c) { %>
-        <li>
-          <span class="db-tx-icon">◇</span>
-          <div class="db-tx-body">
-            <strong><%= c.subject || 'Conversation' %></strong>
-            <small><%= c.status %> · <%= c.updatedAt || c.createdAt || '' %></small>
+<%
+  var allConvs = Array.isArray(queue) ? queue : [];
+  var openCount = 0, waitingCount = 0, closedCount = 0;
+  allConvs.forEach(function(c) {
+    var s = String(c.status || '').toLowerCase();
+    if (s === 'open') openCount++;
+    else if (s === 'waiting' || s === 'pending') waitingCount++;
+    else if (s === 'closed' || s === 'resolved') closedCount++;
+  });
+  var totalActive = openCount + waitingCount;
+
+  /* Find oldest activity */
+  var oldestText = '';
+  if (allConvs.length) {
+    var oldestMs = Infinity;
+    allConvs.forEach(function(c) {
+      var t = new Date(c.updatedAt || c.createdAt || 0).getTime();
+      if (!isNaN(t) && t < oldestMs) oldestMs = t;
+    });
+    if (isFinite(oldestMs)) {
+      var ms = Date.now() - oldestMs;
+      var days = Math.floor(ms / (1000 * 60 * 60 * 24));
+      var hours = Math.floor(ms / (1000 * 60 * 60));
+      if (days >= 1) oldestText = days + 'd';
+      else if (hours >= 1) oldestText = hours + 'h';
+      else oldestText = 'just now';
+    }
+  }
+%>
+
+<% if (allConvs.length === 0) { %>
+
+  <!-- ========== EMPTY STATE ========== -->
+  <section class="db-panel sp-inbox-empty">
+    <div class="sp-inbox-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3>Inbox zero</h3>
+    <p>No open conversations right now. New support requests will appear here.</p>
+  </section>
+
+<% } else { %>
+
+  <!-- ========== SUMMARY ========== -->
+  <section class="sp-inbox-summary">
+    <div class="sp-inbox-summary-item">
+      <span class="sp-inbox-summary-label">Open</span>
+      <strong class="sp-inbox-summary-value sp-inbox-summary-value-info"><%= openCount %></strong>
+      <span class="sp-inbox-summary-hint">awaiting reply</span>
+    </div>
+    <div class="sp-inbox-summary-item">
+      <span class="sp-inbox-summary-label">Waiting</span>
+      <strong class="sp-inbox-summary-value sp-inbox-summary-value-warn"><%= waitingCount %></strong>
+      <span class="sp-inbox-summary-hint">customer response</span>
+    </div>
+    <div class="sp-inbox-summary-item">
+      <span class="sp-inbox-summary-label">Total active</span>
+      <strong class="sp-inbox-summary-value"><%= totalActive %></strong>
+      <span class="sp-inbox-summary-hint">conversations</span>
+    </div>
+    <% if (oldestText) { %>
+      <div class="sp-inbox-summary-item">
+        <span class="sp-inbox-summary-label">Oldest activity</span>
+        <strong class="sp-inbox-summary-value"><%= oldestText %></strong>
+        <span class="sp-inbox-summary-hint">since last message</span>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- ========== INBOX PANEL ========== -->
+  <section class="db-panel sp-inbox-panel">
+    <div class="sp-inbox-panel-head">
+      <div>
+        <h2>Conversations</h2>
+        <p>Sorted by most recent activity</p>
+      </div>
+      <div class="sp-inbox-tabs" role="tablist">
+        <button type="button" class="sp-inbox-tab is-active" data-filter="all" role="tab" aria-selected="true">
+          All <span class="sp-inbox-tab-count"><%= allConvs.length %></span>
+        </button>
+        <button type="button" class="sp-inbox-tab" data-filter="open" role="tab" aria-selected="false">
+          Open <span class="sp-inbox-tab-count"><%= openCount %></span>
+        </button>
+        <button type="button" class="sp-inbox-tab" data-filter="waiting" role="tab" aria-selected="false">
+          Waiting <span class="sp-inbox-tab-count"><%= waitingCount %></span>
+        </button>
+      </div>
+    </div>
+
+    <ul class="sp-inbox-list" id="sp-inbox-list">
+      <% allConvs.forEach(function(c) { %>
+        <%
+          /* Customer name / avatar */
+          var custName = '';
+          if (c.customerName) custName = c.customerName;
+          else if (c.firstName || c.lastName) custName = ((c.firstName || '') + ' ' + (c.lastName || '')).trim();
+          else if (c.email) custName = c.email.split('@')[0];
+          else custName = 'Customer';
+
+          var initials = '';
+          var nameParts = custName.split(/\s+/);
+          if (nameParts.length >= 2) initials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+          else if (custName) initials = custName.slice(0, 2).toUpperCase();
+
+          /* Status */
+          var status = String(c.status || 'open').toLowerCase();
+          var statusClass = status === 'open' ? 'info'
+                          : status === 'waiting' || status === 'pending' ? 'warn'
+                          : status === 'closed' || status === 'resolved' ? 'ok'
+                          : 'other';
+          var statusLabel = c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : 'Open';
+          var filterKey = status === 'waiting' || status === 'pending' ? 'waiting'
+                        : status === 'open' ? 'open'
+                        : status;
+
+          /* Time ago */
+          var ts = c.updatedAt || c.createdAt;
+          var ageLabel = '';
+          if (ts) {
+            var t = new Date(ts).getTime();
+            if (!isNaN(t)) {
+              var msAgo = Date.now() - t;
+              var mins = Math.floor(msAgo / 60000);
+              var hrs = Math.floor(msAgo / 3600000);
+              var days = Math.floor(msAgo / 86400000);
+              if (days >= 1) ageLabel = days + 'd ago';
+              else if (hrs >= 1) ageLabel = hrs + 'h ago';
+              else if (mins >= 1) ageLabel = mins + 'm ago';
+              else ageLabel = 'just now';
+            }
+          }
+
+          /* Preview text */
+          var preview = c.lastMessage || c.preview || c.subject || '';
+        %>
+        <li
+          class="sp-inbox-item sp-inbox-item-<%= statusClass %>"
+          data-status="<%= filterKey %>"
+          data-search="<%= (custName + ' ' + (c.subject || '') + ' ' + (preview || '')).toLowerCase() %>"
+        >
+          <div class="sp-inbox-avatar">
+            <span><%= initials %></span>
+            <% if (c.unread) { %><i class="sp-inbox-unread-dot"></i><% } %>
           </div>
-          <a class="db-chip" href="/admin/support/<%= c.id %>">Open</a>
+
+          <div class="sp-inbox-body">
+            <div class="sp-inbox-row1">
+              <strong class="sp-inbox-subject"><%= c.subject || 'Untitled conversation' %></strong>
+              <span class="sp-inbox-time"><%= ageLabel || (ts || '') %></span>
+            </div>
+            <div class="sp-inbox-row2">
+              <span class="sp-inbox-customer"><%= custName %></span>
+              <% if (preview) { %>
+                <span class="sp-inbox-sep">·</span>
+                <span class="sp-inbox-preview"><%= preview %></span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="sp-inbox-actions">
+            <span class="sp-inbox-badge sp-inbox-badge-<%= statusClass %>">
+              <span class="sp-inbox-badge-dot"></span>
+              <%= statusLabel %>
+            </span>
+            <a class="sp-inbox-open" href="/admin/support/<%= c.id %>">
+              Open
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
         </li>
       <% }) %>
     </ul>
-  <% } %>
-</section>
 
-<%- include('../partials/admin-shell-end') %>
+    <div class="sp-inbox-no-results" id="sp-inbox-no-results" hidden>
+      <p>No conversations match this filter.</p>
+    </div>
+  </section>
+
+  <!-- ========== FILTER SCRIPT ========== -->
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.sp-inbox-tab');
+      var items = document.querySelectorAll('.sp-inbox-item');
+      var noResults = document.getElementById('sp-inbox-no-results');
+      if (!tabs.length || !items.length) return;
+
+      var currentFilter = 'all';
+
+      function applyFilter() {
+        var visible = 0;
+        items.forEach(function (item) {
+          var match = currentFilter === 'all' || item.dataset.status === currentFilter;
+          item.hidden = !match;
+          if (match) visible++;
+        });
+        noResults.hidden = visible !== 0;
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          tabs.forEach(function (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('is-active');
+          tab.setAttribute('aria-selected', 'true');
+          currentFilter = tab.dataset.filter;
+          applyFilter();
+        });
+      });
+    })();
+  </script>
+
+<% } %>
+
+<script src="/js/admin-support-inbox.js" defer></script>
+
+<%- include('../../partials/admin-shell-end') %>

@@ -4,40 +4,221 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Set up authenticator · Globe Trust Bank</title>
+  <meta name="description" content="Set up two-factor authentication for your Globe Trust Bank account.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/mfa-enrol.css">
 </head>
 <body>
   <%- include('../partials/header') %>
-  <main class="container page-hero" style="max-width:32rem;">
-    <h1>Set up authenticator</h1>
-    <p class="prose">
-      Use an authenticator app (for example Microsoft Authenticator, Google Authenticator, or 1Password).
-      Scan the code or enter the secret manually, then confirm with a 6-digit code.
-    </p>
-    <% if (error) { %><div class="notice" style="border-left-color:#8B3A3A;color:#8B3A3A;"><%= error %></div><% } %>
 
-    <% if (qrDataUrl) { %>
-      <p style="text-align:center;margin:1.25rem 0;">
-        <img src="<%= qrDataUrl %>" width="220" height="220" alt="QR code for authenticator setup">
-      </p>
-    <% } %>
+  <main class="mfa-enrol-shell">
+    <div class="mfa-enrol-container">
 
-    <div class="notice">
-      <strong>Manual secret</strong><br>
-      <code style="word-break:break-all;font-size:0.95rem;"><%= secret %></code>
+      <!-- ========== HEADER ========== -->
+      <div class="mfa-enrol-header">
+        <span class="mfa-enrol-eyebrow">Two-factor authentication</span>
+        <h1 class="mfa-enrol-title">Set up authenticator</h1>
+        <p class="mfa-enrol-lead">
+          Use an authenticator app such as Microsoft Authenticator, Google
+          Authenticator, or 1Password. Scan the QR code or enter the secret
+          manually, then confirm with a 6-digit code.
+        </p>
+      </div>
+
+      <!-- ========== STEP INDICATOR ========== -->
+      <ol class="mfa-enrol-steps">
+        <li class="mfa-enrol-step mfa-enrol-step-active">
+          <span class="mfa-enrol-step-num">1</span>
+          <div>
+            <strong>Scan the code</strong>
+            <span>Open your authenticator app</span>
+          </div>
+        </li>
+        <li class="mfa-enrol-step">
+          <span class="mfa-enrol-step-num">2</span>
+          <div>
+            <strong>Verify the code</strong>
+            <span>Enter the 6-digit number</span>
+          </div>
+        </li>
+      </ol>
+
+      <!-- ========== ERROR ========== -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="mfa-enrol-alert">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <span><%= error %></span>
+        </div>
+      <% } %>
+
+      <!-- ========== MAIN GRID ========== -->
+      <div class="mfa-enrol-grid">
+
+        <!-- LEFT: QR CODE + MANUAL SECRET -->
+        <section class="mfa-enrol-card">
+          <div class="mfa-enrol-card-head">
+            <span class="mfa-enrol-card-step">Step 1</span>
+            <h2>Scan or copy</h2>
+          </div>
+
+          <!-- QR code -->
+          <% if (typeof qrDataUrl !== 'undefined' && qrDataUrl) { %>
+            <div class="mfa-enrol-qr">
+              <img
+                src="<%= qrDataUrl %>"
+                width="220"
+                height="220"
+                alt="QR code for authenticator setup"
+              >
+            </div>
+            <p class="mfa-enrol-qr-hint">
+              Open your authenticator app and scan this code.
+            </p>
+          <% } %>
+
+          <!-- Manual secret -->
+          <div class="mfa-enrol-secret">
+            <div class="mfa-enrol-secret-label">
+              <span>Or enter the secret manually</span>
+              <button type="button" class="mfa-enrol-copy" id="mfa-copy" data-secret="<%= secret %>">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <code class="mfa-enrol-secret-value"><%= secret %></code>
+          </div>
+        </section>
+
+        <!-- RIGHT: VERIFY FORM -->
+        <section class="mfa-enrol-card mfa-enrol-card-form">
+          <div class="mfa-enrol-card-head">
+            <span class="mfa-enrol-card-step">Step 2</span>
+            <h2>Verify and enable</h2>
+          </div>
+
+          <p class="mfa-enrol-card-lead">
+            Enter the 6-digit code from your authenticator app to confirm the setup.
+          </p>
+
+          <form method="post" action="/mfa/enrol" class="mfa-enrol-form" id="mfa-enrol-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="mfa-enrol-field">
+              <label for="mfa-code">6-digit code</label>
+              <input
+                type="text"
+                id="mfa-code"
+                name="code"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+                autocomplete="one-time-code"
+                autofocus
+                class="mfa-enrol-code"
+                placeholder="000000"
+              >
+            </div>
+
+            <button type="submit" class="mfa-enrol-submit">
+              Confirm and enable
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </form>
+
+          <div class="mfa-enrol-note">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <span>
+              Never share this secret or your codes with anyone.
+              <strong>Bank staff will never ask for your authenticator codes</strong>
+              by phone or chat.
+            </span>
+          </div>
+        </section>
+
+      </div>
+
     </div>
-
-    <form method="post" action="/mfa/enrol" style="margin-top:1.25rem;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">6-digit code</label>
-      <input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"
-        style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;letter-spacing:0.2em;font-size:1.1rem;">
-      <button class="btn btn-navy" type="submit" style="width:100%;">Confirm and enable</button>
-    </form>
-    <p class="prose" style="font-size:0.85rem;margin-top:1rem;">
-      Never share this secret or codes with anyone. Bank staff will not ask for your authenticator codes by phone or chat.
-    </p>
   </main>
+
   <%- include('../partials/footer') %>
+
+  <!-- ========== SCRIPT ========== -->
+  <script>
+    (function () {
+      /* Copy secret to clipboard */
+      var copyBtn = document.getElementById('mfa-copy');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var secret = copyBtn.getAttribute('data-secret') || '';
+          if (!secret) return;
+
+          var originalText = copyBtn.innerHTML;
+
+          function showCopied() {
+            copyBtn.innerHTML =
+              '<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />' +
+              '</svg> Copied';
+            copyBtn.classList.add('is-copied');
+            setTimeout(function () {
+              copyBtn.innerHTML = originalText;
+              copyBtn.classList.remove('is-copied');
+            }, 1800);
+          }
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(secret).then(showCopied, function () {
+              fallbackCopy(secret, showCopied);
+            });
+          } else {
+            fallbackCopy(secret, showCopied);
+          }
+        });
+      }
+
+      function fallbackCopy(text, onSuccess) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); onSuccess(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+
+      /* Auto-format code input: digits only, 6 max */
+      var codeInput = document.getElementById('mfa-code');
+      if (codeInput) {
+        codeInput.addEventListener('input', function () {
+          var v = this.value.replace(/[^\d]/g, '').slice(0, 6);
+          if (this.value !== v) this.value = v;
+        });
+
+        /* Auto-submit on 6 digits */
+        codeInput.addEventListener('input', function () {
+          if (this.value.length === 6) {
+            var form = document.getElementById('mfa-enrol-form');
+            if (form) {
+              /* Small delay so user sees the last digit */
+              setTimeout(function () { form.requestSubmit(); }, 250);
+            }
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -3,40 +3,306 @@
 <div class="db-greeting">
   <div>
     <h1>Statements</h1>
-    <p>Recent transfer activity (sandbox workflow log).</p>
+    <p>Recent transfer activity across your linked accounts.</p>
   </div>
 </div>
 
-<section class="db-panel">
-  <div class="db-panel__head">
-    <h2>Activity</h2>
-    <span class="db-chip">Last 50</span>
+<% if (!history || !history.length) { %>
+
+  <!-- ========== EMPTY STATE ========== -->
+  <section class="db-panel stmt-empty">
+    <div class="stmt-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+      </svg>
+    </div>
+    <h3>No activity yet</h3>
+    <p>Once you make a transfer, it will appear here.</p>
+    <a href="/app/transfers" class="db-chip">Make a transfer →</a>
+  </section>
+
+<% } else { %>
+
+  <%
+    /* Compute summary numbers from history */
+    var total = history.length;
+    var succeeded = 0, failed = 0, pending = 0;
+    var totalIn = 0, totalOut = 0;
+    history.forEach(function(h) {
+      var st = h.status || 'pending';
+      if (st === 'succeeded') succeeded++;
+      else if (st === 'failed') failed++;
+      else pending++;
+
+      var amt = parseFloat(h.sourceAmount);
+      if (!isNaN(amt)) {
+        if (String(h.sourceAmount).indexOf('-') === 0) totalOut += Math.abs(amt);
+        else totalIn += amt;
+      }
+    });
+  %>
+
+  <!-- ========== SUMMARY ========== -->
+  <section class="stmt-summary">
+    <div class="stmt-summary-item">
+      <span class="stmt-summary-label">Total activity</span>
+      <strong class="stmt-summary-value"><%= total %></strong>
+      <span class="stmt-summary-hint">transfers</span>
+    </div>
+    <div class="stmt-summary-item">
+      <span class="stmt-summary-label">Succeeded</span>
+      <strong class="stmt-summary-value stmt-summary-value-ok"><%= succeeded %></strong>
+      <span class="stmt-summary-hint"><%= total ? Math.round((succeeded / total) * 100) : 0 %>% success rate</span>
+    </div>
+    <div class="stmt-summary-item">
+      <span class="stmt-summary-label">Pending</span>
+      <strong class="stmt-summary-value stmt-summary-value-warn"><%= pending %></strong>
+      <span class="stmt-summary-hint">awaiting settlement</span>
+    </div>
+    <div class="stmt-summary-item">
+      <span class="stmt-summary-label">Failed</span>
+      <strong class="stmt-summary-value stmt-summary-value-err"><%= failed %></strong>
+      <span class="stmt-summary-hint">this period</span>
+    </div>
+  </section>
+
+  <!-- ========== TOOLBAR ========== -->
+  <div class="stmt-toolbar">
+    <div class="stmt-tabs" role="tablist">
+      <button type="button" class="stmt-tab is-active" data-filter="all" role="tab" aria-selected="true">
+        All <span class="stmt-tab-count"><%= total %></span>
+      </button>
+      <button type="button" class="stmt-tab" data-filter="succeeded" role="tab" aria-selected="false">
+        Succeeded <span class="stmt-tab-count"><%= succeeded %></span>
+      </button>
+      <button type="button" class="stmt-tab" data-filter="pending" role="tab" aria-selected="false">
+        Pending <span class="stmt-tab-count"><%= pending %></span>
+      </button>
+      <button type="button" class="stmt-tab" data-filter="failed" role="tab" aria-selected="false">
+        Failed <span class="stmt-tab-count"><%= failed %></span>
+      </button>
+    </div>
+
+    <div class="stmt-search">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        id="stmt-search"
+        placeholder="Search by reference, amount…"
+        aria-label="Search statements"
+        autocomplete="off"
+      >
+    </div>
   </div>
-  <% if (!history || !history.length) { %>
-    <p class="db-muted">No activity yet.</p>
-  <% } else { %>
-    <div class="table-wrap" style="border:0;box-shadow:none;">
-      <table class="data">
+
+  <!-- ========== TABLE ========== -->
+  <section class="db-panel stmt-panel">
+    <div class="stmt-table-wrap">
+      <table class="stmt-table">
         <thead>
-          <tr><th>When</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th class="num">Amount</th>
+            <th>Status</th>
+            <th>Reference</th>
+          </tr>
         </thead>
-        <tbody>
+        <tbody id="stmt-tbody">
           <% history.forEach(function(h) { %>
-            <tr>
-              <td><%= h.createdAt %></td>
-              <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
-              <td>
-                <span class="db-badge db-badge--<%= h.status === 'succeeded' ? 'ok' : h.status === 'failed' ? 'err' : 'pending' %>">
-                  <%= h.status %>
+            <%
+              var st = h.status || 'pending';
+              var statusClass = st === 'succeeded' ? 'ok'
+                              : st === 'failed' ? 'err'
+                              : 'pending';
+              var amtNum = parseFloat(h.sourceAmount);
+              var isOut = String(h.sourceAmount).indexOf('-') === 0;
+              var absAmt = isNaN(amtNum) ? 0 : Math.abs(amtNum);
+              var formatted = absAmt.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              });
+              var searchKey = (
+                (h.externalReference || '') + ' ' +
+                (h.sourceAmount || '') + ' ' +
+                (h.sourceCurrency || '') + ' ' +
+                (h.createdAt || '')
+              ).toLowerCase();
+            %>
+            <tr class="stmt-row" data-status="<%= st %>" data-search="<%= searchKey %>">
+              <td class="stmt-cell-date">
+                <span class="stmt-date-main"><%= h.createdAt ? String(h.createdAt).split(' ')[0] || h.createdAt : '—' %></span>
+                <span class="stmt-date-sub"><%= h.createdAt && String(h.createdAt).split(' ')[1] ? String(h.createdAt).split(' ')[1] : '' %></span>
+              </td>
+              <td class="stmt-cell-desc">
+                <div class="stmt-desc-icon stmt-desc-icon-<%= statusClass %>">
+                  <% if (st === 'succeeded') { %>
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  <% } else if (st === 'failed') { %>
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  <% } else { %>
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  <% } %>
+                </div>
+                <div class="stmt-desc-text">
+                  <strong>Transfer <%= isOut ? 'out' : 'in' %></strong>
+                  <span><%= h.sourceCurrency || '' %></span>
+                </div>
+              </td>
+              <td class="num">
+                <span class="stmt-amount <%= isOut ? 'stmt-amount-out' : 'stmt-amount-in' %>">
+                  <%= isOut ? '−' : '+' %><%= formatted %>
+                  <span class="stmt-amount-currency"><%= h.sourceCurrency || '' %></span>
                 </span>
               </td>
-              <td><code style="font-size:0.8rem;"><%= h.externalReference || '—' %></code></td>
+              <td>
+                <span class="stmt-badge stmt-badge-<%= statusClass %>">
+                  <span class="stmt-badge-dot"></span>
+                  <%= st.charAt(0).toUpperCase() + st.slice(1) %>
+                </span>
+              </td>
+              <td class="stmt-cell-ref">
+                <% if (h.externalReference) { %>
+                  <code class="stmt-ref"><%= h.externalReference %></code>
+                <% } else { %>
+                  <span class="stmt-ref-empty">—</span>
+                <% } %>
+              </td>
             </tr>
           <% }) %>
         </tbody>
       </table>
     </div>
-  <% } %>
-</section>
+
+    <div class="stmt-no-results" id="stmt-no-results" hidden>
+      <p>No statements match your filter or search.</p>
+    </div>
+  </section>
+
+  <!-- ========== SCRIPT ========== -->
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.stmt-tab');
+      var search = document.getElementById('stmt-search');
+      var rows = document.querySelectorAll('.stmt-row');
+      var noResults = document.getElementById('stmt-no-results');
+      if (!tabs.length || !rows.length) return;
+
+      var currentFilter = 'all';
+      var currentSearch = '';
+
+      function applyFilter() {
+        var visible = 0;
+        rows.forEach(function (row) {
+          var matchesFilter = currentFilter === 'all' || row.dataset.status === currentFilter;
+          var matchesSearch = !currentSearch || row.dataset.search.indexOf(currentSearch) !== -1;
+          var show = matchesFilter && matchesSearch;
+          row.hidden = !show;
+          if (show) visible++;
+        });
+        noResults.hidden = visible !== 0;
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          tabs.forEach(function (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('is-active');
+          tab.setAttribute('aria-selected', 'true');
+          currentFilter = tab.dataset.filter;
+          applyFilter();
+        });
+      });
+
+      if (search) {
+        search.addEventListener('input', function () {
+          currentSearch = search.value.trim().toLowerCase();
+          applyFilter();
+        });
+      }
+    })();
+  </script>
+
+  <script>
+    
+/* =========================================================
+   GLOBE TRUST BANK — STATEMENTS
+   File: public/js/statements.js
+   ========================================================= */
+
+'use strict';
+
+(function () {
+  const tabs = document.querySelectorAll('.stmt-tab');
+  const search = document.getElementById('stmt-search');
+  const rows = document.querySelectorAll('.stmt-row');
+  const noResults = document.getElementById('stmt-no-results');
+
+  if (!tabs.length || !noResults) return;
+
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  function applyFilter() {
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+      const status = row.dataset.status || 'pending';
+      const searchText = row.dataset.search || '';
+
+      const matchesFilter =
+        currentFilter === 'all' || status === currentFilter;
+
+      const matchesSearch =
+        !currentSearch || searchText.includes(currentSearch);
+
+      const visible = matchesFilter && matchesSearch;
+
+      row.hidden = !visible;
+
+      if (visible) visibleCount++;
+    });
+
+    noResults.hidden = visibleCount !== 0;
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      currentFilter = tab.dataset.filter || 'all';
+
+      tabs.forEach(function (item) {
+        const isActive = item === tab;
+
+        item.classList.toggle('is-active', isActive);
+        item.setAttribute('aria-selected', String(isActive));
+      });
+
+      applyFilter();
+    });
+  });
+
+  if (search) {
+    search.addEventListener('input', function () {
+      currentSearch = search.value.trim().toLowerCase();
+      applyFilter();
+    });
+  }
+
+  applyFilter();
+})();
+
+  </script>
+
+<% } %>
 
 <%- include('../partials/customer-shell-end') %>

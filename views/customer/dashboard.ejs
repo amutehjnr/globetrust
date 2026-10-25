@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/portal.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body class="db-body">
 <%
@@ -50,11 +51,17 @@
     <div class="db-main">
       <header class="db-topbar">
         <div class="db-search">
-          <span class="db-search__icon" aria-hidden="true">⌕</span>
-          <input type="search" placeholder="Search transactions, payees, or services..." aria-label="Search">
+          <svg class="db-search__icon" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input type="search" placeholder="Search transactions, payees, or services…" aria-label="Search">
         </div>
         <div class="db-topbar__right">
-          <button type="button" class="db-icon-btn" aria-label="Notifications">🔔</button>
+          <button type="button" class="db-icon-btn" aria-label="Notifications">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            </svg>
+          </button>
           <div class="db-user">
             <span class="db-user__avatar"><%= initials.toUpperCase() %></span>
             <span class="db-user__meta">
@@ -68,14 +75,16 @@
       <div class="db-content">
         <% if (typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa) { %>
           <div class="db-alert db-alert--err">
-            Multi-factor authentication is required before transfers.
-            <a href="/mfa/enrol"><strong>Set up authenticator</strong></a>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span>Multi-factor authentication is required before transfers. <a href="/mfa/enrol"><strong>Set up authenticator →</strong></a></span>
           </div>
         <% } %>
 
         <div class="db-greeting">
           <div>
-            <h1>Welcome back, <%= firstName %>!</h1>
+            <h1>Welcome back, <em><%= firstName %></em>.</h1>
             <p>Here's your account overview.</p>
           </div>
           <div class="db-greeting__meta">
@@ -84,15 +93,25 @@
           </div>
         </div>
 
+        <!-- ========== BALANCE CARDS ========== -->
         <div class="db-balance-grid">
           <article class="db-bal-card db-bal-card--total">
-            <div class="db-bal-card__icon">▤</div>
+            <div class="db-bal-card__icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+              </svg>
+            </div>
             <div class="db-bal-card__label">Total Balance</div>
             <div class="db-bal-card__value"><%= accounts && accounts.length ? fmtMoney(totalBalance, 'USD') : '$0.00' %></div>
             <div class="db-bal-card__hint">Across linked accounts</div>
           </article>
+
           <article class="db-bal-card">
-            <div class="db-bal-card__icon">▣</div>
+            <div class="db-bal-card__icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+              </svg>
+            </div>
             <div class="db-bal-card__label">Checking Account</div>
             <div class="db-bal-card__value">
               <%= checking && checking.balance ? fmtMoney(checking.balance.available, checking.currencyCode) : '—' %>
@@ -101,16 +120,27 @@
               <%= checking ? (checking.currencyCode || 'USD') + (checking.linkStatus ? ' · ' + checking.linkStatus : '') : 'Not linked' %>
             </div>
           </article>
+
           <article class="db-bal-card">
-            <div class="db-bal-card__icon">◈</div>
+            <div class="db-bal-card__icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <div class="db-bal-card__label">Savings Account</div>
             <div class="db-bal-card__value">
               <%= savings && savings.balance ? fmtMoney(savings.balance.available, savings.currencyCode) : '—' %>
             </div>
             <div class="db-bal-card__hint"><%= savings ? (savings.currencyCode || 'USD') : 'Not linked' %></div>
           </article>
+
           <article class="db-bal-card">
-            <div class="db-bal-card__icon">€</div>
+            <div class="db-bal-card__icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 9.75a3 3 0 01-3 3m0 0a3 3 0 01-3-3m3 3v-3m-3.375 6.75h6.75" />
+              </svg>
+            </div>
             <div class="db-bal-card__label">Euro Account</div>
             <div class="db-bal-card__value">
               <%= euro && euro.balance ? fmtMoney(euro.balance.available, 'EUR') : '€0.00' %>
@@ -119,42 +149,75 @@
           </article>
         </div>
 
+        <!-- ========== MID GRID ========== -->
         <div class="db-mid-grid">
+
+          <!-- Chart -->
           <section class="db-panel">
             <div class="db-panel__head">
               <h2>Account Overview</h2>
               <span class="db-chip">Last 6 Months</span>
             </div>
             <div class="db-chart" role="img" aria-label="Monthly activity chart">
-              <% var bars = [42, 58, 48, 72, 65, 88]; var months = ['Nov','Dec','Jan','Feb','Mar','Apr']; %>
+              <%
+                var bars = [42, 58, 48, 72, 65, 88];
+                var months = ['Nov','Dec','Jan','Feb','Mar','Apr'];
+              %>
               <% bars.forEach(function(h, i) { %>
                 <div class="db-chart__col">
-                  <div class="db-chart__bar" style="height:<%= h %>%"></div>
+                  <div class="db-chart__bar" data-height="<%= h %>"></div>
                   <span><%= months[i] %></span>
                 </div>
               <% }) %>
             </div>
           </section>
 
+          <!-- Recent transactions -->
           <section class="db-panel">
             <div class="db-panel__head">
               <h2>Recent Transactions</h2>
-              <a href="/app/transfers">View all</a>
+              <a href="/app/transfers">View all →</a>
             </div>
             <% if (!recentTransfers || !recentTransfers.length) { %>
               <p class="db-muted">No recent transfers yet.</p>
             <% } else { %>
               <ul class="db-tx-list">
                 <% recentTransfers.forEach(function(h) { %>
+                  <%
+                    var st = h.status || 'pending';
+                    var stClass = st === 'succeeded' ? 'ok' : st === 'failed' ? 'err' : 'pending';
+                    var amtStr = String(h.sourceAmount || '');
+                    var isOut = amtStr.indexOf('-') === 0;
+                    var absAmt = isNaN(parseFloat(amtStr)) ? amtStr : Math.abs(parseFloat(amtStr)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  %>
                   <li>
-                    <span class="db-tx-icon">⇄</span>
+                    <span class="db-tx-icon db-tx-icon--<%= stClass %>">
+                      <% if (st === 'succeeded') { %>
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      <% } else if (st === 'failed') { %>
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      <% } else { %>
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      <% } %>
+                    </span>
                     <div class="db-tx-body">
                       <strong><%= h.destinationLabel || h.reference || 'Transfer' %></strong>
                       <small><%= h.createdAt %></small>
                     </div>
                     <div class="db-tx-amt">
-                      <strong><%= h.sourceAmount %> <%= h.sourceCurrency %></strong>
-                      <span class="db-badge db-badge--<%= h.status === 'succeeded' ? 'ok' : h.status === 'failed' ? 'err' : 'pending' %>"><%= h.status %></span>
+                      <strong class="<%= isOut ? 'db-tx-amt--out' : 'db-tx-amt--in' %>">
+                        <%= isOut ? '−' : '+' %><%= absAmt %> <span class="db-tx-amt__cur"><%= h.sourceCurrency %></span>
+                      </strong>
+                      <span class="db-badge db-badge--<%= stClass %>">
+                        <span class="db-badge__dot"></span>
+                        <%= st.charAt(0).toUpperCase() + st.slice(1) %>
+                      </span>
                     </div>
                   </li>
                 <% }) %>
@@ -162,27 +225,82 @@
             <% } %>
           </section>
 
+          <!-- Promo -->
           <aside class="db-promo">
             <p class="db-promo__eyebrow">Global Transfers</p>
             <h3>Made Easy</h3>
             <p>Send money to over 200 countries with low fees and great rates.</p>
-            <a class="db-promo__btn" href="/app/transfers">Make a Transfer</a>
+            <a class="db-promo__btn" href="/app/transfers">
+              Make a Transfer
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
           </aside>
         </div>
 
+        <!-- ========== QUICK ACTIONS ========== -->
         <section class="db-panel db-quick">
           <div class="db-quick-grid">
-            <a href="/app/transfers" class="db-quick-item"><span>⇄</span>Send Money</a>
-            <a href="/app/transfers" class="db-quick-item"><span>↻</span>Exchange Currency</a>
-            <a href="/app/support" class="db-quick-item"><span>▤</span>Pay Bills</a>
-            <a href="/app/transfers" class="db-quick-item"><span>▣</span>Top Up Mobile</a>
-            <a href="/app/transfers" class="db-quick-item"><span>↓</span>Request Money</a>
+            <a href="/app/transfers" class="db-quick-item">
+              <span class="db-quick-item__icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+              </span>
+              <span class="db-quick-item__label">Send Money</span>
+            </a>
+
+            <a href="/app/transfers" class="db-quick-item">
+              <span class="db-quick-item__icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              </span>
+              <span class="db-quick-item__label">Exchange Currency</span>
+            </a>
+
+            <a href="/app/support" class="db-quick-item">
+              <span class="db-quick-item__icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                </svg>
+              </span>
+              <span class="db-quick-item__label">Pay Bills</span>
+            </a>
+
+            <a href="/app/transfers" class="db-quick-item">
+              <span class="db-quick-item__icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                </svg>
+              </span>
+              <span class="db-quick-item__label">Top Up Mobile</span>
+            </a>
+
+            <a href="/app/transfers" class="db-quick-item">
+              <span class="db-quick-item__icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              </span>
+              <span class="db-quick-item__label">Request Money</span>
+            </a>
           </div>
         </section>
-
-        <p class="db-sandbox-note">Sandbox balances — not real funds. Transfer outcomes use the sandbox adapter only.</p>
       </div>
     </div>
   </div>
+
+  <!-- Chart bars script -->
+  <script>
+    (function () {
+      document.querySelectorAll('.db-chart__bar[data-height]').forEach(function (bar) {
+        var h = parseFloat(bar.dataset.height) || 0;
+        bar.style.height = Math.max(4, Math.min(100, h)) + '%';
+      });
+    })();
+  </script>
+  <script src="/js/dashboard.js" defer></script>
 </body>
 </html>

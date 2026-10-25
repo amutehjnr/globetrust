@@ -4,15 +4,89 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Password updated · Globe Trust Bank</title>
+  <meta name="description" content="Your Globe Trust Bank password has been updated.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/password-updated.css">
 </head>
 <body>
   <%- include('../partials/header') %>
-  <main class="container page-hero">
-    <h1>Password updated</h1>
-    <p class="prose">You can now sign in with your new password. Other sessions should be treated as untrusted until you review security settings.</p>
-    <a class="btn btn-navy" href="/sign-in">Sign in</a>
+
+  <main class="pw-updated-shell">
+    <div class="pw-updated-container">
+
+      <!-- ========== ICON ========== -->
+      <div class="pw-updated-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <!-- ========== COPY ========== -->
+      <span class="pw-updated-eyebrow">Security step complete</span>
+      <h1 class="pw-updated-title">Password updated.</h1>
+      <p class="pw-updated-lead">
+        Your password has been changed successfully. You can now sign in
+        with your new password.
+      </p>
+
+      <!-- ========== IMPORTANT SECURITY CALLOUT ========== -->
+      <div class="pw-updated-alert">
+        <div class="pw-updated-alert-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+        </div>
+        <div class="pw-updated-alert-body">
+          <strong>One important step remains</strong>
+          <p>
+            Other sessions opened before this change should be treated as
+            untrusted. Review your active sessions and sign out anything you
+            don't recognise.
+          </p>
+          <a href="/app/settings" class="pw-updated-alert-link">
+            Review active sessions
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- ========== PRIMARY CTA ========== -->
+      <div class="pw-updated-actions">
+        <a href="/sign-in" class="pw-updated-btn-primary">
+          Sign in with new password
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      </div>
+
+      <!-- ========== SECONDARY ========== -->
+      <div class="pw-updated-secondary">
+        <a href="/app" class="pw-updated-secondary-link">Go to my banking</a>
+        <span class="pw-updated-secondary-sep">·</span>
+        <a href="/security" class="pw-updated-secondary-link">Security centre</a>
+      </div>
+
+      <!-- ========== HONEST WARNING ========== -->
+      <div class="pw-updated-note">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+        </svg>
+        <span>
+          <strong>Didn't make this change?</strong>
+          Call the number on the back of your card immediately. We'll lock
+          your account and help you reset it safely.
+        </span>
+      </div>
+
+    </div>
   </main>
+
   <%- include('../partials/footer') %>
 </body>
 </html>

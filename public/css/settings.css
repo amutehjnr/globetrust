@@ -1,0 +1,748 @@
+
+/* =========================================================
+   GLOBE TRUST BANK — PREMIUM SETTINGS
+   File: public/css/settings.css
+   Theme: Ivory | Midnight Navy | Champagne Gold
+   ========================================================= */
+
+:root {
+  --settings-navy: #102238;
+  --settings-navy-dark: #091727;
+  --settings-navy-soft: #203b56;
+  --settings-gold: #a77a35;
+  --settings-gold-light: #d9bd83;
+  --settings-ivory: #fffdf9;
+  --settings-cream: #f8f4ed;
+  --settings-text: #263647;
+  --settings-muted: #788391;
+  --settings-border: #e8e0d3;
+  --settings-green: #27815d;
+  --settings-green-bg: #eaf6ef;
+  --settings-amber: #9a6b1c;
+  --settings-amber-bg: #fff5df;
+  --settings-red: #bd4b48;
+  --settings-red-bg: #fff0ef;
+  --settings-shadow: 0 16px 45px rgba(16, 34, 56, 0.06);
+  --settings-radius: 18px;
+}
+
+/* =========================================================
+   PAGE HEADING
+   ========================================================= */
+
+.db-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.db-greeting h1 {
+  margin: 0;
+  color: var(--settings-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(30px, 3vw, 40px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.db-greeting p {
+  margin: 9px 0 0;
+  color: var(--settings-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* =========================================================
+   SETTINGS GRID
+   ========================================================= */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 22px;
+  width: 100%;
+  min-width: 0;
+}
+
+.settings-grid > *,
+.settings-panel {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   PREMIUM PANELS
+   ========================================================= */
+
+.db-panel.settings-panel {
+  position: relative;
+  padding: 25px;
+  overflow: hidden;
+  border: 1px solid rgba(167, 122, 53, 0.16);
+  border-radius: var(--settings-radius);
+
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgba(217, 189, 131, 0.10),
+      transparent 35%
+    ),
+    linear-gradient(145deg, #fffdf9, #ffffff 65%, #fbf8f2);
+
+  box-shadow: var(--settings-shadow);
+}
+
+.db-panel.settings-panel::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--settings-gold-light),
+    var(--settings-gold),
+    var(--settings-gold-light),
+    transparent
+  );
+  content: "";
+}
+
+/* =========================================================
+   PANEL HEADER
+   ========================================================= */
+
+.settings-panel .db-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 23px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid var(--settings-border);
+}
+
+.settings-panel .db-panel__head h2 {
+  margin: 0;
+  color: var(--settings-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+/* Edit profile link */
+
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  color: var(--settings-gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.settings-link:hover {
+  color: var(--settings-navy);
+}
+
+.settings-link:focus-visible {
+  outline: 2px solid var(--settings-gold);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+/* =========================================================
+   PROFILE CARD
+   ========================================================= */
+
+.settings-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin-bottom: 25px;
+  padding: 19px;
+  border: 1px solid rgba(167, 122, 53, 0.16);
+  border-radius: 15px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(217, 189, 131, 0.16),
+      transparent 55%
+    ),
+    linear-gradient(135deg, #fbf6ec, #fffdf9);
+}
+
+/* Initials avatar */
+
+.settings-avatar {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+
+  background: linear-gradient(
+    145deg,
+    #d9bd83,
+    #a77a35 55%,
+    #71501f
+  );
+
+  box-shadow:
+    0 5px 14px rgba(143, 97, 34, 0.16),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+
+  color: #ffffff;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.settings-profile-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.settings-profile-info strong {
+  overflow-wrap: anywhere;
+  color: var(--settings-navy);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.settings-profile-info span {
+  overflow-wrap: anywhere;
+  color: var(--settings-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   SETTINGS LIST
+   ========================================================= */
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0ebe3;
+}
+
+.settings-row:first-child {
+  padding-top: 0;
+}
+
+.settings-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Left label and icon */
+
+.settings-row-label {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-label > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.settings-row-label strong {
+  color: var(--settings-navy);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.settings-row-label > div > span {
+  color: var(--settings-muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+/* Icon container */
+
+.settings-row-icon {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  place-items: center;
+  border: 1px solid rgba(167, 122, 53, 0.16);
+  border-radius: 13px;
+  background: linear-gradient(145deg, #fffaf0, #f3e8d5);
+  color: var(--settings-gold);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.settings-row-icon svg {
+  display: block;
+  width: 21px;
+  height: 21px;
+}
+
+/* Right-side value */
+
+.settings-row-value {
+  display: block;
+  flex: 0 1 auto;
+  max-width: 48%;
+  color: var(--settings-navy);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.7;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   ROW ACTIONS
+   ========================================================= */
+
+.settings-row-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Premium action chip */
+
+.settings-panel .db-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 35px;
+  padding: 0 13px;
+
+  border: 1px solid #e1d2b7;
+  border-radius: 9px;
+  background: #fffdf9;
+  color: var(--settings-gold);
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.settings-panel .db-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--settings-gold);
+  background: #fbf3e4;
+  color: var(--settings-navy);
+  box-shadow: 0 4px 12px rgba(167, 122, 53, 0.08);
+}
+
+.settings-panel .db-chip:active {
+  transform: translateY(0);
+}
+
+.settings-panel .db-chip:focus-visible {
+  outline: 2px solid var(--settings-gold);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   SECURITY STATUS
+   ========================================================= */
+
+.settings-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.settings-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+}
+
+.settings-status-ok {
+  border-color: #d4eadc;
+  background: var(--settings-green-bg);
+  color: var(--settings-green);
+}
+
+.settings-status-ok .settings-status-dot {
+  background: var(--settings-green);
+  box-shadow: 0 0 0 3px rgba(39, 129, 93, 0.09);
+}
+
+.settings-status-warn {
+  border-color: #f1dfb9;
+  background: var(--settings-amber-bg);
+  color: var(--settings-amber);
+}
+
+.settings-status-warn .settings-status-dot {
+  background: #c28b2e;
+  box-shadow: 0 0 0 3px rgba(194, 139, 46, 0.1);
+}
+
+/* =========================================================
+   DANGER ZONE
+   ========================================================= */
+
+.db-panel.settings-panel-danger {
+  margin-top: 24px;
+  border-color: rgba(189, 75, 72, 0.2);
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgba(189, 75, 72, 0.055),
+      transparent 38%
+    ),
+    linear-gradient(145deg, #fffdfb, #ffffff);
+  box-shadow: 0 12px 35px rgba(68, 28, 28, 0.035);
+}
+
+.settings-panel-danger::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #e8b0aa,
+    #bd4b48,
+    #e8b0aa,
+    transparent
+  );
+}
+
+.settings-panel-danger .db-panel__head {
+  border-bottom-color: #f0dedb;
+}
+
+.settings-panel-danger .db-panel__head h2 {
+  color: #a83f3b;
+}
+
+.settings-row-icon-danger {
+  border-color: #f0d4d1;
+  background: linear-gradient(145deg, #fff7f5, #f9e5e2);
+  color: var(--settings-red);
+}
+
+/* Sign out all devices button */
+
+.settings-panel-danger form {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.settings-panel-danger .db-chip-danger {
+  border-color: #e9c4c1;
+  background: #fff8f7;
+  color: var(--settings-red);
+}
+
+.settings-panel-danger .db-chip-danger:hover {
+  border-color: var(--settings-red);
+  background: var(--settings-red);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(189, 75, 72, 0.12);
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1050px) {
+  .settings-grid {
+    gap: 18px;
+  }
+
+  .db-panel.settings-panel {
+    padding: 21px;
+  }
+
+  .settings-row {
+    gap: 12px;
+  }
+
+  .settings-row-label {
+    gap: 10px;
+  }
+
+  .settings-row-icon {
+    width: 39px;
+    height: 39px;
+    flex-basis: 39px;
+    border-radius: 11px;
+  }
+
+  .settings-row-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .settings-row-action {
+    gap: 7px;
+  }
+}
+
+/* =========================================================
+   STACK PANELS ON SMALLER SCREENS
+   ========================================================= */
+
+@media (max-width: 780px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .settings-grid > .settings-panel {
+    width: 100%;
+  }
+
+  .db-panel.settings-panel {
+    padding: 23px;
+  }
+
+  .settings-panel .db-panel__head h2 {
+    font-size: 22px;
+  }
+
+  .settings-row-value {
+    max-width: 45%;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+  .db-greeting {
+    margin-bottom: 21px;
+  }
+
+  .db-greeting h1 {
+    font-size: 30px;
+  }
+
+  .db-greeting p {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  .db-panel.settings-panel {
+    padding: 18px 15px;
+    border-radius: 15px;
+  }
+
+  .settings-panel .db-panel__head {
+    margin-bottom: 19px;
+    padding-bottom: 14px;
+  }
+
+  .settings-panel .db-panel__head h2 {
+    font-size: 21px;
+  }
+
+  .settings-profile-card {
+    gap: 12px;
+    margin-bottom: 21px;
+    padding: 14px;
+    border-radius: 13px;
+  }
+
+  .settings-avatar {
+    width: 51px;
+    height: 51px;
+    flex-basis: 51px;
+    border-radius: 15px;
+    font-size: 20px;
+  }
+
+  .settings-profile-info strong {
+    font-size: 13px;
+  }
+
+  .settings-profile-info span {
+    font-size: 11px;
+  }
+
+  .settings-row {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 17px 0;
+  }
+
+  .settings-row-label {
+    gap: 10px;
+  }
+
+  .settings-row-label strong {
+    font-size: 12px;
+  }
+
+  .settings-row-label > div > span {
+    font-size: 10px;
+  }
+
+  .settings-row-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    border-radius: 10px;
+  }
+
+  .settings-row-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .settings-row-value {
+    max-width: 43%;
+    padding-top: 3px;
+    font-size: 10px;
+  }
+
+  .settings-row-action {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .settings-status {
+    min-height: 25px;
+    padding-inline: 8px;
+    font-size: 9px;
+  }
+
+  .settings-panel .db-chip {
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .db-panel.settings-panel-danger {
+    margin-top: 18px;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 360px) {
+  .db-panel.settings-panel {
+    padding: 15px 12px;
+  }
+
+  .settings-row {
+    gap: 7px;
+  }
+
+  .settings-row-label {
+    gap: 8px;
+  }
+
+  .settings-row-icon {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .settings-row-label strong {
+    font-size: 11px;
+  }
+
+  .settings-row-label > div > span {
+    font-size: 9px;
+  }
+
+  .settings-row-value {
+    max-width: 40%;
+    font-size: 9px;
+  }
+
+  .settings-status {
+    gap: 5px;
+    padding-inline: 6px;
+    font-size: 8px;
+  }
+
+  .settings-panel .db-chip {
+    padding-inline: 8px;
+    font-size: 9px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-row-icon,
+  .settings-panel .db-chip,
+  .settings-link {
+    transition: none;
+  }
+}

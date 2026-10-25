@@ -1,40 +1,205 @@
-<%- include('../partials/admin-shell-start') %>
+<%- include('../../partials/admin-shell-start') %>
 
 <div class="db-greeting">
   <div>
     <h1>Customers</h1>
     <p>Search by email, name, or reference.</p>
   </div>
-  <a class="db-promo__btn" href="/admin/customers/new">＋ Create account</a>
+  <a class="db-promo__btn" href="/admin/customers/new">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:14px;height:14px;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    Create account
+  </a>
 </div>
 
-<section class="db-panel">
-  <form method="get" action="/admin/customers" class="form-grid" style="grid-template-columns:1fr auto;max-width:100%;margin-bottom:1rem;">
-    <input type="search" name="q" value="<%= q || '' %>" placeholder="Search email, name, reference (min 2 chars)" style="padding:0.7rem 0.85rem;border-radius:10px;border:1px solid var(--db-border);">
-    <button class="btn btn-navy" type="submit">Search</button>
+<%
+  var customerResults = Array.isArray(results) ? results : [];
+  var searchQuery = typeof q === 'string' ? q : '';
+
+  var total = customerResults.length;
+  var active = 0;
+  var pending = 0;
+  var other = 0;
+
+  customerResults.forEach(function(c) {
+    var s = String(c.status || '').toLowerCase();
+
+    if (s === 'active') active++;
+    else if (s === 'pending') pending++;
+    else other++;
+  });
+
+  var hasQuery = searchQuery.trim().length >= 2;
+%>
+
+<!-- ========== SEARCH TOOLBAR ========== -->
+<section class="cust-toolbar">
+  <form method="get" action="/admin/customers" class="cust-search-form" role="search">
+    <div class="cust-search">
+      <svg class="cust-search-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        id="cust-search-input"
+        name="q"
+        value="<%= q || '' %>"
+        placeholder="Search by email, name, or reference…"
+        aria-label="Search customers"
+        autocomplete="off"
+      >
+      <% if (q) { %>
+        <a href="/admin/customers" class="cust-search-clear" aria-label="Clear search">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </a>
+      <% } %>
+    </div>
+    <button type="submit" class="cust-search-btn">
+      Search
+    </button>
   </form>
 
-  <div class="table-wrap" style="border:0;box-shadow:none;">
-    <table class="data">
-      <thead>
-        <tr><th>Name</th><th>Email</th><th>Reference</th><th>Status</th><th>Joined</th></tr>
-      </thead>
-      <tbody>
-        <% if (!results || !results.length) { %>
-          <tr><td colspan="5">No customers found.</td></tr>
-        <% } %>
-        <% (results || []).forEach(function(c) { %>
-          <tr>
-            <td><%= c.firstName || '' %> <%= c.lastName || '' %></td>
-            <td><%= c.email %></td>
-            <td><%= c.customerReference || '—' %></td>
-            <td><span class="db-badge db-badge--<%= c.status === 'active' ? 'ok' : 'pending' %>"><%= c.status %></span></td>
-            <td><%= c.createdAt %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
+  <% if (hasQuery) { %>
+    <div class="cust-search-hint">
+      Showing results for <strong>"<%= q %>"</strong>
+    </div>
+  <% } else if (q) { %>
+    <div class="cust-search-hint cust-search-hint-warn">
+      Enter at least 2 characters to search.
+    </div>
+  <% } %>
 </section>
 
-<%- include('../partials/admin-shell-end') %>
+<!-- ========== SUMMARY ========== -->
+<% if (total > 0) { %>
+  <section class="cust-summary">
+    <div class="cust-summary-item">
+      <span class="cust-summary-label">Total</span>
+      <strong class="cust-summary-value"><%= total %></strong>
+      <span class="cust-summary-hint"><%= total === 1 ? 'customer' : 'customers' %></span>
+    </div>
+    <div class="cust-summary-item">
+      <span class="cust-summary-label">Active</span>
+      <strong class="cust-summary-value cust-summary-value-ok"><%= active %></strong>
+      <span class="cust-summary-hint"><%= total ? Math.round((active / total) * 100) : 0 %>%</span>
+    </div>
+    <div class="cust-summary-item">
+      <span class="cust-summary-label">Pending</span>
+      <strong class="cust-summary-value cust-summary-value-warn"><%= pending %></strong>
+      <span class="cust-summary-hint"><%= total ? Math.round((pending / total) * 100) : 0 %>%</span>
+    </div>
+    <% if (other > 0) { %>
+      <div class="cust-summary-item">
+        <span class="cust-summary-label">Other</span>
+        <strong class="cust-summary-value"><%= other %></strong>
+        <span class="cust-summary-hint">status</span>
+      </div>
+    <% } %>
+  </section>
+<% } %>
+
+<!-- ========== TABLE ========== -->
+<section class="db-panel cust-panel">
+  <div class="cust-panel-head">
+    <h2>Customer list</h2>
+    <span class="cust-panel-count"><%= total %> shown</span>
+  </div>
+
+  <% if (!results || !results.length) { %>
+
+    <!-- ========== EMPTY STATE ========== -->
+    <div class="cust-empty">
+      <div class="cust-empty-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        </svg>
+      </div>
+      <% if (q) { %>
+        <h3>No customers match your search</h3>
+        <p>Try a different name, email, or reference, or clear the search to see all customers.</p>
+        <a href="/admin/customers" class="cust-empty-btn">Clear search</a>
+      <% } else { %>
+        <h3>No customers yet</h3>
+        <p>Create the first customer account to get started.</p>
+        <a href="/admin/customers/new" class="cust-empty-btn">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Create customer
+        </a>
+      <% } %>
+    </div>
+
+  <% } else { %>
+
+    <div class="cust-table-wrap">
+      <table class="cust-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Email</th>
+            <th>Reference</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th class="cust-table-actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% results.forEach(function(c) { %>
+            <%
+              var fn = c.firstName || '';
+              var ln = c.lastName || '';
+              var fullName = (fn + ' ' + ln).trim() || 'Unnamed customer';
+              var initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || (c.email ? c.email[0].toUpperCase() : '?');
+              var status = String(c.status || '').toLowerCase();
+              var statusClass = status === 'active' ? 'ok'
+                              : status === 'pending' ? 'pending'
+                              : 'other';
+              var statusLabel = c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : 'Unknown';
+            %>
+            <tr>
+              <td class="cust-cell-customer">
+                <div class="cust-customer">
+                  <span class="cust-avatar"><%= initials %></span>
+                  <span class="cust-customer-name"><%= fullName %></span>
+                </div>
+              </td>
+              <td class="cust-cell-email">
+                <a href="mailto:<%= c.email %>" class="cust-email"><%= c.email %></a>
+              </td>
+              <td class="cust-cell-ref">
+                <% if (c.customerReference) { %>
+                  <code class="cust-ref"><%= c.customerReference %></code>
+                <% } else { %>
+                  <span class="cust-ref-empty">—</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="cust-badge cust-badge-<%= statusClass %>">
+                  <span class="cust-badge-dot"></span>
+                  <%= statusLabel %>
+                </span>
+              </td>
+              <td class="cust-cell-date">
+                <%= c.createdAt ? String(c.createdAt).split('T')[0] || c.createdAt : '—' %>
+              </td>
+              <td class="cust-cell-actions">
+                <a href="/admin/customers/<%= c.id %>" class="cust-row-action" title="View customer">
+                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  <% } %>
+</section>
+
+<%- include('../../partials/admin-shell-end') %>

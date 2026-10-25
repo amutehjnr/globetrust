@@ -1,106 +1,297 @@
 <%- include('../partials/admin-shell-start') %>
 
-<% if (message) { %><div class="db-alert" style="background:#d8ead8;color:#1e5c2a;"><%= message %></div><% } %>
-<% if (error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+<%
+  var dashboardCounts = counts || {};
+  var registrationData = Array.isArray(registrationsLast7)
+    ? registrationsLast7
+    : [];
+  var kycPreview = Array.isArray(pendingKycPreview)
+    ? pendingKycPreview
+    : [];
+  var customersPreview = Array.isArray(recentCustomers)
+    ? recentCustomers
+    : [];
+%>
 
 <div class="db-greeting">
   <div>
     <h1>Admin overview</h1>
     <p>Operations snapshot for Globe Trust Bank.</p>
   </div>
-  <a class="db-promo__btn" href="/admin/customers/new">＋ Create customer</a>
+  <a class="db-promo__btn" href="/admin/customers/new">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:14px;height:14px;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    Create customer
+  </a>
 </div>
 
-<div class="db-balance-grid">
-  <article class="db-bal-card db-bal-card--total">
-    <div class="db-bal-card__label">Users</div>
-    <div class="db-bal-card__value"><%= counts.users %></div>
-    <div class="db-bal-card__hint">All statuses</div>
-  </article>
-  <article class="db-bal-card">
-    <div class="db-bal-card__label">Pending KYC</div>
-    <div class="db-bal-card__value"><%= counts.pendingKyc %></div>
-    <div class="db-bal-card__hint"><a href="/admin/kyc">Review queue →</a></div>
-  </article>
-  <article class="db-bal-card">
-    <div class="db-bal-card__label">Open support</div>
-    <div class="db-bal-card__value"><%= counts.openSupport || 0 %></div>
-    <div class="db-bal-card__hint"><a href="/admin/support">Inbox →</a></div>
-  </article>
-  <article class="db-bal-card">
-    <div class="db-bal-card__label">Transfers (7d)</div>
-    <div class="db-bal-card__value"><%= counts.transfersLast7Days || 0 %></div>
-    <div class="db-bal-card__hint">Sandbox requests</div>
-  </article>
-</div>
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span><%= message %></span>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+    <span><%= error %></span>
+  </div>
+<% } %>
 
-<div class="db-mid-grid" style="grid-template-columns:1.2fr 1fr;">
-  <section class="db-panel">
-    <div class="db-panel__head">
-      <h2>Registrations (7 days)</h2>
+<!-- ========== KPI CARDS ========== -->
+<section class="adm-kpi-grid">
+  <article class="adm-kpi-card adm-kpi-card--navy">
+    <div class="adm-kpi-top">
+      <div class="adm-kpi-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        </svg>
+      </div>
+      <span class="adm-kpi-label">Users</span>
     </div>
-    <div class="db-chart" role="img" aria-label="Registrations chart">
-      <% 
-        var max = 1;
-        (registrationsLast7 || []).forEach(function(d) { if (d.count > max) max = d.count; });
-        (registrationsLast7 || []).forEach(function(d) { 
-          var h = Math.max(8, Math.round((d.count / max) * 100));
-      %>
-        <div class="db-chart__col">
-          <div class="db-chart__bar" style="height:<%= h %>%"></div>
-          <span><%= String(d.date).slice(5) %></span>
-        </div>
-      <% }) %>
+    <strong class="adm-kpi-value"><%= counts.users || 0 %></strong>
+    <span class="adm-kpi-hint">All statuses</span>
+  </article>
+
+  <article class="adm-kpi-card">
+    <div class="adm-kpi-top">
+      <div class="adm-kpi-icon adm-kpi-icon--warn">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+      </div>
+      <span class="adm-kpi-label">Pending KYC</span>
     </div>
+    <strong class="adm-kpi-value"><%= counts.pendingKyc || 0 %></strong>
+    <a href="/admin/kyc" class="adm-kpi-link">
+      Review queue
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </a>
+  </article>
+
+  <article class="adm-kpi-card">
+    <div class="adm-kpi-top">
+      <div class="adm-kpi-icon adm-kpi-icon--info">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+        </svg>
+      </div>
+      <span class="adm-kpi-label">Open support</span>
+    </div>
+    <strong class="adm-kpi-value"><%= counts.openSupport || 0 %></strong>
+    <a href="/admin/support" class="adm-kpi-link">
+      Open inbox
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </a>
+  </article>
+
+  <article class="adm-kpi-card">
+    <div class="adm-kpi-top">
+      <div class="adm-kpi-icon adm-kpi-icon--ok">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+        </svg>
+      </div>
+      <span class="adm-kpi-label">Transfers (7d)</span>
+    </div>
+    <strong class="adm-kpi-value"><%= counts.transfersLast7Days || 0 %></strong>
+    <span class="adm-kpi-hint">Last 7 days</span>
+  </article>
+</section>
+
+<!-- ========== MID GRID ========== -->
+<div class="adm-mid-grid">
+
+  <!-- Registration chart -->
+  <section class="db-panel adm-panel">
+    <div class="adm-panel-head">
+      <div>
+        <h2>Registrations</h2>
+        <p>Last 7 days</p>
+      </div>
+      <span class="adm-panel-chip">
+        Total: 
+        <strong><%
+          var regTotal = 0;
+          (registrationsLast7 || []).forEach(function(d) { regTotal += (d.count || 0); });
+        %><%= regTotal %></strong>
+      </span>
+    </div>
+
+    <% if (!registrationsLast7 || !registrationsLast7.length) { %>
+      <p class="db-muted" style="padding: 1rem 0;">No registrations in the last 7 days.</p>
+    <% } else { %>
+      <div class="adm-chart" role="img" aria-label="Daily registrations, last 7 days">
+        <%
+          var maxVal = 1;
+          registrationsLast7.forEach(function(d) { if ((d.count || 0) > maxVal) maxVal = d.count; });
+        %>
+        <% registrationsLast7.forEach(function(d, i) { %>
+          <%
+            var h = Math.max(6, Math.round(((d.count || 0) / maxVal) * 100));
+            var label = String(d.date || '').slice(5);
+            var isMax = (d.count || 0) === maxVal && maxVal > 0;
+          %>
+          <div class="adm-chart-col">
+            <div class="adm-chart-bar-wrap">
+              <div
+                class="adm-chart-bar <%= isMax ? 'is-max' : '' %>"
+                data-height="<%= h %>"
+                title="<%= d.count || 0 %> registrations on <%= d.date %>"
+              >
+                <span class="adm-chart-tooltip"><%= d.count || 0 %></span>
+              </div>
+            </div>
+            <span class="adm-chart-label"><%= label %></span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
   </section>
 
-  <section class="db-panel">
-    <div class="db-panel__head">
-      <h2>Pending KYC</h2>
-      <a href="/admin/kyc">View all</a>
+  <!-- Pending KYC preview -->
+  <section class="db-panel adm-panel">
+    <div class="adm-panel-head">
+      <div>
+        <h2>Pending KYC</h2>
+        <p>Awaiting review</p>
+      </div>
+      <a href="/admin/kyc" class="adm-panel-link">View all →</a>
     </div>
+
     <% if (!pendingKycPreview || !pendingKycPreview.length) { %>
-      <p class="db-muted">No pending documents.</p>
+      <div class="adm-empty-small">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p>No pending documents.</p>
+      </div>
     <% } else { %>
-      <ul class="db-tx-list">
+      <ul class="adm-kyc-list">
         <% pendingKycPreview.forEach(function(d) { %>
-          <li>
-            <span class="db-tx-icon">☰</span>
-            <div class="db-tx-body">
-              <strong><%= d.firstName || '' %> <%= d.lastName || '' %></strong>
-              <small><%= d.email %> · <%= d.documentType %></small>
+          <%
+            var fn = d.firstName || '';
+            var ln = d.lastName || '';
+            var fullName = (fn + ' ' + ln).trim() || 'Customer';
+            var initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || (d.email ? d.email[0].toUpperCase() : '?');
+            var typeLabel = {
+              passport: 'Passport',
+              national_id: 'National ID',
+              drivers_license: "Driver's licence",
+              proof_of_address: 'Proof of address',
+              other: 'Other'
+            }[d.documentType] || String(d.documentType || 'document').replace(/_/g, ' ');
+          %>
+          <li class="adm-kyc-item">
+            <div class="adm-kyc-avatar"><%= initials %></div>
+            <div class="adm-kyc-body">
+              <strong><%= fullName %></strong>
+              <span><%= d.email %></span>
+              <span class="adm-kyc-doc"><%= typeLabel %></span>
             </div>
-            <a class="db-chip" href="/admin/kyc/<%= d.id %>/review">Review</a>
+            <a class="adm-kyc-btn" href="/admin/kyc/<%= d.id %>/review">Review</a>
           </li>
         <% }) %>
       </ul>
     <% } %>
   </section>
+
 </div>
 
-<section class="db-panel" style="margin-top:1rem;">
-  <div class="db-panel__head">
-    <h2>Recent customers</h2>
-    <a href="/admin/customers">Search</a>
+<!-- ========== RECENT CUSTOMERS ========== -->
+<section class="db-panel adm-panel adm-customers-panel">
+  <div class="adm-panel-head">
+    <div>
+      <h2>Recent customers</h2>
+      <p>Newest first</p>
+    </div>
+    <a href="/admin/customers" class="adm-panel-link">Search all →</a>
   </div>
-  <div class="table-wrap" style="border:0;box-shadow:none;">
-    <table class="data">
-      <thead>
-        <tr><th>Name</th><th>Email</th><th>Reference</th><th>Status</th><th>Joined</th></tr>
-      </thead>
-      <tbody>
-        <% (recentCustomers || []).forEach(function(c) { %>
+
+  <% if (!recentCustomers || !recentCustomers.length) { %>
+    <div class="adm-empty-small">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+      </svg>
+      <p>No customers yet.</p>
+      <a href="/admin/customers/new" class="adm-empty-btn">Create first customer</a>
+    </div>
+  <% } else { %>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
           <tr>
-            <td><%= c.firstName || '' %> <%= c.lastName || '' %></td>
-            <td><%= c.email %></td>
-            <td><%= c.customerReference || '—' %></td>
-            <td><span class="db-badge db-badge--<%= c.status === 'active' ? 'ok' : 'pending' %>"><%= c.status %></span></td>
-            <td><%= c.createdAt %></td>
+            <th>Customer</th>
+            <th>Email</th>
+            <th>Reference</th>
+            <th>Status</th>
+            <th>Joined</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <% recentCustomers.forEach(function(c) { %>
+            <%
+              var fn2 = c.firstName || '';
+              var ln2 = c.lastName || '';
+              var fullName2 = (fn2 + ' ' + ln2).trim() || 'Unnamed';
+              var initials2 = ((fn2[0] || '') + (ln2[0] || '')).toUpperCase() || (c.email ? c.email[0].toUpperCase() : '?');
+              var status = String(c.status || '').toLowerCase();
+              var statusClass = status === 'active' ? 'ok' : status === 'pending' ? 'pending' : 'other';
+              var statusLabel = c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : 'Unknown';
+            %>
+            <tr>
+              <td>
+                <div class="adm-cust">
+                  <span class="adm-cust-avatar"><%= initials2 %></span>
+                  <span class="adm-cust-name"><%= fullName2 %></span>
+                </div>
+              </td>
+              <td>
+                <a href="mailto:<%= c.email %>" class="adm-cust-email"><%= c.email %></a>
+              </td>
+              <td>
+                <% if (c.customerReference) { %>
+                  <code class="adm-cust-ref"><%= c.customerReference %></code>
+                <% } else { %>
+                  <span class="adm-cust-ref-empty">—</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="adm-badge adm-badge-<%= statusClass %>">
+                  <span class="adm-badge-dot"></span>
+                  <%= statusLabel %>
+                </span>
+              </td>
+              <td class="adm-cust-date">
+                <%= c.createdAt ? String(c.createdAt).split('T')[0] || c.createdAt : '—' %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
 </section>
+
+<!-- ========== CHART HEIGHT SCRIPT ========== -->
+<script>
+  (function () {
+    document.querySelectorAll('.adm-chart-bar[data-height]').forEach(function (bar) {
+      var h = parseFloat(bar.dataset.height) || 0;
+      bar.style.height = Math.max(4, Math.min(100, h)) + '%';
+    });
+  })();
+</script>
+
+<script src="/js/admin-overview.js" defer></script>
 
 <%- include('../partials/admin-shell-end') %>

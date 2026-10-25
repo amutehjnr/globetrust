@@ -9,46 +9,150 @@
 </div>
 
 <% if (!accounts || !accounts.length) { %>
-  <div class="db-panel"><p class="db-muted">No account links yet.</p></div>
+
+  <!-- ========== EMPTY STATE ========== -->
+  <section class="db-panel accounts-empty">
+    <div class="accounts-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+      </svg>
+    </div>
+    <h3>No linked accounts yet</h3>
+    <p>Once your identity is verified and your account is approved by the bank, linked accounts will appear here.</p>
+    <a href="/app/kyc" class="db-chip">Open KYC →</a>
+  </section>
+
 <% } else { %>
-  <div class="db-balance-grid" style="margin-bottom:1.25rem;">
+
+  <!-- ========== SUMMARY + BALANCE CARDS ========== -->
+  <section class="accounts-summary">
+    <div class="accounts-summary-item">
+      <span class="accounts-summary-label">Total available</span>
+      <strong class="accounts-summary-value">
+        <% 
+          var totalAvailable = 0;
+          var primaryCurrency = '—';
+          accounts.forEach(function(a) {
+            if (a.balance && !isNaN(parseFloat(a.balance.available))) {
+              totalAvailable += parseFloat(a.balance.available);
+              if (!primaryCurrency || primaryCurrency === '—') primaryCurrency = a.currencyCode;
+            }
+          });
+        %>
+        <%= totalAvailable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+        <span class="accounts-summary-currency"><%= primaryCurrency %></span>
+      </strong>
+    </div>
+    <div class="accounts-summary-item">
+      <span class="accounts-summary-label">Linked accounts</span>
+      <strong class="accounts-summary-value"><%= accounts.length %></strong>
+    </div>
+    <div class="accounts-summary-item">
+      <span class="accounts-summary-label">Currencies</span>
+      <strong class="accounts-summary-value">
+        <%= accounts.map(function(a) { return a.currencyCode; }).filter(function(v, i, arr) { return arr.indexOf(v) === i; }).join(' · ') %>
+      </strong>
+    </div>
+  </section>
+
+  <!-- ========== BALANCE CARDS GRID ========== -->
+  <div class="accounts-card-grid">
     <% accounts.forEach(function(a) { %>
-      <article class="db-bal-card">
-        <div class="db-bal-card__icon">▤</div>
-        <div class="db-bal-card__label"><%= a.displayLabel || a.currencyCode %></div>
-        <div class="db-bal-card__value">
-          <% if (a.balance) { %><%= a.balance.available %><% } else { %>—<% } %>
+      <article class="accounts-card">
+        <div class="accounts-card-head">
+          <div class="accounts-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+            </svg>
+          </div>
+          <div class="accounts-card-title">
+            <span class="accounts-card-label"><%= a.displayLabel || a.currencyCode %></span>
+            <span class="accounts-card-code"><%= a.currencyCode %></span>
+          </div>
+          <span class="accounts-status accounts-status-<%= (a.linkStatus || 'linked').toLowerCase() %>">
+            <span class="accounts-status-dot"></span>
+            <%= a.linkStatus || 'Linked' %>
+          </span>
         </div>
-        <div class="db-bal-card__hint">
-          <%= a.currencyCode %> · <%= a.linkStatus || 'linked' %>
-          <% if (a.balance && a.balance.isDemo) { %> · demo<% } %>
+
+        <div class="accounts-card-balance">
+          <span class="accounts-card-balance-label">Available</span>
+          <strong class="accounts-card-balance-value">
+            <% if (a.balance) { %>
+              <%= Number(a.balance.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+              <span class="accounts-card-balance-currency"><%= a.currencyCode %></span>
+            <% } else { %>
+              —
+            <% } %>
+          </strong>
         </div>
+
+        <% if (a.balance) { %>
+          <div class="accounts-card-meta">
+            <span>Ledger: <%= Number(a.balance.ledger).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+            <% if (a.balance.isDemo) { %>
+              <span class="accounts-card-demo">Demo funds</span>
+            <% } %>
+          </div>
+        <% } %>
+
+        <% if (a.providerCode) { %>
+          <div class="accounts-card-provider">
+            Provided by <strong><%= a.providerCode %></strong>
+          </div>
+        <% } %>
       </article>
     <% }) %>
   </div>
 
-  <div class="db-panel">
-    <div class="db-panel__head"><h2>Account details</h2></div>
-    <div class="table-wrap" style="border:0;box-shadow:none;">
-      <table class="data">
+  <!-- ========== DETAIL TABLE ========== -->
+  <section class="db-panel accounts-table-panel">
+    <div class="db-panel__head">
+      <h2>Account details</h2>
+    </div>
+    <div class="accounts-table-wrap">
+      <table class="accounts-table">
         <thead>
-          <tr><th>Label</th><th>Currency</th><th>Available</th><th>Ledger</th><th>Status</th><th>Provider</th></tr>
+          <tr>
+            <th>Label</th>
+            <th>Currency</th>
+            <th class="num">Available</th>
+            <th class="num">Ledger</th>
+            <th>Status</th>
+            <th>Provider</th>
+          </tr>
         </thead>
         <tbody>
           <% accounts.forEach(function(a) { %>
             <tr>
-              <td><%= a.displayLabel || 'Account' %></td>
-              <td><%= a.currencyCode %></td>
-              <td><%= a.balance ? a.balance.available : '—' %></td>
-              <td><%= a.balance ? a.balance.ledger : '—' %></td>
-              <td><%= a.linkStatus %></td>
-              <td><%= a.providerCode %></td>
+              <td>
+                <strong class="accounts-table-label"><%= a.displayLabel || 'Account' %></strong>
+              </td>
+              <td><span class="accounts-table-code"><%= a.currencyCode %></span></td>
+              <td class="num">
+                <% if (a.balance) { %>
+                  <%= Number(a.balance.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                <% } else { %>—<% } %>
+              </td>
+              <td class="num">
+                <% if (a.balance) { %>
+                  <%= Number(a.balance.ledger).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <span class="accounts-status accounts-status-<%= (a.linkStatus || 'linked').toLowerCase() %>">
+                  <span class="accounts-status-dot"></span>
+                  <%= a.linkStatus || 'Linked' %>
+                </span>
+              </td>
+              <td><span class="accounts-table-provider"><%= a.providerCode || '—' %></span></td>
             </tr>
           <% }) %>
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
+
 <% } %>
 
 <%- include('../partials/customer-shell-end') %>

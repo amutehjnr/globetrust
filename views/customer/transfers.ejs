@@ -6,75 +6,452 @@
   <title>Transfers · Globe Trust Bank</title>
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/portal.css">
+  <link rel="stylesheet" href="/css/transfers.css">
 </head>
 <body>
   <div class="portal-shell">
     <%- include('../partials/customer-nav') %>
     <div class="portal-main">
-      <div class="portal-header-row">
-        <h1>Transfer requests</h1>
-        <span class="badge badge-demo">Sandbox only</span>
-      </div>
-      <div class="alert alert-info">
-        This form creates a <strong>workflow request</strong> and calls the sandbox adapter.
-        A green status here is not proof of real-world settlement.
-      </div>
-      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
-      <% if (success) { %><div class="alert alert-ok"><%= success %></div><% } %>
 
-      <form method="post" action="/app/transfers" class="form-grid" style="margin:1.25rem 0 2rem;max-width:32rem;">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="hidden" name="idempotencyKey" value="<%= idempotencyKey %>">
+      <div class="transfers-header">
         <div>
-          <label>From account</label>
-          <select name="sourceAccountLinkId" required>
-            <% links.forEach(function(l) { %>
-              <option value="<%= l.id %>"><%= l.displayLabel %> (<%= l.currencyCode %>)</option>
-            <% }) %>
-          </select>
+          <h1>Transfer requests</h1>
+          <p>Move money between accounts and external destinations.</p>
         </div>
-        <div>
-          <label>Amount</label>
-          <input name="amount" required placeholder="100.00" inputmode="decimal">
-        </div>
-        <div>
-          <label>Destination account reference</label>
-          <input name="destinationAccountRef" required placeholder="Sandbox beneficiary ref" minlength="4">
-        </div>
-        <div>
-          <label>Narrative (optional)</label>
-          <input name="narrative" maxlength="140">
-        </div>
-        <button class="btn btn-navy" type="submit">Submit transfer request</button>
-      </form>
+      </div>
 
-      <h2 style="color:var(--navy);font-size:1.1rem;">Recent requests</h2>
-      <div class="table-wrap">
-        <table class="data">
-          <thead>
-            <tr><th>When</th><th>Amount</th><th>Status</th><th>Provider ref</th></tr>
-          </thead>
-          <tbody>
-            <% if (!history.length) { %>
-              <tr><td colspan="4">No transfer requests yet.</td></tr>
-            <% } %>
-            <% history.forEach(function(h) { %>
-              <tr>
-                <td><%= h.createdAt %></td>
-                <td><%= h.sourceAmount %> <%= h.sourceCurrency %></td>
-                <td>
-                  <span class="badge badge-<%= h.status === 'succeeded' ? 'approved' : h.status === 'failed' ? 'rejected' : 'pending' %>">
-                    <%= h.status %>
-                  </span>
-                  <% if (h.failureCode) { %><small> <%= h.failureCode %></small><% } %>
-                </td>
-                <td><code style="font-size:0.8rem;"><%= h.externalReference || '—' %></code></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="transfer-alert transfer-alert-error"><%= error %></div>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="transfer-alert transfer-alert-success"><%= success %></div>
+      <% } %>
+
+      <div class="transfers-layout">
+
+        <!-- ========== FORM ========== -->
+        <section class="transfers-form-panel">
+          <div class="transfers-form-head">
+            <h2>New transfer</h2>
+            <span class="transfers-form-chip">Instant</span>
+          </div>
+
+          <form method="post" action="/app/transfers" class="transfers-form" id="transfer-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="idempotencyKey" value="<%= idempotencyKey %>">
+
+            <!-- From account -->
+            <div class="transfer-field">
+              <label for="transfer-source">From account</label>
+              <select id="transfer-source" name="sourceAccountLinkId" required>
+                <% links.forEach(function(l) { %>
+                  <option
+                    value="<%= l.id %>"
+                    data-currency="<%= l.currencyCode %>"
+                  >
+                    <%= l.displayLabel %> · <%= l.currencyCode %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <!-- Amount -->
+            <div class="transfer-field">
+              <label for="transfer-amount">Amount</label>
+              <div class="transfer-input-group" id="transfer-amount-group">
+                <span class="transfer-input-prefix" id="transfer-currency"><%= links[0] ? links[0].currencyCode : '—' %></span>
+                <input
+                  type="text"
+                  id="transfer-amount"
+                  name="amount"
+                  required
+                  placeholder="0.00"
+                  inputmode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
+                  autocomplete="off"
+                >
+              </div>
+            </div>
+
+            <!-- Destination -->
+            <div class="transfer-field">
+              <label for="transfer-destination">Destination account reference</label>
+              <input
+                type="text"
+                id="transfer-destination"
+                name="destinationAccountRef"
+                required
+                placeholder="Enter account number or IBAN"
+                minlength="4"
+                autocomplete="off"
+              >
+              <span class="transfer-hint" id="transfer-dest-hint">Minimum 4 characters</span>
+            </div>
+
+            <!-- Narrative -->
+            <div class="transfer-field">
+              <label for="transfer-narrative">
+                Narrative
+                <span class="transfer-optional">optional</span>
+              </label>
+              <input
+                type="text"
+                id="transfer-narrative"
+                name="narrative"
+                maxlength="140"
+                placeholder="What's this for? (e.g. Rent, Invoice #43)"
+                autocomplete="off"
+              >
+              <span class="transfer-hint" id="transfer-narrative-hint">0 / 140</span>
+            </div>
+
+            <!-- Summary -->
+            <div class="transfer-summary" id="transfer-summary" hidden>
+              <div class="transfer-summary-row">
+                <span>From</span>
+                <strong id="sum-from">—</strong>
+              </div>
+              <div class="transfer-summary-row">
+                <span>To</span>
+                <strong id="sum-to">—</strong>
+              </div>
+              <div class="transfer-summary-row transfer-summary-amount">
+                <span>Amount</span>
+                <strong id="sum-amount">—</strong>
+              </div>
+            </div>
+
+            <button type="submit" class="transfer-submit">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+              Submit transfer
+            </button>
+          </form>
+        </section>
+
+        <!-- ========== HISTORY ========== -->
+        <section class="transfers-history-panel">
+          <div class="transfers-history-head">
+            <h2>Recent requests</h2>
+            <span class="transfers-history-count">
+              <%= history && history.length ? history.length : 0 %>
+            </span>
+          </div>
+
+          <% if (!history || !history.length) { %>
+            <div class="transfers-empty">
+              <div class="transfers-empty-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+              </div>
+              <h3>No transfers yet</h3>
+              <p>Your transfer history will appear here once you make your first transfer.</p>
+            </div>
+          <% } else { %>
+            <ul class="transfers-list">
+              <% history.forEach(function(h) { %>
+                <%
+                  var status = h.status || 'pending';
+                  var statusClass = status === 'succeeded' ? 'success'
+                                  : status === 'failed' ? 'failed'
+                                  : 'pending';
+                %>
+                <li class="transfer-item transfer-item-<%= statusClass %>">
+                  <div class="transfer-item-icon">
+                    <% if (status === 'succeeded') { %>
+                      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    <% } else if (status === 'failed') { %>
+                      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    <% } else { %>
+                      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    <% } %>
+                  </div>
+
+                  <div class="transfer-item-body">
+                    <div class="transfer-item-top">
+                      <strong class="transfer-item-amount">
+                        <%= h.sourceAmount %> <span class="transfer-item-currency"><%= h.sourceCurrency %></span>
+                      </strong>
+                      <span class="transfer-badge transfer-badge-<%= statusClass %>">
+                        <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+                      </span>
+                    </div>
+                    <div class="transfer-item-meta">
+                      <span><%= h.createdAt || '—' %></span>
+                      <% if (h.externalReference) { %>
+                        <span class="transfer-item-ref">Ref: <code><%= h.externalReference %></code></span>
+                      <% } %>
+                    </div>
+                    <% if (h.failureCode) { %>
+                      <div class="transfer-item-failure">Failure: <%= h.failureCode %></div>
+                    <% } %>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+
       </div>
     </div>
   </div>
+
+  <!-- ========== FORM SCRIPT ========== -->
+  <script>
+    (function () {
+      var form = document.getElementById('transfer-form');
+      if (!form) return;
+
+      var source = document.getElementById('transfer-source');
+      var currencyEl = document.getElementById('transfer-currency');
+      var amount = document.getElementById('transfer-amount');
+      var dest = document.getElementById('transfer-destination');
+      var destHint = document.getElementById('transfer-dest-hint');
+      var narrative = document.getElementById('transfer-narrative');
+      var narrativeHint = document.getElementById('transfer-narrative-hint');
+      var summary = document.getElementById('transfer-summary');
+      var sumFrom = document.getElementById('sum-from');
+      var sumTo = document.getElementById('sum-to');
+      var sumAmount = document.getElementById('sum-amount');
+
+      /* Update currency prefix when account changes */
+      function updateCurrency() {
+        var opt = source.options[source.selectedIndex];
+        var cur = opt ? opt.getAttribute('data-currency') : '—';
+        currencyEl.textContent = cur || '—';
+      }
+
+      /* Format amount input: digits and one dot only, 2 decimals */
+      amount.addEventListener('input', function () {
+        var v = amount.value.replace(/[^\d.]/g, '');
+        var parts = v.split('.');
+        if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+        if (parts[1] && parts[1].length > 2) v = parts[0] + '.' + parts[1].slice(0, 2);
+        amount.value = v;
+        updateSummary();
+      });
+
+      /* Destination hint */
+      dest.addEventListener('input', function () {
+        var len = dest.value.trim().length;
+        if (len === 0) {
+          destHint.textContent = 'Minimum 4 characters';
+          destHint.className = 'transfer-hint';
+        } else if (len < 4) {
+          destHint.textContent = len + ' / 4 characters';
+          destHint.className = 'transfer-hint transfer-hint-warn';
+        } else {
+          destHint.textContent = 'Looks good';
+          destHint.className = 'transfer-hint transfer-hint-ok';
+        }
+        updateSummary();
+      });
+
+      /* Narrative counter */
+      narrative.addEventListener('input', function () {
+        narrativeHint.textContent = narrative.value.length + ' / 140';
+      });
+
+      /* Summary preview */
+      function updateSummary() {
+        var amt = parseFloat(amount.value);
+        var destVal = dest.value.trim();
+        var fromText = source.options[source.selectedIndex].textContent;
+        var cur = currencyEl.textContent;
+
+        if (!amt || amt <= 0 || destVal.length < 4) {
+          summary.hidden = true;
+          return;
+        }
+
+        sumFrom.textContent = fromText;
+        sumTo.textContent = destVal;
+        sumAmount.textContent =
+          Number(amt).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+          ' ' + cur;
+        summary.hidden = false;
+      }
+
+      source.addEventListener('change', function () {
+        updateCurrency();
+        updateSummary();
+      });
+
+      updateCurrency();
+    })();
+  </script>
+
+  <script>
+    
+/* =========================================================
+   GLOBE TRUST BANK — TRANSFERS PAGE
+   File: public/js/transfers.js
+   ========================================================= */
+
+'use strict';
+
+(function () {
+  const form = document.getElementById('transfer-form');
+
+  if (!form) return;
+
+  const source = document.getElementById('transfer-source');
+  const currencyEl = document.getElementById('transfer-currency');
+  const amount = document.getElementById('transfer-amount');
+  const destination = document.getElementById('transfer-destination');
+  const destinationHint = document.getElementById('transfer-dest-hint');
+  const narrative = document.getElementById('transfer-narrative');
+  const narrativeHint = document.getElementById('transfer-narrative-hint');
+
+  const summary = document.getElementById('transfer-summary');
+  const summaryFrom = document.getElementById('sum-from');
+  const summaryTo = document.getElementById('sum-to');
+  const summaryAmount = document.getElementById('sum-amount');
+
+  if (
+    !source ||
+    !currencyEl ||
+    !amount ||
+    !destination ||
+    !destinationHint ||
+    !narrative ||
+    !narrativeHint ||
+    !summary ||
+    !summaryFrom ||
+    !summaryTo ||
+    !summaryAmount
+  ) {
+    return;
+  }
+
+  function getSelectedOption() {
+    return source.options[source.selectedIndex] || null;
+  }
+
+  function updateCurrency() {
+    const option = getSelectedOption();
+
+    currencyEl.textContent = option
+      ? option.getAttribute('data-currency') || '—'
+      : '—';
+  }
+
+  function updateDestinationHint() {
+    const length = destination.value.trim().length;
+
+    if (length === 0) {
+      destinationHint.textContent = 'Minimum 4 characters';
+      destinationHint.className = 'transfer-hint';
+    } else if (length < 4) {
+      destinationHint.textContent = `${length} / 4 characters`;
+      destinationHint.className = 'transfer-hint transfer-hint-warn';
+    } else {
+      destinationHint.textContent = 'Check the destination details carefully';
+      destinationHint.className = 'transfer-hint transfer-hint-ok';
+    }
+  }
+
+  function updateNarrativeCounter() {
+    narrativeHint.textContent = `${narrative.value.length} / 140`;
+  }
+
+  function updateSummary() {
+    const parsedAmount = Number(amount.value);
+    const destinationValue = destination.value.trim();
+    const option = getSelectedOption();
+
+    if (
+      !option ||
+      !Number.isFinite(parsedAmount) ||
+      parsedAmount <= 0 ||
+      destinationValue.length < 4
+    ) {
+      summary.hidden = true;
+      return;
+    }
+
+    const currency = currencyEl.textContent;
+    const formattedAmount = parsedAmount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    summaryFrom.textContent = option.textContent.trim();
+    summaryTo.textContent = destinationValue;
+    summaryAmount.textContent = `${formattedAmount} ${currency}`;
+    summary.hidden = false;
+  }
+
+  amount.addEventListener('input', function () {
+    // Permit digits and one decimal point, with up to two decimal places.
+    let value = amount.value.replace(/[^\d.]/g, '');
+    const parts = value.split('.');
+
+    if (parts.length > 2) {
+      value = `${parts.shift()}.${parts.join('')}`;
+    }
+
+    const decimalParts = value.split('.');
+
+    if (decimalParts.length === 2) {
+      value = `${decimalParts[0]}.${decimalParts[1].slice(0, 2)}`;
+    }
+
+    amount.value = value;
+    updateSummary();
+  });
+
+  destination.addEventListener('input', function () {
+    updateDestinationHint();
+    updateSummary();
+  });
+
+  narrative.addEventListener('input', updateNarrativeCounter);
+
+  source.addEventListener('change', function () {
+    updateCurrency();
+    updateSummary();
+  });
+
+  form.addEventListener('submit', function (event) {
+    const parsedAmount = Number(amount.value);
+    const destinationValue = destination.value.trim();
+
+    if (
+      !Number.isFinite(parsedAmount) ||
+      parsedAmount <= 0 ||
+      destinationValue.length < 4
+    ) {
+      event.preventDefault();
+
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        amount.focus();
+      } else {
+        destination.focus();
+      }
+
+      return;
+    }
+
+    // Do not disable the submit button here: a failed network request
+    // should not leave the user unable to retry. The server must enforce
+    // idempotency using the submitted idempotencyKey.
+  });
+
+  updateCurrency();
+  updateDestinationHint();
+  updateNarrativeCounter();
+  updateSummary();
+})();
+
+  </script>
 </body>
 </html>

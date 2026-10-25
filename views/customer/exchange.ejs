@@ -8,19 +8,391 @@
   <span class="db-chip">Updated periodically</span>
 </div>
 
-<div class="db-balance-grid">
-  <% rates.forEach(function(r) { %>
-    <article class="db-bal-card">
-      <div class="db-bal-card__label"><%= r.pair %></div>
-      <div class="db-bal-card__value" style="font-size:1.2rem;"><%= r.mid %></div>
-      <div class="db-bal-card__hint"><%= r.change %> today</div>
-    </article>
-  <% }) %>
-</div>
+<% if (!rates || !rates.length) { %>
 
-<section class="db-panel" style="margin-top:1rem;">
-  <div class="db-panel__head"><h2>Convert</h2></div>
-  <p class="db-muted">Live conversion and booking will use the bank’s treasury rates after go-live. Use <a href="/app/transfers">Transfers</a> for sandbox moves between linked accounts.</p>
-</section>
+  <!-- ========== EMPTY STATE ========== -->
+  <section class="db-panel rates-empty">
+    <div class="rates-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+      </svg>
+    </div>
+    <h3>No rates available</h3>
+    <p>Exchange rates will appear here once the treasury feed is connected.</p>
+  </section>
+
+<% } else { %>
+
+  <!-- ========== RATES GRID ========== -->
+  <section class="rates-grid" aria-label="Current exchange rates">
+    <% rates.forEach(function(r) { %>
+      <%
+        var change = String(r.change || '0').trim();
+        var isUp   = change.indexOf('+') === 0 || (parseFloat(change) > 0);
+        var isDown = change.indexOf('-') === 0 || (parseFloat(change) < 0);
+        var isFlat = !isUp && !isDown;
+        var changeClass = isUp ? 'up' : (isDown ? 'down' : 'flat');
+        var changeLabel = isUp ? 'up' : (isDown ? 'down' : 'unchanged');
+
+        /* Extract base and quote from pair like "USD/NGN" */
+        var parts = String(r.pair || '').split('/');
+        var base  = (parts[0] || '').trim();
+        var quote = (parts[1] || '').trim();
+      %>
+      <article class="rate-card" aria-label="<%= r.pair %> rate <%= r.mid %>">
+        <header class="rate-card-head">
+          <div class="rate-pair">
+            <span class="rate-code"><%= base %></span>
+            <span class="rate-slash">/</span>
+            <span class="rate-code rate-code-quote"><%= quote %></span>
+          </div>
+
+          <span class="rate-change rate-change-<%= changeClass %>" aria-label="Change: <%= changeLabel %>">
+            <% if (isUp) { %>
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+              </svg>
+            <% } else if (isDown) { %>
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            <% } else { %>
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15" />
+              </svg>
+            <% } %>
+            <span><%= change %></span>
+          </span>
+        </header>
+
+        <div class="rate-value">
+          <span class="rate-mid"><%= r.mid %></span>
+          <span class="rate-quote"><%= quote %></span>
+        </div>
+
+        <footer class="rate-meta">
+          <span>1 <%= base %> = <%= r.mid %> <%= quote %></span>
+        </footer>
+      </article>
+    <% }) %>
+  </section>
+
+  <!-- ========== CONVERTER ========== -->
+  <section class="db-panel rate-convert-panel">
+    <div class="db-panel__head">
+      <h2>Quick converter</h2>
+      <span class="rate-convert-badge">Indicative</span>
+    </div>
+
+    <p class="rate-convert-lead">
+      Live conversion and booking will use the bank's treasury rates after go-live.
+      Use <a href="/app/transfers">Transfers</a> for sandbox moves between linked accounts.
+    </p>
+
+    <form class="rate-convert-form" id="rate-convert-form" onsubmit="return false;">
+      <div class="rate-convert-row">
+        <div class="rate-convert-field">
+          <label for="rate-amount">Amount</label>
+          <input
+            type="number"
+            id="rate-amount"
+            name="amount"
+            min="0"
+            step="0.01"
+            value="100"
+            placeholder="0.00"
+          >
+        </div>
+
+        <div class="rate-convert-field">
+          <label for="rate-from">From</label>
+          <select id="rate-from" name="from"></select>
+        </div>
+
+        <div class="rate-convert-swap">
+          <button type="button" id="rate-swap" aria-label="Swap currencies" title="Swap">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="rate-convert-field">
+          <label for="rate-to">To</label>
+          <select id="rate-to" name="to"></select>
+        </div>
+      </div>
+
+      <div class="rate-convert-result" id="rate-convert-result" aria-live="polite">
+        <span class="rate-convert-result-label">You'll get approximately</span>
+        <strong class="rate-convert-result-value" id="rate-result-value">—</strong>
+        <span class="rate-convert-result-note">Mid-market estimate · not a quote</span>
+      </div>
+    </form>
+  </section>
+
+  <!-- ========== CONVERTER SCRIPT ========== -->
+  <script>
+    (function () {
+      var rates = <%- JSON.stringify(rates) %>;
+
+      var amountEl = document.getElementById('rate-amount');
+      var fromEl   = document.getElementById('rate-from');
+      var toEl     = document.getElementById('rate-to');
+      var swapEl   = document.getElementById('rate-swap');
+      var resultEl = document.getElementById('rate-result-value');
+      if (!amountEl || !fromEl || !toEl || !resultEl) return;
+
+      /* Build list of currencies from rates (base and quote) */
+      var currencies = {};
+      rates.forEach(function (r) {
+        var p = String(r.pair || '').split('/');
+        if (p[0]) currencies[p[0].trim()] = true;
+        if (p[1]) currencies[p[1].trim()] = true;
+      });
+      var currencyList = Object.keys(currencies).sort();
+
+      function fillSelect(el, selected) {
+        el.innerHTML = '';
+        currencyList.forEach(function (code) {
+          var opt = document.createElement('option');
+          opt.value = code;
+          opt.textContent = code;
+          if (code === selected) opt.selected = true;
+          el.appendChild(opt);
+        });
+      }
+
+      /* Pick defaults: first base currency from rates */
+      var firstPair = String((rates[0] && rates[0].pair) || 'USD/NGN').split('/');
+      var defaultFrom = (firstPair[0] || 'USD').trim();
+      var defaultTo   = (firstPair[1] || 'NGN').trim();
+
+      fillSelect(fromEl, defaultFrom);
+      fillSelect(toEl,   defaultTo);
+
+      /* Look up rate: try direct pair, then inverse */
+      function findRate(from, to) {
+        if (from === to) return 1;
+        var direct = rates.find(function (r) { return r.pair === from + '/' + to; });
+        if (direct) return parseFloat(direct.mid);
+        var inverse = rates.find(function (r) { return r.pair === to + '/' + from; });
+        if (inverse) {
+          var v = parseFloat(inverse.mid);
+          return v ? 1 / v : null;
+        }
+        return null;
+      }
+
+      function formatNumber(n) {
+        return Number(n).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function update() {
+        var amount = parseFloat(amountEl.value) || 0;
+        var from = fromEl.value;
+        var to   = toEl.value;
+        var rate = findRate(from, to);
+
+        if (rate === null || amount === 0) {
+          resultEl.textContent = '—';
+          return;
+        }
+
+        var converted = amount * rate;
+        resultEl.innerHTML =
+          '<span class="rate-convert-amount">' + formatNumber(converted) + '</span>' +
+          ' <span class="rate-convert-currency">' + to + '</span>';
+      }
+
+      amountEl.addEventListener('input', update);
+      fromEl.addEventListener('change', update);
+      toEl.addEventListener('change', update);
+
+      swapEl.addEventListener('click', function () {
+        var a = fromEl.value;
+        fromEl.value = toEl.value;
+        toEl.value = a;
+        update();
+      });
+
+      update();
+    })();
+  </script>
+
+<% } %>
 
 <%- include('../partials/customer-shell-end') %>
+
+<script type="application/json" id="exchange-rates-data"><%- JSON.stringify(rates).replace(/</g, '\\u003c') %></script>
+<script>
+  
+(function () {
+  'use strict';
+
+  var dataEl = document.getElementById('exchange-rates-data');
+  var amountEl = document.getElementById('rate-amount');
+  var fromEl = document.getElementById('rate-from');
+  var toEl = document.getElementById('rate-to');
+  var swapEl = document.getElementById('rate-swap');
+  var resultEl = document.getElementById('rate-result-value');
+  var noteEl = document.querySelector('.rate-convert-result-note');
+
+  if (!dataEl || !amountEl || !fromEl || !toEl || !swapEl || !resultEl) {
+    return;
+  }
+
+  var rates;
+
+  try {
+    rates = JSON.parse(dataEl.textContent || '[]');
+    if (!Array.isArray(rates)) rates = [];
+  } catch (error) {
+    rates = [];
+  }
+
+  function currencyCode(value) {
+    return String(value || '').trim().toUpperCase();
+  }
+
+  function parseRate(value) {
+    var number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : null;
+  }
+
+  var currencies = new Set();
+
+  rates.forEach(function (item) {
+    var pair = String(item.pair || '').split('/');
+    if (pair.length !== 2) return;
+
+    var base = currencyCode(pair[0]);
+    var quote = currencyCode(pair[1]);
+
+    if (base) currencies.add(base);
+    if (quote) currencies.add(quote);
+  });
+
+  var currencyList = Array.from(currencies).sort();
+
+  function fillSelect(select, selected) {
+    select.replaceChildren();
+
+    currencyList.forEach(function (code) {
+      var option = document.createElement('option');
+      option.value = code;
+      option.textContent = code;
+      select.appendChild(option);
+    });
+
+    if (currencyList.includes(selected)) {
+      select.value = selected;
+    } else if (currencyList.length) {
+      select.selectedIndex = 0;
+    }
+  }
+
+  var firstPair = String((rates[0] && rates[0].pair) || 'USD/NGN')
+    .split('/');
+
+  fillSelect(fromEl, currencyCode(firstPair[0]));
+  fillSelect(toEl, currencyCode(firstPair[1]));
+
+  function findRate(from, to) {
+    if (!from || !to) return null;
+    if (from === to) return 1;
+
+    var direct = rates.find(function (item) {
+      return String(item.pair || '').trim().toUpperCase() === from + '/' + to;
+    });
+
+    if (direct) return parseRate(direct.mid);
+
+    var inverse = rates.find(function (item) {
+      return String(item.pair || '').trim().toUpperCase() === to + '/' + from;
+    });
+
+    var inverseRate = inverse ? parseRate(inverse.mid) : null;
+    return inverseRate ? 1 / inverseRate : null;
+  }
+
+  function formatNumber(number) {
+    return number.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function update() {
+    var rawAmount = amountEl.value.trim();
+    var amount = Number(rawAmount);
+    var from = fromEl.value;
+    var to = toEl.value;
+    var rate = findRate(from, to);
+
+    resultEl.replaceChildren();
+
+    if (
+      rawAmount === '' ||
+      !Number.isFinite(amount) ||
+      amount < 0
+    ) {
+      resultEl.textContent = 'Enter a valid amount';
+      if (noteEl) {
+        noteEl.textContent = 'Enter an amount of zero or more.';
+        noteEl.classList.add('is-warning');
+      }
+      return;
+    }
+
+    if (rate === null) {
+      resultEl.textContent = 'Rate unavailable';
+
+      if (noteEl) {
+        noteEl.textContent = 'No direct or inverse rate is available for this pair.';
+        noteEl.classList.add('is-warning');
+      }
+      return;
+    }
+
+    var converted = amount * rate;
+
+    if (!Number.isFinite(converted)) {
+      resultEl.textContent = 'Amount too large';
+      return;
+    }
+
+    var amountSpan = document.createElement('span');
+    amountSpan.className = 'rate-convert-amount';
+    amountSpan.textContent = formatNumber(converted);
+
+    var currencySpan = document.createElement('span');
+    currencySpan.className = 'rate-convert-currency';
+    currencySpan.textContent = to;
+
+    resultEl.append(amountSpan, currencySpan);
+
+    if (noteEl) {
+      noteEl.textContent = 'Mid-market estimate · not a quote';
+      noteEl.classList.remove('is-warning');
+    }
+  }
+
+  amountEl.addEventListener('input', update);
+  fromEl.addEventListener('change', update);
+  toEl.addEventListener('change', update);
+
+  swapEl.addEventListener('click', function () {
+    var currentFrom = fromEl.value;
+    fromEl.value = toEl.value;
+    toEl.value = currentFrom;
+    update();
+  });
+
+  update();
+})();
+
+</script>

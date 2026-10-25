@@ -6,42 +6,183 @@
   <title>Profile · Globe Trust Bank</title>
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/portal.css">
+  <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
   <div class="portal-shell">
     <%- include('../partials/customer-nav') %>
     <div class="portal-main">
-      <h1>Profile</h1>
-      <% if (error) { %><div class="alert alert-err"><%= error %></div><% } %>
-      <% if (success) { %><div class="alert alert-ok"><%= success %></div><% } %>
-      <form method="post" action="/app/profile" class="form-grid" style="margin-top:1rem;">
+
+      <!-- ========== HEADER ========== -->
+      <div class="profile-header">
+        <div>
+          <h1>Profile</h1>
+          <p>Manage your personal details and preferences.</p>
+        </div>
+      </div>
+
+      <!-- ========== ALERTS ========== -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="profile-alert profile-alert-error"><%= error %></div>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="profile-alert profile-alert-success"><%= success %></div>
+      <% } %>
+
+      <!-- ========== IDENTITY CARD (avatar + email) ========== -->
+      <div class="profile-identity">
+        <%
+          var firstName = profile && profile.firstName ? profile.firstName : '';
+          var lastName  = profile && profile.lastName ? profile.lastName : '';
+          var initials  = ((firstName[0] || '') + (lastName[0] || '')).toUpperCase() || '?';
+          var fullName  = (firstName + ' ' + lastName).trim() || 'Your name';
+        %>
+        <div class="profile-avatar"><%= initials %></div>
+        <div class="profile-identity-info">
+          <strong><%= fullName %></strong>
+          <span><%= profile && profile.email ? profile.email : 'No email on file' %></span>
+        </div>
+        <span class="profile-identity-chip">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          Verified email
+        </span>
+      </div>
+
+      <!-- ========== FORM ========== -->
+      <form method="post" action="/app/profile" class="profile-form" id="profile-form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div>
-          <label>Email (read-only)</label>
-          <input value="<%= profile && profile.email ? profile.email : '' %>" disabled>
+
+        <!-- Identity section -->
+        <section class="profile-section">
+          <div class="profile-section-head">
+            <h2>Identity</h2>
+            <span>Your legal name as it appears on official documents</span>
+          </div>
+
+          <div class="profile-grid profile-grid-3">
+            <div class="profile-field">
+              <label for="profile-first">First name <span class="req">*</span></label>
+              <input
+                type="text"
+                id="profile-first"
+                name="firstName"
+                required
+                autocomplete="given-name"
+                value="<%= profile && profile.firstName ? profile.firstName : '' %>"
+              >
+            </div>
+
+            <div class="profile-field">
+              <label for="profile-middle">Middle name</label>
+              <input
+                type="text"
+                id="profile-middle"
+                name="middleName"
+                autocomplete="additional-name"
+                value="<%= profile && profile.middleName ? profile.middleName : '' %>"
+              >
+            </div>
+
+            <div class="profile-field">
+              <label for="profile-last">Last name <span class="req">*</span></label>
+              <input
+                type="text"
+                id="profile-last"
+                name="lastName"
+                required
+                autocomplete="family-name"
+                value="<%= profile && profile.lastName ? profile.lastName : '' %>"
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- Location & locale section -->
+        <section class="profile-section">
+          <div class="profile-section-head">
+            <h2>Location &amp; locale</h2>
+            <span>Used for statement formatting and communication preferences</span>
+          </div>
+
+          <div class="profile-grid profile-grid-2">
+            <div class="profile-field">
+              <label for="profile-country">Country code</label>
+              <input
+                type="text"
+                id="profile-country"
+                name="countryCode"
+                maxlength="2"
+                placeholder="NG"
+                autocomplete="country"
+                value="<%= profile && profile.countryCode ? profile.countryCode : '' %>"
+                style="text-transform: uppercase;"
+              >
+              <span class="profile-hint">ISO 3166-1 alpha-2 · e.g. NG, GB, US</span>
+            </div>
+
+            <div class="profile-field">
+              <label for="profile-locale">Preferred locale</label>
+              <input
+                type="text"
+                id="profile-locale"
+                name="preferredLocale"
+                placeholder="en"
+                autocomplete="language"
+                value="<%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>"
+              >
+              <span class="profile-hint">e.g. en, en-GB, fr</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Account section (read-only) -->
+        <section class="profile-section">
+          <div class="profile-section-head">
+            <h2>Account</h2>
+            <span>Contact support to change these details</span>
+          </div>
+
+          <div class="profile-grid profile-grid-1">
+            <div class="profile-field">
+              <label for="profile-email">
+                Email address
+                <span class="profile-field-badge">
+                  <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  Read-only
+                </span>
+              </label>
+              <input
+                type="email"
+                id="profile-email"
+                value="<%= profile && profile.email ? profile.email : '' %>"
+                disabled
+                class="profile-input-locked"
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- Save bar -->
+        <div class="profile-save-bar">
+          <span class="profile-save-hint">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+            Changes apply to future statements and communications.
+          </span>
+          <button type="submit" class="profile-save-btn">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Save profile
+          </button>
         </div>
-        <div>
-          <label>First name</label>
-          <input name="firstName" required value="<%= profile && profile.firstName ? profile.firstName : '' %>">
-        </div>
-        <div>
-          <label>Middle name</label>
-          <input name="middleName" value="<%= profile && profile.middleName ? profile.middleName : '' %>">
-        </div>
-        <div>
-          <label>Last name</label>
-          <input name="lastName" required value="<%= profile && profile.lastName ? profile.lastName : '' %>">
-        </div>
-        <div>
-          <label>Country code (ISO 3166-1 alpha-2)</label>
-          <input name="countryCode" maxlength="2" placeholder="NG" value="<%= profile && profile.countryCode ? profile.countryCode : '' %>">
-        </div>
-        <div>
-          <label>Preferred locale</label>
-          <input name="preferredLocale" value="<%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>">
-        </div>
-        <button class="btn btn-navy" type="submit">Save profile</button>
       </form>
+
     </div>
   </div>
 </body>

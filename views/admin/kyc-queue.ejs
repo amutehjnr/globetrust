@@ -1,65 +1,208 @@
-<%- include('../partials/admin-shell-start') %>
+<%- include('../../partials/admin-shell-start') %>
+
+<%
+  var kycQueue = Array.isArray(queue) ? queue : [];
+  var pendingCount = kycQueue.length;
+%>
 
 <div class="db-greeting">
   <div>
     <h1>KYC review queue</h1>
-    <p>Pending identity documents.</p>
+    <p>Pending identity documents awaiting review.</p>
   </div>
   <span class="db-chip"><%= queue.length %> pending</span>
 </div>
 
-<% if (message) { %><div class="db-alert" style="background:#d8ead8;color:#1e5c2a;"><%= message %></div><% } %>
-<% if (typeof error !== 'undefined' && error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span><%= message %></span>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+    <span><%= error %></span>
+  </div>
+<% } %>
 
-<section class="db-panel">
-  <% if (!queue.length) { %>
-    <p class="db-muted">No pending documents.</p>
-  <% } else { %>
-    <div class="table-wrap" style="border:0;box-shadow:none;">
-      <table class="data">
-        <thead>
-          <tr>
-            <th>Customer</th>
-            <th>Email</th>
-            <th>Document</th>
-            <th>Submitted</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% queue.forEach(function(d) { %>
-            <tr>
-              <td>
-                <%= d.customerReference || '—' %><br>
-                <small><%= [d.firstName, d.lastName].filter(Boolean).join(' ') %></small>
-              </td>
-              <td><%= d.email %></td>
-              <td>
-                <%= d.documentType %><br>
-                <a href="/admin/kyc/documents/<%= d.id %>" target="_blank" rel="noopener">View securely</a>
-              </td>
-              <td><%= d.createdAt %></td>
-              <td>
-                <div class="kyc-actions">
-                  <a class="btn btn-outline" style="padding:0.35rem 0.65rem;font-size:0.78rem;" href="/admin/kyc/<%= d.id %>/review">Review…</a>
-                  <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button class="btn btn-navy" name="decision" value="approved" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;">Approve</button>
-                  </form>
-                  <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kyc-inline-form" onsubmit="return confirm('Reject this document?');">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <input type="hidden" name="reason" value="Rejected from queue">
-                    <button class="btn btn-outline" name="decision" value="rejected" type="submit" style="padding:0.35rem 0.65rem;font-size:0.78rem;border-color:#8B3A3A;color:#8B3A3A;">Reject</button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+<%
+  var pendingCount = (queue || []).length;
+  var oldestText = '';
+  if (pendingCount) {
+    var oldestMs = Infinity;
+    queue.forEach(function(d) {
+      if (d.createdAt) {
+        var t = new Date(d.createdAt).getTime();
+        if (!isNaN(t) && t < oldestMs) oldestMs = t;
+      }
+    });
+    if (isFinite(oldestMs)) {
+      var ms = Date.now() - oldestMs;
+      var days = Math.floor(ms / (1000 * 60 * 60 * 24));
+      var hours = Math.floor(ms / (1000 * 60 * 60));
+      if (days >= 1) oldestText = days + ' day' + (days === 1 ? '' : 's') + ' ago';
+      else if (hours >= 1) oldestText = hours + ' hour' + (hours === 1 ? '' : 's') + ' ago';
+      else oldestText = 'just now';
+    }
+  }
+%>
+
+<% if (pendingCount > 0) { %>
+
+  <!-- ========== SUMMARY ========== -->
+  <section class="kycq-summary">
+    <div class="kycq-summary-item">
+      <span class="kycq-summary-label">Pending review</span>
+      <strong class="kycq-summary-value kycq-summary-value-warn"><%= pendingCount %></strong>
+      <span class="kycq-summary-hint"><%= pendingCount === 1 ? 'document' : 'documents' %> awaiting decision</span>
     </div>
-  <% } %>
-  <p class="db-sandbox-note" style="margin-top:1rem;">Prefer <strong>Review…</strong> when rejecting so you can record a clear reason.</p>
-</section>
+    <% if (oldestText) { %>
+      <div class="kycq-summary-item">
+        <span class="kycq-summary-label">Oldest submission</span>
+        <strong class="kycq-summary-value"><%= oldestText %></strong>
+        <span class="kycq-summary-hint">Aim to review within 48 hours</span>
+      </div>
+    <% } %>
+    <div class="kycq-summary-item">
+      <span class="kycq-summary-label">Workflow</span>
+      <strong class="kycq-summary-value" style="font-size: 0.95rem;">View → Decide</strong>
+      <span class="kycq-summary-hint">Always open the document before deciding</span>
+    </div>
+  </section>
 
-<%- include('../partials/admin-shell-end') %>
+  <!-- ========== QUEUE ========== -->
+  <section class="db-panel kycq-panel">
+    <div class="kycq-panel-head">
+      <h2>Pending documents</h2>
+      <span class="kycq-panel-count"><%= pendingCount %> in queue</span>
+    </div>
+
+    <ul class="kycq-list">
+      <% queue.forEach(function(d) { %>
+        <%
+          var fn = d.firstName || '';
+          var ln = d.lastName || '';
+          var fullName = (fn + ' ' + ln).trim() || 'Customer';
+          var initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || (d.email ? d.email[0].toUpperCase() : '?');
+          var ref = d.customerReference || '—';
+          var docType = d.documentType || 'document';
+          var typeLabel = {
+            passport: 'Passport',
+            national_id: 'National ID',
+            drivers_license: "Driver's licence",
+            proof_of_address: 'Proof of address',
+            other: 'Other document'
+          }[docType] || String(docType).replace(/_/g, ' ');
+
+          var ageHours = 0;
+          if (d.createdAt) {
+            var t = new Date(d.createdAt).getTime();
+            if (!isNaN(t)) ageHours = (Date.now() - t) / (1000 * 60 * 60);
+          }
+          var isUrgent = ageHours > 48;
+          var ageLabel = '';
+          if (ageHours >= 24) {
+            var days = Math.floor(ageHours / 24);
+            ageLabel = days + 'd ago';
+          } else if (ageHours >= 1) {
+            ageLabel = Math.floor(ageHours) + 'h ago';
+          } else if (ageHours > 0) {
+            ageLabel = 'just now';
+          }
+        %>
+        <li class="kycq-item <%= isUrgent ? 'is-urgent' : '' %>">
+
+          <div class="kycq-customer">
+            <div class="kycq-avatar"><%= initials %></div>
+            <div class="kycq-customer-info">
+              <strong><%= fullName %></strong>
+              <span class="kycq-customer-email"><%= d.email %></span>
+              <span class="kycq-customer-ref">Ref: <code><%= ref %></code></span>
+            </div>
+          </div>
+
+          <div class="kycq-doc">
+            <div class="kycq-doc-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div class="kycq-doc-info">
+              <strong><%= typeLabel %></strong>
+              <a href="/admin/kyc/documents/<%= d.id %>" target="_blank" rel="noopener" class="kycq-doc-link">
+                View securely
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="kycq-time">
+            <span class="kycq-time-label">Submitted</span>
+            <strong class="kycq-time-value <%= isUrgent ? 'kycq-time-urgent' : '' %>">
+              <%= ageLabel || d.createdAt %>
+            </strong>
+            <% if (isUrgent) { %>
+              <span class="kycq-time-warning">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                Overdue
+              </span>
+            <% } %>
+          </div>
+
+          <div class="kycq-actions">
+            <a href="/admin/kyc/<%= d.id %>/review" class="kycq-btn kycq-btn-ghost">
+              Review
+            </a>
+            <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kycq-inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="kycq-btn kycq-btn-approve" name="decision" value="approved" type="submit">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Approve
+              </button>
+            </form>
+            <form method="post" action="/admin/kyc/<%= d.id %>/review" class="kycq-inline" onsubmit="return confirm('Reject this document? Consider using Review… to record a clear reason.');">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="reason" value="Rejected from queue">
+              <button class="kycq-btn kycq-btn-reject" name="decision" value="rejected" type="submit">
+                Reject
+              </button>
+            </form>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+
+    <div class="kycq-panel-foot">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+      </svg>
+      <span>Prefer <strong>Review…</strong> when rejecting so you can record a clear reason.</span>
+    </div>
+  </section>
+
+<% } else { %>
+
+  <section class="db-panel kycq-empty">
+    <div class="kycq-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3>All caught up</h3>
+    <p>There are no pending identity documents in the review queue.</p>
+  </section>
+
+<% } %>
+
+<%- include('../../partials/admin-shell-end') %>

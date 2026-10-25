@@ -1,0 +1,311 @@
+/* public/css/register-received.css */
+
+/* Registration Received — Globe Trust Bank */
+
+.reg-recv-shell {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px 80px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(198, 164, 103, 0.10), transparent 48%),
+    var(--color-ivory, #f8f6f0);
+}
+
+.reg-recv-container {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 48px 52px 40px;
+  background: #fffefa;
+  border: 1px solid rgba(30, 42, 58, 0.09);
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(22, 34, 49, 0.07);
+  text-align: center;
+}
+
+/* Confirmation icon */
+
+.reg-recv-icon {
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  color: #b18b4c;
+  background: rgba(193, 160, 99, 0.12);
+  border: 1px solid rgba(177, 139, 76, 0.28);
+  border-radius: 50%;
+}
+
+.reg-recv-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* Heading and introduction */
+
+.reg-recv-eyebrow {
+  display: inline-block;
+  margin-bottom: 13px;
+  color: #a47e41;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.reg-recv-title {
+  margin: 0 0 17px;
+  color: #172638;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(30px, 4vw, 39px);
+  font-weight: 500;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+}
+
+.reg-recv-lead {
+  max-width: 440px;
+  margin: 0 auto;
+  color: #69717b;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.85;
+}
+
+/* Next steps */
+
+.reg-recv-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 34px;
+  padding: 7px 0;
+  text-align: left;
+  border-top: 1px solid #ece8df;
+  border-bottom: 1px solid #ece8df;
+}
+
+.reg-recv-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 17px;
+  padding: 20px 4px;
+}
+
+.reg-recv-step + .reg-recv-step {
+  border-top: 1px solid #f0ede6;
+}
+
+.reg-recv-step-num {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a47e41;
+  background: #f7f2e8;
+  border: 1px solid #e8dcc5;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reg-recv-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.reg-recv-step-body strong {
+  color: #1b2b3d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.reg-recv-step-body span {
+  color: #737b84;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* Compliance note */
+
+.reg-recv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 25px;
+  padding: 15px 16px;
+  color: #6d716f;
+  background: #f8f6f0;
+  border: 1px solid #eee8db;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.reg-recv-note svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #a47e41;
+}
+
+.reg-recv-note span {
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* Primary action */
+
+.reg-recv-actions {
+  margin-top: 29px;
+}
+
+.reg-recv-btn-primary {
+  width: 100%;
+  min-height: 51px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 14px 22px;
+  color: #fffdf8;
+  background: #172638;
+  border: 1px solid #172638;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.45px;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.reg-recv-btn-primary svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 180ms ease;
+}
+
+.reg-recv-btn-primary:hover {
+  background: #263d55;
+  border-color: #263d55;
+  box-shadow: 0 7px 18px rgba(23, 38, 56, 0.14);
+}
+
+.reg-recv-btn-primary:hover svg {
+  transform: translateX(3px);
+}
+
+.reg-recv-btn-primary:focus-visible,
+.reg-recv-secondary-link:focus-visible {
+  outline: 3px solid #c4a46a;
+  outline-offset: 4px;
+}
+
+/* Secondary link */
+
+.reg-recv-footer {
+  margin-top: 24px;
+}
+
+.reg-recv-secondary-link {
+  display: inline-block;
+  color: #747b82;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.reg-recv-secondary-link:hover {
+  color: #a47e41;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+  .reg-recv-shell {
+    min-height: auto;
+    padding: 36px 16px 48px;
+  }
+
+  .reg-recv-container {
+    padding: 34px 23px 29px;
+    border-radius: 6px;
+  }
+
+  .reg-recv-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 21px;
+  }
+
+  .reg-recv-icon svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .reg-recv-title {
+    font-size: 31px;
+  }
+
+  .reg-recv-lead {
+    font-size: 13px;
+  }
+
+  .reg-recv-steps {
+    margin-top: 27px;
+  }
+
+  .reg-recv-step {
+    gap: 13px;
+    padding: 17px 0;
+  }
+
+  .reg-recv-step-body strong {
+    font-size: 12px;
+  }
+
+  .reg-recv-step-body span {
+    font-size: 11px;
+  }
+
+  .reg-recv-note {
+    padding: 13px;
+  }
+
+  .reg-recv-btn-primary {
+    min-height: 49px;
+  }
+}
+
+@media (max-width: 360px) {
+  .reg-recv-container {
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+
+  .reg-recv-title {
+    font-size: 27px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reg-recv-btn-primary,
+  .reg-recv-btn-primary svg,
+  .reg-recv-secondary-link {
+    transition: none;
+  }
+}

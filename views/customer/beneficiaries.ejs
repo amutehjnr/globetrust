@@ -8,22 +8,128 @@
   <a class="db-promo__btn" href="/app/transfers" style="align-self:center;">New transfer</a>
 </div>
 
-<section class="db-panel">
-  <% if (!beneficiaries || !beneficiaries.length) { %>
-    <p class="db-muted">No saved beneficiaries yet. When you send a transfer, you can save the payee here.</p>
-  <% } else { %>
-    <ul class="db-tx-list">
+<% if (!beneficiaries || !beneficiaries.length) { %>
+
+  <!-- ========== EMPTY STATE ========== -->
+  <section class="db-panel benef-empty">
+    <div class="benef-empty-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+      </svg>
+    </div>
+    <h3>No saved beneficiaries yet</h3>
+    <p>When you send a transfer, you can save the payee here for faster future payments.</p>
+    <a href="/app/transfers" class="db-chip">Make your first transfer →</a>
+  </section>
+
+<% } else { %>
+
+  <!-- ========== SEARCH BAR ========== -->
+  <div class="benef-toolbar">
+    <div class="benef-search">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        id="benef-search"
+        placeholder="Search by name or account…"
+        autocomplete="off"
+        aria-label="Search beneficiaries"
+      >
+    </div>
+    <span class="benef-count">
+      <strong id="benef-count-visible"><%= beneficiaries.length %></strong>
+      <span id="benef-count-label"><%= beneficiaries.length === 1 ? 'beneficiary' : 'beneficiaries' %></span>
+    </span>
+  </div>
+
+  <!-- ========== BENEFICIARY LIST ========== -->
+  <section class="db-panel benef-panel">
+    <ul class="benef-list" id="benef-list">
       <% beneficiaries.forEach(function(b) { %>
-        <li>
-          <span class="db-tx-icon">◎</span>
-          <div class="db-tx-body">
-            <strong><%= b.name %></strong>
-            <small><%= b.accountRef %> · <%= b.currency || '' %></small>
+        <%
+          var name = b.name || 'Unknown';
+          var parts = name.trim().split(/\s+/);
+          var initials = (parts[0] ? parts[0][0] : '') + (parts[1] ? parts[1][0] : '');
+          initials = initials.toUpperCase() || '?';
+          var ref = b.accountRef || '';
+          var masked = ref.length > 4 ? '•••• ' + ref.slice(-4) : ref;
+        %>
+        <li class="benef-item" data-search="<%= name.toLowerCase() %> <%= ref.toLowerCase() %>">
+          <div class="benef-avatar"><%= initials %></div>
+
+          <div class="benef-body">
+            <div class="benef-name-row">
+              <strong class="benef-name"><%= name %></strong>
+              <% if (b.currency) { %>
+                <span class="benef-currency"><%= b.currency %></span>
+              <% } %>
+            </div>
+            <span class="benef-ref"><%= masked %></span>
+          </div>
+
+          <div class="benef-actions">
+            <a
+              href="/app/transfers?beneficiary=<%= b.id %>"
+              class="benef-btn benef-btn-primary"
+              title="Send money to <%= name %>"
+            >
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+              <span>Send</span>
+            </a>
+            <% if (typeof editUrl !== 'undefined' || true) { %>
+              <a
+                href="/app/beneficiaries/<%= b.id %>/edit"
+                class="benef-btn benef-btn-ghost"
+                title="Edit"
+                aria-label="Edit <%= name %>"
+              >
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+              </a>
+            <% } %>
           </div>
         </li>
       <% }) %>
     </ul>
-  <% } %>
-</section>
+
+    <!-- Empty search result -->
+    <div class="benef-no-results" id="benef-no-results" hidden>
+      <p>No beneficiaries match your search.</p>
+    </div>
+  </section>
+
+  <!-- ========== SEARCH SCRIPT ========== -->
+  <script>
+    (function () {
+      var search = document.getElementById('benef-search');
+      var items = document.querySelectorAll('.benef-item');
+      var noResults = document.getElementById('benef-no-results');
+      var countVisible = document.getElementById('benef-count-visible');
+      var countLabel = document.getElementById('benef-count-label');
+      if (!search || !items.length) return;
+
+      function update() {
+        var q = search.value.trim().toLowerCase();
+        var shown = 0;
+        items.forEach(function (item) {
+          var match = !q || item.dataset.search.indexOf(q) !== -1;
+          item.hidden = !match;
+          if (match) shown++;
+        });
+        noResults.hidden = shown !== 0;
+        countVisible.textContent = shown;
+        countLabel.textContent = shown === 1 ? 'beneficiary' : 'beneficiaries';
+      }
+
+      search.addEventListener('input', update);
+    })();
+  </script>
+
+<% } %>
 
 <%- include('../partials/customer-shell-end') %>

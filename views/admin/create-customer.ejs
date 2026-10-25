@@ -5,55 +5,410 @@
     <h1>Create customer account</h1>
     <p>Provision a portal user. Share the temporary password securely.</p>
   </div>
-  <a href="/admin/customers" class="db-chip">Back to customers</a>
+  <a href="/admin/customers" class="db-chip">← Back to customers</a>
 </div>
 
-<% if (error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
-<% if (success) { %><div class="db-alert" style="background:#d8ead8;color:#1e5c2a;"><%= success %></div><% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+    <span><%= error %></span>
+  </div>
+<% } %>
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="db-alert db-alert--ok">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span><%= success %></span>
+  </div>
+<% } %>
 
-<section class="db-panel" style="max-width:560px;">
-  <form method="post" action="/admin/customers/new" class="form-grid">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<form method="post" action="/admin/customers/new" class="nc-form" id="nc-form" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;">
-      <div>
-        <label>First name</label>
-        <input name="firstName" required value="<%= values.firstName || '' %>">
+  <div class="nc-layout">
+
+    <!-- ========== LEFT: FORM ========== -->
+    <div class="nc-form-main">
+
+      <!-- Identity section -->
+      <section class="nc-section">
+        <div class="nc-section-head">
+          <h2>Customer identity</h2>
+          <span>Name and contact details</span>
+        </div>
+
+        <div class="nc-grid nc-grid-2">
+          <div class="nc-field">
+            <label for="nc-first">First name <span class="nc-req">*</span></label>
+            <input
+              type="text"
+              id="nc-first"
+              name="firstName"
+              required
+              autocomplete="given-name"
+              value="<%= values.firstName || '' %>"
+            >
+          </div>
+          <div class="nc-field">
+            <label for="nc-last">Last name <span class="nc-req">*</span></label>
+            <input
+              type="text"
+              id="nc-last"
+              name="lastName"
+              required
+              autocomplete="family-name"
+              value="<%= values.lastName || '' %>"
+            >
+          </div>
+        </div>
+
+        <div class="nc-grid nc-grid-2">
+          <div class="nc-field">
+            <label for="nc-email">Email address <span class="nc-req">*</span></label>
+            <input
+              type="email"
+              id="nc-email"
+              name="email"
+              required
+              autocomplete="off"
+              placeholder="name@example.com"
+              value="<%= values.email || '' %>"
+            >
+          </div>
+          <div class="nc-field">
+            <label for="nc-phone">
+              Phone
+              <span class="nc-optional">optional</span>
+            </label>
+            <input
+              type="tel"
+              id="nc-phone"
+              name="phoneE164"
+              autocomplete="tel"
+              placeholder="+2348012345678"
+              value="<%= values.phoneE164 || '' %>"
+            >
+            <span class="nc-hint">E.164 format</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account setup section -->
+      <section class="nc-section">
+        <div class="nc-section-head">
+          <h2>Account setup</h2>
+          <span>Password and activation</span>
+        </div>
+
+        <!-- Password with reveal + generate -->
+        <div class="nc-field">
+          <label for="nc-password">Temporary password <span class="nc-req">*</span></label>
+          <div class="nc-password-wrap">
+            <input
+              type="password"
+              id="nc-password"
+              name="password"
+              required
+              minlength="12"
+              autocomplete="new-password"
+              placeholder="Min 12 chars · upper · lower · number"
+            >
+            <button
+              type="button"
+              class="nc-password-toggle"
+              id="nc-password-toggle"
+              aria-label="Show password"
+              title="Show/hide password"
+            >
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="nc-icon-eye">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="nc-icon-eye-off" style="display:none;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            </button>
+          </div>
+          <div class="nc-password-actions">
+            <button type="button" class="nc-btn nc-btn-ghost" id="nc-generate-password">
+              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              Generate strong password
+            </button>
+          </div>
+          <div class="nc-strength" id="nc-strength" aria-live="polite">
+            <div class="nc-strength-bar">
+              <span class="nc-strength-fill" id="nc-strength-fill"></span>
+            </div>
+            <span class="nc-strength-label" id="nc-strength-label">Enter a password</span>
+          </div>
+        </div>
+
+        <!-- Activation choice (radio cards) -->
+        <div class="nc-field">
+          <label>Account status</label>
+          <div class="nc-radio-group">
+            <label class="nc-radio-card">
+              <input
+                type="radio"
+                name="activate"
+                value="yes"
+                checked
+              >
+              <span class="nc-radio-card-inner">
+                <span class="nc-radio-card-icon">
+                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+                <span class="nc-radio-card-body">
+                  <strong>Active</strong>
+                  <span>Customer can sign in immediately with the temporary password.</span>
+                </span>
+              </span>
+            </label>
+
+            <label class="nc-radio-card">
+              <input
+                type="radio"
+                name="activate"
+                value="no"
+              >
+              <span class="nc-radio-card-inner">
+                <span class="nc-radio-card-icon">
+                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+                <span class="nc-radio-card-body">
+                  <strong>Pending</strong>
+                  <span>Account created but sign-in blocked until email verification.</span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Submit row -->
+      <div class="nc-submit-row">
+        <button type="submit" class="nc-btn nc-btn-primary">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+          </svg>
+          Create customer account
+        </button>
       </div>
-      <div>
-        <label>Last name</label>
-        <input name="lastName" required value="<%= values.lastName || '' %>">
+
+    </div>
+
+    <!-- ========== RIGHT: INFO PANEL ========== -->
+    <aside class="nc-info-panel">
+
+      <!-- Preview -->
+      <div class="nc-info-card">
+        <div class="nc-info-head">
+          <span class="nc-info-eyebrow">Preview</span>
+        </div>
+        <div class="nc-preview">
+          <div class="nc-preview-avatar" id="nc-preview-avatar">—</div>
+          <div class="nc-preview-info">
+            <strong id="nc-preview-name">Customer name</strong>
+            <span id="nc-preview-email">email@example.com</span>
+          </div>
+        </div>
+        <div class="nc-preview-status" id="nc-preview-status">
+          <span class="nc-preview-dot"></span>
+          Active on creation
+        </div>
       </div>
-    </div>
 
-    <div>
-      <label>Email</label>
-      <input type="email" name="email" required autocomplete="off" value="<%= values.email || '' %>">
-    </div>
+      <!-- Security note -->
+      <div class="nc-info-card nc-info-note">
+        <div class="nc-info-head">
+          <span class="nc-info-eyebrow">Security</span>
+        </div>
+        <ul class="nc-note-list">
+          <li>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <span>Password is hashed with Argon2 before storage.</span>
+          </li>
+          <li>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+            <span>Share the password only via a secure channel.</span>
+          </li>
+          <li>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span>Ask the customer to change it after first sign-in.</span>
+          </li>
+        </ul>
+      </div>
 
-    <div>
-      <label>Phone (optional, E.164)</label>
-      <input name="phoneE164" placeholder="+2348012345678" value="<%= values.phoneE164 || '' %>">
-    </div>
+      <!-- Admin note -->
+      <div class="nc-info-card nc-info-admin">
+        <div class="nc-info-head">
+          <span class="nc-info-eyebrow">Admin only</span>
+        </div>
+        <p>
+          This action is logged in the audit trail. Creating a customer does
+          not enable real-money banking — that requires bank approval via the
+          core banking workflow.
+        </p>
+      </div>
 
-    <div>
-      <label>Temporary password</label>
-      <input type="password" name="password" required minlength="12" autocomplete="new-password" placeholder="Min 12 · upper · lower · number">
-    </div>
+    </aside>
 
-    <div>
-      <label>Account status</label>
-      <select name="activate">
-        <option value="yes">Active (can sign in immediately)</option>
-        <option value="no">Pending (email verification style)</option>
-      </select>
-    </div>
+  </div>
+</form>
 
-    <button class="btn btn-navy" type="submit">Create customer account</button>
-  </form>
-  <p class="db-sandbox-note" style="margin-top:1rem;">
-    Admin-only. Password is hashed with Argon2. Tell the customer to change it after first sign-in.
-  </p>
-</section>
+<!-- ========== SCRIPT ========== -->
+<script>
+  (function () {
+    var form = document.getElementById('nc-form');
+    if (!form) return;
+
+    var firstEl    = document.getElementById('nc-first');
+    var lastEl     = document.getElementById('nc-last');
+    var emailEl    = document.getElementById('nc-email');
+    var pwdEl      = document.getElementById('nc-password');
+    var toggleEl   = document.getElementById('nc-password-toggle');
+    var generateEl = document.getElementById('nc-generate-password');
+    var strengthEl = document.getElementById('nc-strength');
+    var fillEl     = document.getElementById('nc-strength-fill');
+    var labelEl    = document.getElementById('nc-strength-label');
+
+    var previewAvatar = document.getElementById('nc-preview-avatar');
+    var previewName   = document.getElementById('nc-preview-name');
+    var previewEmail  = document.getElementById('nc-preview-email');
+    var previewStatus = document.getElementById('nc-preview-status');
+
+    var actives = document.querySelectorAll('input[name="activate"]');
+
+    /* ---- Preview updates ---- */
+    function updatePreview() {
+      var fn = firstEl.value.trim();
+      var ln = lastEl.value.trim();
+      var em = emailEl.value.trim();
+
+      var fullName = (fn + ' ' + ln).trim() || 'Customer name';
+      previewName.textContent = fullName;
+
+      var initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase();
+      if (!initials && em) initials = em[0].toUpperCase();
+      previewAvatar.textContent = initials || '—';
+
+      previewEmail.textContent = em || 'email@example.com';
+    }
+
+    [firstEl, lastEl, emailEl].forEach(function (el) {
+      el.addEventListener('input', updatePreview);
+    });
+
+    /* ---- Activation preview ---- */
+    function updateActivation() {
+      var active = document.querySelector('input[name="activate"]:checked');
+      var val = active ? active.value : 'yes';
+      if (val === 'yes') {
+        previewStatus.innerHTML = '<span class="nc-preview-dot"></span>Active on creation';
+        previewStatus.classList.remove('nc-preview-status-pending');
+      } else {
+        previewStatus.innerHTML = '<span class="nc-preview-dot"></span>Pending verification';
+        previewStatus.classList.add('nc-preview-status-pending');
+      }
+    }
+
+    actives.forEach(function (r) {
+      r.addEventListener('change', updateActivation);
+    });
+
+    /* ---- Password visibility ---- */
+    if (toggleEl) {
+      toggleEl.addEventListener('click', function () {
+        var visible = pwdEl.type === 'text';
+        pwdEl.type = visible ? 'password' : 'text';
+        toggleEl.querySelector('.nc-icon-eye').style.display = visible ? '' : 'none';
+        toggleEl.querySelector('.nc-icon-eye-off').style.display = visible ? 'none' : '';
+        toggleEl.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+      });
+    }
+
+    /* ---- Password strength ---- */
+    function scorePassword(p) {
+      var score = 0;
+      if (!p) return 0;
+      if (p.length >= 8) score++;
+      if (p.length >= 12) score++;
+      if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+      if (/\d/.test(p)) score++;
+      if (/[^A-Za-z0-9]/.test(p)) score++;
+      return Math.min(score, 5);
+    }
+
+    function updateStrength() {
+      var p = pwdEl.value;
+      var s = scorePassword(p);
+      var pct = (s / 5) * 100;
+      var label, color;
+      if (!p) { label = 'Enter a password'; color = '#94a3b8'; }
+      else if (s <= 1) { label = 'Too weak'; color = '#dc2626'; }
+      else if (s === 2) { label = 'Weak'; color = '#f59e0b'; }
+      else if (s === 3) { label = 'Fair'; color = '#eab308'; }
+      else if (s === 4) { label = 'Good'; color = '#10b981'; }
+      else { label = 'Strong'; color = '#047857'; }
+      fillEl.style.width = pct + '%';
+      fillEl.style.background = color;
+      labelEl.textContent = label;
+      labelEl.style.color = color;
+    }
+
+    pwdEl.addEventListener('input', updateStrength);
+
+    /* ---- Generate strong password ---- */
+    if (generateEl) {
+      generateEl.addEventListener('click', function () {
+        var upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        var lower = 'abcdefghijkmnpqrstuvwxyz';
+        var digits = '23456789';
+        var symbols = '!@#$%&*?';
+        var all = upper + lower + digits + symbols;
+
+        var pwd = [
+          upper[Math.floor(Math.random() * upper.length)],
+          lower[Math.floor(Math.random() * lower.length)],
+          digits[Math.floor(Math.random() * digits.length)],
+          symbols[Math.floor(Math.random() * symbols.length)]
+        ];
+        for (var i = 0; i < 12; i++) {
+          pwd.push(all[Math.floor(Math.random() * all.length)]);
+        }
+        pwd = pwd.sort(function () { return Math.random() - 0.5; }).join('').slice(0, 16);
+
+        pwdEl.value = pwd;
+        pwdEl.type = 'text';
+        toggleEl.querySelector('.nc-icon-eye').style.display = 'none';
+        toggleEl.querySelector('.nc-icon-eye-off').style.display = '';
+        toggleEl.setAttribute('aria-label', 'Hide password');
+        updateStrength();
+        pwdEl.focus();
+      });
+    }
+
+    /* ---- Init ---- */
+    updatePreview();
+    updateActivation();
+    updateStrength();
+  })();
+</script>
+<script src="/js/admin-create-customer.js" defer></script>
 
 <%- include('../partials/admin-shell-end') %>

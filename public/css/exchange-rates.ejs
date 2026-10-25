@@ -1,0 +1,509 @@
+
+/* =========================================================
+   GLOBE TRUST BANK — EXCHANGE RATES
+   Theme: Midnight Navy, Ivory & Champagne Gold
+   File: public/css/exchange-rates.css
+========================================================= */
+
+.rates-empty,
+.rate-convert-panel {
+  border: 1px solid var(--border, #e8e0d3);
+  border-radius: 20px;
+  background: var(--surface, #fffdf9);
+  box-shadow: 0 8px 28px rgba(16, 34, 56, 0.045);
+}
+
+.rates-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 44px 24px;
+  text-align: center;
+}
+
+.rates-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 20px;
+  color: #a77a35;
+  background: #f7f0e3;
+  border: 1px solid #eadcc3;
+  border-radius: 20px;
+}
+
+.rates-empty-icon svg {
+  width: 31px;
+  height: 31px;
+}
+
+.rates-empty h3 {
+  margin: 0 0 9px;
+  color: #102238;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.rates-empty p {
+  max-width: 420px;
+  margin: 0;
+  color: #788391;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+/* Rates grid */
+
+.rates-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.rate-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  padding: 23px;
+  background: #fffdf9;
+  border: 1px solid #e8e0d3;
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(16, 34, 56, 0.035);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.rate-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #a77a35, #dfc99c);
+  content: "";
+}
+
+.rate-card:hover {
+  transform: translateY(-3px);
+  border-color: #d9c7a7;
+  box-shadow: 0 13px 30px rgba(16, 34, 56, 0.075);
+}
+
+.rate-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 29px;
+}
+
+.rate-pair {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.rate-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 43px;
+  min-height: 34px;
+  padding: 5px 8px;
+  color: #102238;
+  background: #f3f0e9;
+  border: 1px solid #e9e2d6;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+}
+
+.rate-code-quote {
+  color: #89632a;
+  background: #fbf5e9;
+  border-color: #eee0c4;
+}
+
+.rate-slash {
+  color: #a5aab1;
+  font-size: 0.9rem;
+}
+
+.rate-change {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-height: 29px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rate-change svg {
+  width: 14px;
+  height: 14px;
+}
+
+.rate-change-up {
+  color: #23744f;
+  background: #eaf6ee;
+}
+
+.rate-change-down {
+  color: #b23e43;
+  background: #fff0ef;
+}
+
+.rate-change-flat {
+  color: #737d89;
+  background: #f0f2f4;
+}
+
+.rate-value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.rate-mid {
+  color: #102238;
+  font-size: clamp(1.7rem, 2.3vw, 2.25rem);
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.rate-quote {
+  color: #788391;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.rate-meta {
+  padding-top: 15px;
+  border-top: 1px solid #eee8de;
+  color: #788391;
+  font-size: 0.81rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* Converter panel */
+
+.rate-convert-panel {
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.rate-convert-panel .db-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.rate-convert-panel .db-panel__head h2 {
+  margin: 0;
+  color: #102238;
+  font-size: 1.2rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.rate-convert-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  color: #89632a;
+  background: #fbf3e4;
+  border: 1px solid #ecdfc6;
+  border-radius: 30px;
+  font-size: 0.73rem;
+  font-weight: 750;
+}
+
+.rate-convert-lead {
+  max-width: 760px;
+  margin: 0 0 26px;
+  color: #788391;
+  font-size: 0.88rem;
+  line-height: 1.75;
+}
+
+.rate-convert-lead a {
+  color: #89632a;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #d9c49b;
+  text-underline-offset: 3px;
+}
+
+.rate-convert-lead a:hover {
+  color: #102238;
+}
+
+.rate-convert-form {
+  margin: 0;
+}
+
+.rate-convert-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px minmax(0, 1fr);
+  align-items: end;
+  gap: 14px;
+}
+
+.rate-convert-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 9px;
+}
+
+.rate-convert-field label {
+  color: #263647;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.rate-convert-field input,
+.rate-convert-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 49px;
+  padding: 0 13px;
+  color: #102238;
+  background: #fff;
+  border: 1px solid #ddd6ca;
+  border-radius: 10px;
+  outline: none;
+  font: inherit;
+  font-size: 0.91rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.rate-convert-field input:focus,
+.rate-convert-field select:focus {
+  border-color: #b48a4b;
+  box-shadow: 0 0 0 3px rgba(167, 122, 53, 0.13);
+}
+
+.rate-convert-field input:disabled,
+.rate-convert-field select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.rate-convert-swap {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding-bottom: 3px;
+}
+
+#rate-swap {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  color: #89632a;
+  background: #fbf5e9;
+  border: 1px solid #eadcc3;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+
+#rate-swap:hover {
+  background: #f1e4cc;
+  border-color: #d4bc91;
+  transform: rotate(180deg);
+}
+
+#rate-swap:focus-visible {
+  outline: 3px solid rgba(167, 122, 53, 0.35);
+  outline-offset: 3px;
+}
+
+#rate-swap svg {
+  width: 19px;
+  height: 19px;
+}
+
+.rate-convert-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 26px;
+  padding: 23px 24px;
+  background:
+    radial-gradient(ellipse at top right, rgba(217, 189, 131, 0.13), transparent 55%),
+    #f7f4ed;
+  border: 1px solid #e9dfce;
+  border-radius: 15px;
+}
+
+.rate-convert-result-label {
+  color: #788391;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.rate-convert-result-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 9px;
+  color: #102238;
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+
+.rate-convert-amount {
+  overflow-wrap: anywhere;
+}
+
+.rate-convert-currency {
+  color: #89632a;
+  font-size: 0.9rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.rate-convert-result-note {
+  color: #89919a;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.rate-convert-result-note.is-warning {
+  color: #9a6b1c;
+}
+
+/* Keyboard accessibility */
+
+.rate-card:focus-within {
+  outline: 2px solid rgba(167, 122, 53, 0.5);
+  outline-offset: 3px;
+}
+
+/* Tablet */
+
+@media (max-width: 1050px) {
+  .rates-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rate-convert-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rate-convert-swap {
+    align-items: center;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0;
+  }
+
+  .rate-convert-field:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 620px) {
+  .rates-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+    margin-bottom: 20px;
+  }
+
+  .rate-card {
+    padding: 20px;
+  }
+
+  .rate-card-head {
+    margin-bottom: 24px;
+  }
+
+  .rate-mid {
+    font-size: 1.9rem;
+  }
+
+  .rate-convert-panel {
+    padding: 19px;
+    border-radius: 16px;
+  }
+
+  .rate-convert-panel .db-panel__head {
+    align-items: flex-start;
+  }
+
+  .rate-convert-lead {
+    margin-bottom: 22px;
+  }
+
+  .rate-convert-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .rate-convert-field:nth-child(4) {
+    grid-column: auto;
+  }
+
+  .rate-convert-swap {
+    grid-column: auto;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  #rate-swap {
+    width: 100%;
+    height: 43px;
+  }
+
+  #rate-swap:hover {
+    transform: none;
+  }
+
+  .rate-convert-result {
+    margin-top: 22px;
+    padding: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rate-card,
+  #rate-swap,
+  .rate-convert-field input,
+  .rate-convert-field select {
+    transition: none;
+  }
+}

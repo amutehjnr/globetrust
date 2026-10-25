@@ -4,23 +4,177 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Verify authenticator · Globe Trust Bank</title>
+  <meta name="description" content="Complete two-step verification for your Globe Trust Bank account.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/mfa-verify.css">
 </head>
-<body>
+<body class="mv-page">
   <%- include('../partials/header') %>
-  <main class="container page-hero" style="max-width:28rem;">
-    <h1>Two-step verification</h1>
-    <p class="prose">Enter the 6-digit code from your authenticator app to finish signing in.</p>
-    <% if (error) { %><div class="notice" style="border-left-color:#8B3A3A;color:#8B3A3A;"><%= error %></div><% } %>
-    <form method="post" action="/mfa/verify" style="margin-top:1.25rem;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <label style="display:block;font-weight:600;margin-bottom:0.35rem;">Authentication code</label>
-      <input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"
-        style="width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #E4E0D8;border-radius:8px;letter-spacing:0.2em;font-size:1.15rem;">
-      <button class="btn btn-navy" type="submit" style="width:100%;">Verify</button>
-    </form>
-    <p class="prose" style="margin-top:1rem;font-size:0.9rem;"><a href="/sign-in">Cancel and return to sign in</a></p>
+
+  <main class="mv-shell">
+
+    <!-- ========== LEFT: FORM ========== -->
+    <section class="mv-form-panel">
+      <div class="mv-form-wrap">
+
+        <div class="mv-back">
+          <a href="/sign-in" class="mv-back-link">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back to sign in
+          </a>
+        </div>
+
+        <div class="mv-icon-wrap">
+          <div class="mv-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+          </div>
+        </div>
+
+        <span class="mv-eyebrow">Two-step verification</span>
+        <h1 class="mv-title">One more step.</h1>
+        <p class="mv-lead">
+          Enter the 6-digit code from your authenticator app to finish
+          signing in.
+        </p>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="mv-alert">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span><%= error %></span>
+          </div>
+        <% } %>
+
+        <form method="post" action="/mfa/verify" class="mv-form" id="mv-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="mv-field">
+            <label for="mv-code">Authentication code</label>
+            <input
+              type="text"
+              id="mv-code"
+              name="code"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              maxlength="6"
+              required
+              autocomplete="one-time-code"
+              autofocus
+              class="mv-code"
+              placeholder="000000"
+            >
+          </div>
+
+          <button type="submit" class="mv-submit">
+            Verify and sign in
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="mv-help">
+          <p>
+            <strong>Can't access your authenticator?</strong>
+            Call the number on the back of your card. We'll re-verify your
+            identity and get you back in.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== RIGHT: BRAND PANEL ========== -->
+    <aside class="mv-brand-panel">
+      <div class="mv-brand-inner">
+        <div class="mv-brand-mark">GT</div>
+        <h2>Globe Trust Bank</h2>
+        <p>
+          A bank built on unhurried conversation, plain language, and the
+          things that actually matter.
+        </p>
+
+        <div class="mv-brand-section">
+          <h4>Why this step exists</h4>
+          <ul class="mv-reasons">
+            <li>
+              <span class="mv-reason-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </span>
+              <div>
+                <strong>A password alone isn't enough</strong>
+                <span>Even if someone guesses it, they can't get past this step.</span>
+              </div>
+            </li>
+            <li>
+              <span class="mv-reason-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <div>
+                <strong>Codes expire in seconds</strong>
+                <span>Each 6-digit code is single-use and refreshes every 30 seconds.</span>
+              </div>
+            </li>
+            <li>
+              <span class="mv-reason-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <div>
+                <strong>Only you have this code</strong>
+                <span>Bank staff will never ask you for a code — if someone does, it isn't us.</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mv-brand-footer">
+          <a href="/security">Security at Globe Trust →</a>
+        </div>
+      </div>
+    </aside>
+
   </main>
+
   <%- include('../partials/footer') %>
+
+  <!-- ========== SCRIPT ========== -->
+  <script>
+    (function () {
+      var codeInput = document.getElementById('mv-code');
+      var form = document.getElementById('mv-form');
+      if (!codeInput) return;
+
+      /* Strip non-digits, cap at 6 */
+      codeInput.addEventListener('input', function () {
+        var v = this.value.replace(/[^\d]/g, '').slice(0, 6);
+        if (this.value !== v) this.value = v;
+
+        /* Auto-submit at 6 digits */
+        if (v.length === 6 && form) {
+          setTimeout(function () { form.requestSubmit(); }, 250);
+        }
+      });
+
+      /* Clear error styling on new input */
+      codeInput.addEventListener('input', function () {
+        codeInput.classList.remove('is-error');
+      });
+    })();
+  </script>
+  <script src="/js/mfa-verify.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,644 @@
+
+/* =========================================================
+   GLOBE TRUST BANK — TRANSFERS PAGE
+   File: public/css/transfers.css
+   ========================================================= */
+
+:root {
+  --transfer-navy: #102238;
+  --transfer-navy-deep: #091727;
+  --transfer-gold: #a77a35;
+  --transfer-gold-light: #d9bd83;
+  --transfer-ivory: #fffdf9;
+  --transfer-cream: #f8f4ed;
+  --transfer-text: #263647;
+  --transfer-muted: #788391;
+  --transfer-border: #e8e0d3;
+  --transfer-green: #27815d;
+  --transfer-green-bg: #edf7f0;
+  --transfer-red: #bd4b48;
+  --transfer-red-bg: #fff0ef;
+  --transfer-amber: #9a6b1c;
+  --transfer-amber-bg: #fff7e8;
+  --transfer-radius: 18px;
+  --transfer-shadow: 0 10px 35px rgba(16, 34, 56, 0.055);
+}
+
+.portal-main {
+  min-width: 0;
+}
+
+.transfers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.transfers-header h1 {
+  margin: 0;
+  color: var(--transfer-navy);
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+
+.transfers-header p {
+  margin: 9px 0 0;
+  color: var(--transfer-muted);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.transfers-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.03fr) minmax(0, 0.97fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.transfers-form-panel,
+.transfers-history-panel {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--transfer-ivory);
+  border: 1px solid var(--transfer-border);
+  border-radius: var(--transfer-radius);
+  box-shadow: var(--transfer-shadow);
+}
+
+.transfers-form-head,
+.transfers-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 23px 25px;
+  border-bottom: 1px solid var(--transfer-border);
+}
+
+.transfers-form-head h2,
+.transfers-history-head h2 {
+  margin: 0;
+  color: var(--transfer-navy);
+  font-size: 1.08rem;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.transfers-form-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 7px 11px;
+  color: var(--transfer-green);
+  background: var(--transfer-green-bg);
+  border: 1px solid #d8ecdf;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.transfers-form-chip::before {
+  width: 6px;
+  height: 6px;
+  content: "";
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.transfers-form {
+  display: grid;
+  gap: 21px;
+  padding: 25px;
+}
+
+.transfer-field {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.transfer-field label {
+  color: var(--transfer-text);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.transfer-field select,
+.transfer-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 49px;
+  padding: 12px 14px;
+  color: var(--transfer-navy);
+  background: #fff;
+  border: 1px solid #ded8ce;
+  border-radius: 11px;
+  outline: none;
+  font: inherit;
+  font-size: 0.91rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.transfer-field select {
+  cursor: pointer;
+}
+
+.transfer-field input::placeholder {
+  color: #a0a6ad;
+}
+
+.transfer-field select:hover,
+.transfer-field input:hover {
+  border-color: #c8b48f;
+}
+
+.transfer-field select:focus,
+.transfer-field input:focus {
+  background: #fff;
+  border-color: var(--transfer-gold);
+  box-shadow: 0 0 0 4px rgba(167, 122, 53, 0.12);
+}
+
+.transfer-field select:disabled,
+.transfer-field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.transfer-input-group {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ded8ce;
+  border-radius: 11px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.transfer-input-group:focus-within {
+  border-color: var(--transfer-gold);
+  box-shadow: 0 0 0 4px rgba(167, 122, 53, 0.12);
+}
+
+.transfer-input-prefix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 65px;
+  padding: 0 13px;
+  color: var(--transfer-gold);
+  background: var(--transfer-cream);
+  border-right: 1px solid var(--transfer-border);
+  font-size: 0.8rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.transfer-input-group input {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.transfer-input-group input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.transfer-hint {
+  color: var(--transfer-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.transfer-hint-warn {
+  color: var(--transfer-amber);
+}
+
+.transfer-hint-ok {
+  color: var(--transfer-green);
+}
+
+.transfer-optional {
+  margin-left: 5px;
+  color: var(--transfer-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.transfer-summary {
+  display: grid;
+  gap: 15px;
+  padding: 19px;
+  background: linear-gradient(135deg, #fbf7ef, #fffdf9);
+  border: 1px solid #e9ddc7;
+  border-radius: 13px;
+}
+
+.transfer-summary[hidden] {
+  display: none;
+}
+
+.transfer-summary-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--transfer-muted);
+  font-size: 0.82rem;
+}
+
+.transfer-summary-row strong {
+  max-width: 68%;
+  color: var(--transfer-navy);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.transfer-summary-amount {
+  padding-top: 14px;
+  border-top: 1px solid #e8ddc9;
+}
+
+.transfer-summary-amount strong {
+  color: var(--transfer-gold);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.transfer-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 20px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--transfer-navy), var(--transfer-navy-deep));
+  border: 1px solid var(--transfer-navy);
+  border-radius: 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  box-shadow: 0 7px 18px rgba(9, 23, 39, 0.12);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.transfer-submit svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.transfer-submit:hover {
+  background: linear-gradient(135deg, #1b3857, #102238);
+  box-shadow: 0 10px 24px rgba(9, 23, 39, 0.18);
+  transform: translateY(-1px);
+}
+
+.transfer-submit:focus-visible {
+  outline: 3px solid rgba(167, 122, 53, 0.45);
+  outline-offset: 3px;
+}
+
+.transfer-submit:active {
+  transform: translateY(0);
+}
+
+.transfer-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+/* Alerts */
+
+.transfer-alert {
+  margin: 0 0 22px;
+  padding: 15px 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.transfer-alert-error {
+  color: var(--transfer-red);
+  background: var(--transfer-red-bg);
+  border-color: #f2d4d2;
+}
+
+.transfer-alert-success {
+  color: var(--transfer-green);
+  background: var(--transfer-green-bg);
+  border-color: #d5e9dc;
+}
+
+/* Transfer history */
+
+.transfers-history-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  color: var(--transfer-navy);
+  background: var(--transfer-cream);
+  border: 1px solid var(--transfer-border);
+  border-radius: 9px;
+  font-size: 0.79rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.transfers-list {
+  display: grid;
+  margin: 0;
+  padding: 5px 22px;
+  list-style: none;
+}
+
+.transfer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 21px 2px;
+  border-bottom: 1px solid #eee9e0;
+}
+
+.transfer-item:last-child {
+  border-bottom: 0;
+}
+
+.transfer-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  color: var(--transfer-amber);
+  background: var(--transfer-amber-bg);
+  border: 1px solid #f0e2c8;
+  border-radius: 13px;
+}
+
+.transfer-item-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.transfer-item-success .transfer-item-icon {
+  color: var(--transfer-green);
+  background: var(--transfer-green-bg);
+  border-color: #d5e9dc;
+}
+
+.transfer-item-failed .transfer-item-icon {
+  color: var(--transfer-red);
+  background: var(--transfer-red-bg);
+  border-color: #f2d4d2;
+}
+
+.transfer-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.transfer-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.transfer-item-amount {
+  color: var(--transfer-navy);
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.transfer-item-currency {
+  color: var(--transfer-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.transfer-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.69rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.transfer-badge-success {
+  color: var(--transfer-green);
+  background: var(--transfer-green-bg);
+  border-color: #d5e9dc;
+}
+
+.transfer-badge-pending {
+  color: var(--transfer-amber);
+  background: var(--transfer-amber-bg);
+  border-color: #f0e2c8;
+}
+
+.transfer-badge-failed {
+  color: var(--transfer-red);
+  background: var(--transfer-red-bg);
+  border-color: #f2d4d2;
+}
+
+.transfer-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 13px;
+  margin-top: 8px;
+  color: var(--transfer-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.transfer-item-ref {
+  overflow-wrap: anywhere;
+}
+
+.transfer-item-ref code {
+  color: var(--transfer-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.73rem;
+  overflow-wrap: anywhere;
+}
+
+.transfer-item-failure {
+  margin-top: 9px;
+  padding: 9px 11px;
+  color: var(--transfer-red);
+  background: var(--transfer-red-bg);
+  border-radius: 8px;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+/* Empty state */
+
+.transfers-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 48px 25px;
+  text-align: center;
+}
+
+.transfers-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  margin-bottom: 18px;
+  color: var(--transfer-gold);
+  background: var(--transfer-cream);
+  border: 1px solid var(--transfer-border);
+  border-radius: 19px;
+}
+
+.transfers-empty-icon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.transfers-empty h3 {
+  margin: 0;
+  color: var(--transfer-navy);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.transfers-empty p {
+  max-width: 290px;
+  margin: 9px 0 0;
+  color: var(--transfer-muted);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+/* Responsive layout */
+
+@media (max-width: 1100px) {
+  .transfers-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .transfers-form-panel,
+  .transfers-history-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .transfers-header {
+    align-items: flex-start;
+    margin-bottom: 21px;
+  }
+
+  .transfers-header h1 {
+    font-size: 1.65rem;
+  }
+
+  .transfers-header p {
+    font-size: 0.85rem;
+  }
+
+  .transfers-layout {
+    gap: 17px;
+  }
+
+  .transfers-form-head,
+  .transfers-history-head {
+    padding: 18px;
+  }
+
+  .transfers-form {
+    gap: 19px;
+    padding: 19px;
+  }
+
+  .transfers-list {
+    padding: 4px 16px;
+  }
+
+  .transfer-item {
+    gap: 11px;
+    padding: 18px 0;
+  }
+
+  .transfer-item-icon {
+    width: 37px;
+    height: 37px;
+    flex-basis: 37px;
+    border-radius: 11px;
+  }
+
+  .transfer-item-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .transfer-item-top {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .transfer-summary {
+    padding: 15px;
+  }
+
+  .transfers-empty {
+    padding: 36px 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transfer-field select,
+  .transfer-field input,
+  .transfer-input-group,
+  .transfer-submit {
+    transition: none;
+  }
+
+  .transfer-submit:hover {
+    transform: none;
+  }
+}

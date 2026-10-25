@@ -7,62 +7,172 @@
   </div>
 </div>
 
-<div class="db-mid-grid" style="grid-template-columns:1fr 1fr;">
-  <section class="db-panel">
+<div class="settings-grid">
+
+  <!-- ========== PROFILE ========== -->
+  <section class="db-panel settings-panel">
     <div class="db-panel__head">
       <h2>Profile</h2>
-      <a href="/app/profile">Edit</a>
+      <a href="/app/profile" class="settings-link">Edit →</a>
     </div>
-    <ul class="db-tx-list">
-      <li>
-        <div class="db-tx-body">
-          <strong><%= profile && profile.firstName ? profile.firstName + ' ' + (profile.lastName || '') : '—' %></strong>
-          <small><%= profile && profile.email ? profile.email : '' %></small>
+
+    <div class="settings-profile-card">
+      <div class="settings-avatar">
+        <%= profile && profile.firstName ? profile.firstName.charAt(0).toUpperCase() : '?' %><%= profile && profile.lastName ? profile.lastName.charAt(0).toUpperCase() : '' %>
+      </div>
+      <div class="settings-profile-info">
+        <strong>
+          <%= profile && profile.firstName
+              ? profile.firstName + ' ' + (profile.lastName || '')
+              : '—' %>
+        </strong>
+        <span><%= profile && profile.email ? profile.email : 'No email on file' %></span>
+      </div>
+    </div>
+
+    <ul class="settings-list">
+      <li class="settings-row">
+        <div class="settings-row-label">
+          <span class="settings-row-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+            </svg>
+          </span>
+          <div>
+            <strong>Customer reference</strong>
+            <span>Your unique identifier</span>
+          </div>
         </div>
+        <span class="settings-row-value">
+          <%= profile && profile.customerReference ? profile.customerReference : '—' %>
+        </span>
       </li>
-      <li>
-        <div class="db-tx-body">
-          <strong>Customer reference</strong>
-          <small><%= profile && profile.customerReference ? profile.customerReference : '—' %></small>
+
+      <li class="settings-row">
+        <div class="settings-row-label">
+          <span class="settings-row-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+            </svg>
+          </span>
+          <div>
+            <strong>Country / locale</strong>
+            <span>Where you bank and your language</span>
+          </div>
         </div>
-      </li>
-      <li>
-        <div class="db-tx-body">
-          <strong>Country / locale</strong>
-          <small><%= profile && profile.countryCode ? profile.countryCode : '—' %> · <%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %></small>
-        </div>
+        <span class="settings-row-value">
+          <%= profile && profile.countryCode ? profile.countryCode : '—' %>
+          ·
+          <%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>
+        </span>
       </li>
     </ul>
   </section>
 
-  <section class="db-panel">
-    <div class="db-panel__head"><h2>Security</h2></div>
-    <ul class="db-tx-list">
-      <li>
-        <span class="db-tx-icon">⚙</span>
-        <div class="db-tx-body">
-          <strong>Authenticator (MFA)</strong>
-          <small><%= mfaStatus && mfaStatus.enrolled ? 'Enrolled' : 'Not enrolled' %></small>
+  <!-- ========== SECURITY ========== -->
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head">
+      <h2>Security</h2>
+    </div>
+
+    <ul class="settings-list">
+
+      <!-- MFA -->
+      <li class="settings-row">
+        <div class="settings-row-label">
+          <span class="settings-row-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+          </span>
+          <div>
+            <strong>Authenticator (MFA)</strong>
+            <span>Two-factor authentication</span>
+          </div>
         </div>
-        <a href="/mfa/enrol" class="db-chip">Manage</a>
-      </li>
-      <li>
-        <span class="db-tx-icon">⚙</span>
-        <div class="db-tx-body">
-          <strong>Identity (KYC)</strong>
-          <small>Documents & verification</small>
+        <div class="settings-row-action">
+          <% if (mfaStatus && mfaStatus.enrolled) { %>
+            <span class="settings-status settings-status-ok">
+              <span class="settings-status-dot"></span>
+              Enrolled
+            </span>
+          <% } else { %>
+            <span class="settings-status settings-status-warn">
+              <span class="settings-status-dot"></span>
+              Not enrolled
+            </span>
+          <% } %>
+          <a href="/mfa/enrol" class="db-chip">
+            <%= mfaStatus && mfaStatus.enrolled ? 'Manage' : 'Set up' %>
+          </a>
         </div>
-        <a href="/app/kyc" class="db-chip">Open</a>
       </li>
-      <li>
-        <span class="db-tx-icon">⚙</span>
-        <div class="db-tx-body">
-          <strong>Password</strong>
-          <small>Use forgot password from sign-in if needed</small>
+
+      <!-- KYC -->
+      <li class="settings-row">
+        <div class="settings-row-label">
+          <span class="settings-row-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+            </svg>
+          </span>
+          <div>
+            <strong>Identity (KYC)</strong>
+            <span>Documents &amp; verification</span>
+          </div>
+        </div>
+        <div class="settings-row-action">
+          <a href="/app/kyc" class="db-chip">Open →</a>
         </div>
       </li>
+
+      <!-- Password -->
+      <li class="settings-row">
+        <div class="settings-row-label">
+          <span class="settings-row-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </span>
+          <div>
+            <strong>Password</strong>
+            <span>Change your sign-in password</span>
+          </div>
+        </div>
+        <div class="settings-row-action">
+          <a href="/auth/forgot-password" class="db-chip">Reset →</a>
+        </div>
+      </li>
+
     </ul>
   </section>
+
 </div>
+
+<!-- ========== DANGER ZONE ========== -->
+<section class="db-panel settings-panel settings-panel-danger" style="margin-top: 1.5rem;">
+  <div class="db-panel__head">
+    <h2>Danger zone</h2>
+  </div>
+  <ul class="settings-list">
+    <li class="settings-row">
+      <div class="settings-row-label">
+        <span class="settings-row-icon settings-row-icon-danger">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          </svg>
+        </span>
+        <div>
+          <strong>Sign out of all devices</strong>
+          <span>End every active session immediately</span>
+        </div>
+      </div>
+      <form method="POST" action="/auth/logout-all" style="margin: 0;">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <button type="submit" class="db-chip db-chip-danger">Sign out</button>
+      </form>
+    </li>
+  </ul>
+</section>
 
 <%- include('../partials/customer-shell-end') %>
