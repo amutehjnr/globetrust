@@ -53,7 +53,7 @@ function createAuthRouter({ authService }) {
 
   router.get('/sign-in', (req, res) => {
     if (req.session?.user) {
-      return res.redirect(defaultHomeForRoles(req.session.user.roles));
+      return res.redirect(303, defaultHomeForRoles(req.session.user.roles));
     }
     res.render('auth/sign-in', {
       title: 'Sign in',
@@ -108,7 +108,7 @@ function createAuthRouter({ authService }) {
         await new Promise((resolve, reject) => {
           req.session.save((err) => (err ? reject(err) : resolve()));
         });
-        return res.redirect('/mfa/verify');
+        return res.redirect(303, '/mfa/verify');
       }
 
       req.session.user = { ...result.user, roles };
@@ -119,7 +119,7 @@ function createAuthRouter({ authService }) {
         req.session.save((err) => (err ? reject(err) : resolve()));
       });
 
-      return res.redirect(nextUrl);
+      return res.redirect(303, nextUrl);
     } catch (err) {
       console.error('[GLOBE_LOGIN] failed', JSON.stringify({
         message: err.message,
@@ -149,7 +149,7 @@ function createAuthRouter({ authService }) {
 
   router.get('/register', (req, res) => {
     if (req.session?.user) {
-      return res.redirect(defaultHomeForRoles(req.session.user.roles));
+      return res.redirect(303, defaultHomeForRoles(req.session.user.roles));
     }
     res.render('auth/register', {
       title: 'Register',

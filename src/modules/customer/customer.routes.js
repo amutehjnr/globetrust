@@ -72,6 +72,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   });
 
+  // Avoid 404 if a client re-POSTs to /dashboard after login
+  router.post('/dashboard', (req, res) => res.redirect(303, '/dashboard'));
+
   // Legacy alias — old /app links land on dashboard
   router.get('/app', (_req, res) => res.redirect(302, '/dashboard'));
 
@@ -167,6 +170,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   );
 
+   
   function pageLocals(req, extra = {}) {
     const u = req.session.user || {};
     const name = u.email ? String(u.email).split('@')[0] : 'Customer';
@@ -191,9 +195,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         path: '/app/accounts',
         accounts
       }));
-    } catch (err) {
-      next(err);
-    }
+    } catch (err) { next(err); }
   });
 
   router.get('/app/cards', (req, res) => {
@@ -207,7 +209,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     res.render('customer/beneficiaries', pageLocals(req, {
       title: 'Beneficiaries',
       path: '/app/beneficiaries',
-      beneficiaries: []
+      beneficiaries: [] // wire to DB later
     }));
   });
 
@@ -222,9 +224,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         path: '/app/statements',
         history
       }));
-    } catch (err) {
-      next(err);
-    }
+    } catch (err) { next(err); }
   });
 
   router.get('/app/exchange', (req, res) => {
@@ -253,9 +253,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         profile,
         mfaStatus
       }));
-    } catch (err) {
-      next(err);
-    }
+    } catch (err) { next(err); }
   });
 
   return router;

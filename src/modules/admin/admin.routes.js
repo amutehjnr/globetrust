@@ -42,8 +42,8 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
     };
   }
 
-  router.get('/admin', async (req, res, next) => {
-    console.log('[GLOBE_ADMIN] GET /admin', JSON.stringify({
+  async function renderAdminOverview(req, res, next) {
+    console.log('[GLOBE_ADMIN]', req.method, '/admin', JSON.stringify({
       user: req.session?.user
         ? { id: req.session.user.id, email: req.session.user.email, roles: req.session.user.roles }
         : null
@@ -69,10 +69,17 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
         error: req.query.err || null
       }));
     } catch (err) {
-      console.error('[GLOBE_ADMIN] GET /admin failed', err?.message);
+      console.error('[GLOBE_ADMIN] /admin failed', err?.message);
       console.error(err?.stack || err);
       next(err);
     }
+  }
+
+  // GET is normal; POST accepted too (PRG / form resubmit after login must not 404)
+  router.get('/admin', renderAdminOverview);
+  router.post('/admin', (req, res) => {
+    console.warn('[GLOBE_ADMIN] POST /admin received — converting to GET (PRG)');
+    return res.redirect(303, '/admin');
   });
 
   router.get('/admin/customers', async (req, res, next) => {
