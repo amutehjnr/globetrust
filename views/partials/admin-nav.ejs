@@ -1,3 +1,196 @@
+<style>
+  /* ==========================================================================
+   Base sidebar styles
+   ========================================================================== */
+.db-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem 1rem;
+  box-sizing: border-box;
+  background: #10131a;
+  color: #d8dbe2;
+  overflow-y: auto;
+  z-index: 1000;
+  transition: transform 0.25s ease;
+}
+
+.db-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.db-sidebar__brand strong {
+  display: block;
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+}
+
+.db-sidebar__brand small {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  opacity: 0.6;
+}
+
+.db-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.db-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: #cfd3dc;
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.db-nav-item:hover {
+  background: rgba(197, 161, 91, 0.12);
+  color: #f2e6cc;
+}
+
+.db-nav-item.is-active {
+  background: rgba(197, 161, 91, 0.18);
+  color: #f2e6cc;
+  border-left: 2px solid #c5a15b;
+}
+
+.db-nav-icon {
+  width: 1.1rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.db-sidebar__foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1rem;
+}
+
+.db-signout button {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: #cfd3dc;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.db-signout button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* ==========================================================================
+   Hamburger button (hidden on desktop)
+   ========================================================================== */
+.db-hamburger {
+  display: none;
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1100;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #10131a;
+  color: #f2e6cc;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.db-hamburger:focus-visible {
+  outline: 2px solid #c5a15b;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Overlay backdrop (mobile only)
+   ========================================================================== */
+.db-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* ==========================================================================
+   Phone: off-canvas sidebar + hamburger
+   ========================================================================== */
+@media (max-width: 768px) {
+  .db-hamburger {
+    display: inline-flex;
+  }
+
+  .db-sidebar {
+    width: min(78vw, 280px);
+    transform: translateX(-100%);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* state controlled by JS toggling a class on <body> (recommended) */
+  body.db-sidebar-open .db-sidebar {
+    transform: translateX(0);
+  }
+
+  body.db-sidebar-open .db-sidebar-backdrop {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Optional: prevent page scroll while menu is open */
+  body.db-sidebar-open {
+    overflow: hidden;
+  }
+}
+
+/* ==========================================================================
+   Pure-CSS fallback using :target (no JS required)
+   Wrap sidebar in #db-sidebar and use href="#db-sidebar"
+   ========================================================================== */
+/*
+.db-sidebar {
+  transform: translateX(-100%);
+}
+#db-sidebar:target {
+  transform: translateX(0);
+}
+*/
+</style>
+
+<button class="db-hamburger" aria-label="Toggle navigation" aria-controls="db-sidebar" aria-expanded="false">☰</button>
+<div class="db-sidebar-backdrop"></div>
+
 <aside class="db-sidebar" aria-label="Admin navigation">
   <a class="db-sidebar__brand" href="/admin">
     <span class="db-sidebar__logo" aria-hidden="true">
@@ -42,3 +235,21 @@
     </form>
   </div>
 </aside>
+
+<script>
+  const btn = document.querySelector('.db-hamburger');
+const backdrop = document.querySelector('.db-sidebar-backdrop');
+
+function toggleSidebar(open) {
+  document.body.classList.toggle('db-sidebar-open', open);
+  btn.setAttribute('aria-expanded', String(open));
+}
+
+btn.addEventListener('click', () => toggleSidebar(!document.body.classList.contains('db-sidebar-open')));
+backdrop.addEventListener('click', () => toggleSidebar(false));
+
+// close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') toggleSidebar(false);
+});
+</script>
