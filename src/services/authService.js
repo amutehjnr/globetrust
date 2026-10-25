@@ -24,8 +24,11 @@ function createAuthService({ userRepo, tokenRepo, logger, emailService }) {
           passwordHash,
           firstName: input.firstName,
           lastName: input.lastName,
-          phoneE164: input.phoneE164 || null
-       });
+          phoneE164: input.phoneE164 || null,
+          countryCode: input.countryCode && input.countryCode !== 'OTHER'
+            ? input.countryCode
+            : null
+        });
         const userId = created.id || created;
         logger.info({ userId }, 'Customer registered (pending verification)');
 

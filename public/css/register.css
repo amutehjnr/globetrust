@@ -1,4 +1,3 @@
-
 /* =========================================================
    GLOBE TRUST BANK — REGISTRATION PAGE
    File: public/css/register.css
@@ -180,6 +179,25 @@ body.register-page {
   outline: 2px solid var(--register-gold);
   outline-offset: 2px;
 }
+
+.register-page .form-group select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 94, 49, 0.22);
+  background: #fffdf9;
+  color: #17283b;
+  font: inherit;
+  font-size: 14px;
+  appearance: auto;
+}
+.register-page .form-group select:focus {
+  outline: none;
+  border-color: #b8873b;
+  box-shadow: 0 0 0 3px rgba(184, 135, 59, 0.2);
+}
+
 
 /* ---------- Optional label and hints ---------- */
 

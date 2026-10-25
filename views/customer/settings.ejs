@@ -66,6 +66,31 @@
           <%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>
         </span>
       </li>
+      <li class="settings-row settings-row-stack">
+        <div class="settings-row-info">
+          <strong>Update country</strong>
+          <span>Change the country on your profile</span>
+        </div>
+        <form method="post" action="/app/settings/country" class="settings-country-form" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;width:100%;margin-top:10px;">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <select name="countryCode" required style="min-width:220px;padding:10px 12px;border-radius:8px;border:1px solid rgba(125,94,49,.25);background:#fffdf9;font-size:13px;">
+            <option value="" disabled <%= !(profile && profile.countryCode) ? 'selected' : '' %>>Select country</option>
+            <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) { %>
+              <option value="<%= c.code %>"
+                <%= profile && profile.countryCode === c.code ? 'selected' : '' %>>
+                <%= c.name %>
+              </option>
+            <% }) %>
+          </select>
+          <button type="submit" class="db-chip">Save country</button>
+        </form>
+        <% if (typeof countryMessage !== 'undefined' && countryMessage) { %>
+          <p class="settings-hint" style="margin:8px 0 0;color:#1B6B4A;font-size:12px;"><%= countryMessage %></p>
+        <% } %>
+        <% if (typeof countryError !== 'undefined' && countryError) { %>
+          <p class="settings-hint" style="margin:8px 0 0;color:#8B2942;font-size:12px;"><%= countryError %></p>
+        <% } %>
+      </li>
     </ul>
   </section>
 
@@ -140,7 +165,7 @@
           </div>
         </div>
         <div class="settings-row-action">
-          <a href="/auth/forgot-password" class="db-chip">Reset →</a>
+          <a href="/forgot-password" class="db-chip">Reset →</a>
         </div>
       </li>
 
@@ -167,7 +192,7 @@
           <span>End every active session immediately</span>
         </div>
       </div>
-      <form method="POST" action="/auth/logout-all" style="margin: 0;">
+      <form method="POST" action="/sign-out" style="margin: 0;">
         <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
         <button type="submit" class="db-chip db-chip-danger">Sign out</button>
       </form>

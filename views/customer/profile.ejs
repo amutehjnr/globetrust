@@ -108,21 +108,19 @@
 
           <div class="profile-grid profile-grid-2">
             <div class="profile-field">
-              <label for="profile-country">Country code</label>
-              <input
-                type="text"
-                id="profile-country"
-                name="countryCode"
-                maxlength="2"
-                placeholder="NG"
-                autocomplete="country"
-                value="<%= profile && profile.countryCode ? profile.countryCode : '' %>"
-                style="text-transform: uppercase;"
-              >
-              <span class="profile-hint">ISO 3166-1 alpha-2 · e.g. NG, GB, US</span>
+              <label for="profile-country">Country</label>
+              <select id="profile-country" name="countryCode" autocomplete="country">
+                <option value="">Select country</option>
+                <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) { %>
+                  <option value="<%= c.code %>"
+                    <%= profile && profile.countryCode === c.code ? 'selected' : '' %>>
+                    <%= c.name %>
+                  </option>
+                <% }) %>
+              </select>
+              <span class="profile-hint">Used for regional settings and compliance</span>
             </div>
-
-            <div class="profile-field">
+<div class="profile-field">
               <label for="profile-locale">Preferred locale</label>
               <input
                 type="text"

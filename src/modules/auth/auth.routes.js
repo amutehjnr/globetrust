@@ -9,6 +9,7 @@ const {
   parseBody
 } = require('../../validators/authValidators');
 const { requireCsrf } = require('../../middleware/csrf');
+const { COUNTRIES } = require('../../utils/countries');
 const {
   loginLimiter,
   registerLimiter,
@@ -155,7 +156,8 @@ function createAuthRouter({ authService }) {
       title: 'Register',
       path: '/register',
       error: null,
-      values: {}
+      values: {},
+      countries: COUNTRIES
     });
   });
 
@@ -180,8 +182,10 @@ function createAuthRouter({ authService }) {
             email: req.body.email,
             firstName: req.body.firstName,
             lastName: req.body.lastName,
-            phoneE164: req.body.phoneE164
-          }
+            phoneE164: req.body.phoneE164,
+            countryCode: req.body.countryCode
+          },
+          countries: COUNTRIES
         });
       }
       return next(err);

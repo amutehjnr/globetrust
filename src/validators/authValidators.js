@@ -17,7 +17,12 @@ const registerSchema = z.object({
     .string()
     .regex(/^\+[1-9]\d{7,14}$/, 'Use international format, e.g. +234...')
     .optional()
-    .or(z.literal(''))
+    .or(z.literal('')),
+  countryCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$|^OTHER$/, 'Select your country')
 });
 
 const loginSchema = z.object({

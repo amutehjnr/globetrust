@@ -5,6 +5,7 @@ const multer = require('multer');
 const { z } = require('zod');
 const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
+const { COUNTRIES, normalizeCountryCode } = require('../../utils/countries');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -85,6 +86,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         title: 'Profile',
         path: '/app/profile',
         profile,
+        countries: COUNTRIES,
         error: null,
         success: null
       });
@@ -102,6 +104,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         title: 'Profile',
         path: '/app/profile',
         profile,
+        countries: COUNTRIES,
         error: null,
         success: 'Profile updated.'
       });
@@ -112,6 +115,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
           title: 'Profile',
           path: '/app/profile',
           profile,
+          countries: COUNTRIES,
           error: (err.issues || err.errors || []).map((e) => e.message).join('; '),
           success: null
         });
@@ -251,12 +255,58 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         title: 'Settings',
         path: '/app/settings',
         profile,
-        mfaStatus
+        mfaStatus,
+        countries: COUNTRIES,
+        countryMessage: null,
+        countryError: null
       }));
     } catch (err) { next(err); }
   });
 
+  router.post('/app/settings/country', requireCsrf, async (req, res, next) => {
+    try {
+      const code = normalizeCountryCode(req.body.countryCode);
+      if (!code && req.body.countryCode !== 'OTHER') {
+        const profile = await customerRepo.getProfile(req.session.user.id);
+        let mfaStatus = { enrolled: false, required: true };
+        if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);
+        return res.status(400).render('customer/settings', pageLocals(req, {
+          title: 'Settings',
+          path: '/app/settings',
+          profile,
+          mfaStatus,
+          countries: COUNTRIES,
+          countryMessage: null,
+          countryError: 'Please select a valid country.'
+        }));
+      }
+      const profile = await customerRepo.getProfile(req.session.user.id);
+      await customerRepo.updateProfile(req.session.user.id, {
+        firstName: profile?.firstName || 'Customer',
+        lastName: profile?.lastName || 'User',
+        middleName: profile?.middleName || '',
+        countryCode: code || '',
+        preferredLocale: profile?.preferredLocale || 'en'
+      });
+      const updated = await customerRepo.getProfile(req.session.user.id);
+      let mfaStatus = { enrolled: false, required: true };
+      if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);
+      return res.render('customer/settings', pageLocals(req, {
+        title: 'Settings',
+        path: '/app/settings',
+        profile: updated,
+        mfaStatus,
+        countries: COUNTRIES,
+        countryMessage: 'Country updated.',
+        countryError: null
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }
+
 
 module.exports = { createCustomerRouter };

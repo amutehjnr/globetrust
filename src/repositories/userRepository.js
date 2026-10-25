@@ -46,7 +46,7 @@ function createUserRepository(pool) {
       return { ...mapUser(rows[0]), passwordHash: rows[0].password_hash };
     },
 
-      async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, status }) {
+      async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, countryCode, status }) {
       const userId = newBinaryId();
       const profileRef = `CUS${Date.now().toString(36).toUpperCase()}`;
       const userStatus = status === 'active' ? 'active' : 'pending';
@@ -75,9 +75,9 @@ function createUserRepository(pool) {
           );
         }
         await conn.query(
-          `INSERT INTO customer_profiles (user_id, customer_reference, first_name, last_name)
-           VALUES (?, ?, ?, ?)`,
-          [userId, profileRef, firstName, lastName]
+          `INSERT INTO customer_profiles (user_id, customer_reference, first_name, last_name, country_code)
+           VALUES (?, ?, ?, ?, ?)`,
+          [userId, profileRef, firstName, lastName, countryCode || null]
         );
         await conn.commit();
         return { id: binaryToUuid(userId), customerReference: profileRef };

@@ -73,9 +73,39 @@
               </div>
             </div>
 
+            <!-- Destination bank (by user country) -->
+            <div class="transfer-field">
+              <label for="transfer-bank">
+                Destination bank
+                <% if (typeof countryCode !== 'undefined' && countryCode) { %>
+                  <span class="transfer-optional"><%= countryCode %></span>
+                <% } %>
+              </label>
+              <select id="transfer-bank" name="destinationBankCode" required>
+                <option value="" disabled <%= !(typeof formValues !== 'undefined' && formValues.destinationBankCode) ? 'selected' : '' %>>
+                  Select bank
+                </option>
+                <% (typeof banks !== 'undefined' ? banks : []).forEach(function (b) { %>
+                  <option
+                    value="<%= b.code %>"
+                    <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>
+                  >
+                    <%= b.name %>
+                  </option>
+                <% }) %>
+              </select>
+              <% if (!countryCode) { %>
+                <span class="transfer-hint">Set your country in <a href="/app/settings">Settings</a> for a full local bank list.</span>
+              <% } else if (!(banks && banks.length)) { %>
+                <span class="transfer-hint">No bank directory for this country yet — choose a generic option.</span>
+              <% } else { %>
+                <span class="transfer-hint"><%= banks.length %> banks available for <%= countryCode %></span>
+              <% } %>
+            </div>
+
             <!-- Destination -->
             <div class="transfer-field">
-              <label for="transfer-destination">Destination account reference</label>
+              <label for="transfer-destination">Destination account number</label>
               <input
                 type="text"
                 id="transfer-destination"
@@ -84,6 +114,7 @@
                 placeholder="Enter account number or IBAN"
                 minlength="4"
                 autocomplete="off"
+                value="<%= typeof formValues !== 'undefined' && formValues.destinationAccountRef ? formValues.destinationAccountRef : '' %>"
               >
               <span class="transfer-hint" id="transfer-dest-hint">Minimum 4 characters</span>
             </div>

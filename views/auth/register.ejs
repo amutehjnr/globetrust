@@ -88,6 +88,20 @@
             >
           </div>
 
+          <!-- Country -->
+          <div class="form-group">
+            <label for="countryCode">Country</label>
+            <select id="countryCode" name="countryCode" required autocomplete="country">
+              <option value="" disabled <%= !(typeof values !== 'undefined' && values.countryCode) ? 'selected' : '' %>>Select your country</option>
+              <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) { %>
+                <option value="<%= c.code %>"
+                  <%= typeof values !== 'undefined' && values.countryCode === c.code ? 'selected' : '' %>>
+                  <%= c.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
           <!-- Password -->
           <div class="form-group">
             <label for="password">
