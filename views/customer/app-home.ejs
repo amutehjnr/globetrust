@@ -4,153 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My banking · Globe Trust Bank</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/my-banking.css">
 </head>
 <body>
   <%- include('../partials/header') %>
-
-  <main class="myb-shell">
-
-    <!-- ========== HERO GREETING ========== -->
-    <section class="myb-hero">
-      <div class="container">
-        <div class="myb-hero-inner">
-          <div class="myb-hero-copy">
-            <span class="myb-eyebrow">Signed in</span>
-            <h1 class="myb-title">
-              Welcome back<% if (currentUser && currentUser.firstName) { %>, <em><%= currentUser.firstName %></em><% } %>.
-            </h1>
-            <p class="myb-lead">
-              You're signed in as
-              <strong><%= currentUser.email %></strong>.
-              <% if (currentUser.roles && currentUser.roles.length) { %>
-                Your access level: <strong><%= currentUser.roles.join(', ') %></strong>.
-              <% } %>
-            </p>
-          </div>
-
-          <div class="myb-hero-avatar">
-            <div class="myb-avatar">
-              <%
-                var initials = '?';
-                if (currentUser && currentUser.firstName && currentUser.lastName) {
-                  initials = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
-                } else if (currentUser && currentUser.email) {
-                  initials = currentUser.email[0].toUpperCase();
-                }
-              %>
-              <%= initials %>
-            </div>
-            <span class="myb-avatar-status">
-              <span class="myb-avatar-dot"></span>
-              Online
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== MFA ALERT (only if required) ========== -->
+  <main class="container page-hero">
+    <h1>Welcome</h1>
+    <p class="prose">Signed in as <strong><%= currentUser.email %></strong></p>
+    <p class="prose">Roles: <%= (currentUser.roles || []).join(', ') || 'none' %></p>
     <% if (typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa) { %>
-      <section class="container">
-        <div class="myb-alert">
-          <div class="myb-alert-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-          </div>
-          <div class="myb-alert-body">
-            <strong>Multi-factor authentication is required</strong>
-            <p>Add an extra layer of security to your account by setting up an authenticator app.</p>
-          </div>
-          <a href="/mfa/enrol" class="myb-alert-btn">Set up now →</a>
-        </div>
-      </section>
+      <div class="notice">
+        Multi-factor authentication is required for this account.
+        <a href="/mfa/enrol"><strong>Set up your authenticator now</strong></a>
+      </div>
+    <% } else { %>
+      <p class="prose" style="font-size:0.9rem;"><a href="/mfa/enrol">Authenticator settings</a></p>
     <% } %>
-
-    <!-- ========== QUICK ACTIONS ========== -->
-    <section class="myb-actions container">
-      <a href="/app" class="myb-action-card myb-action-primary">
-        <div class="myb-action-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-          </svg>
-        </div>
-        <div class="myb-action-body">
-          <h3>Go to dashboard</h3>
-          <p>View accounts, transfers, and card controls.</p>
-        </div>
-        <span class="myb-action-arrow">→</span>
-      </a>
-
-      <a href="/mfa/enrol" class="myb-action-card">
-        <div class="myb-action-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-        </div>
-        <div class="myb-action-body">
-          <h3>Authenticator settings</h3>
-          <p>Manage two-factor authentication for this account.</p>
-        </div>
-        <span class="myb-action-arrow">→</span>
-      </a>
-
-      <a href="/security" class="myb-action-card">
-        <div class="myb-action-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-        </div>
-        <div class="myb-action-body">
-          <h3>Security centre</h3>
-          <p>Learn how we protect you, and how to spot fraud.</p>
-        </div>
-        <span class="myb-action-arrow">→</span>
-      </a>
-    </section>
-
-    <!-- ========== CONTEXT NOTE ========== -->
-    <section class="container myb-note-wrap">
-      <div class="myb-note">
-        <div class="myb-note-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-          </svg>
-        </div>
-        <p>
-          Balances and transfers appear in your dashboard once authorised
-          core-banking integration is configured. Figures shown in the app
-          are not live funds.
-        </p>
-      </div>
-    </section>
-
-    <!-- ========== SIGN OUT ROW ========== -->
-    <section class="container myb-signout-wrap">
-      <div class="myb-signout">
-        <div>
-          <strong>Finished for now?</strong>
-          <span>You can sign back in anytime.</span>
-        </div>
-        <form method="post" action="/sign-out" style="margin: 0;">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit" class="myb-signout-btn">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-            </svg>
-            Sign out
-          </button>
-        </form>
-      </div>
-    </section>
-
+    <div class="notice">
+      Balances and transfers are not shown here until authorised core-banking integration is configured.
+      Figures on this screen must never be treated as live funds.
+    </div>
+    <form method="post" action="/sign-out" style="margin-top:1.5rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-outline" type="submit">Sign out</button>
+    </form>
   </main>
-
   <%- include('../partials/footer') %>
 </body>
 </html>
