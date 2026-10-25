@@ -111,7 +111,6 @@ function createApp(pool) {
   app.use(createHealthRouter({ pool }));
   app.use(createMetricsRouter());
 
-
   app.get('/', (_req, res) => {
     res.render('public/home', {
       title: 'Home',
@@ -127,20 +126,20 @@ function createApp(pool) {
     });
   }
 
-  // Legacy path
+  // Legacy path used in some links
   app.get('/app/dashboard', (_req, res) => res.redirect(302, '/dashboard'));
 
   // Auth routes (includes /sign-in, /register, etc.)
   app.use(createAuthRouter({ authService }));
   app.use(createMfaRouter({ mfaService }));
-  app.use(createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }));
+  // Admin before customer so /admin is never swallowed by portal middleware
   app.use(createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }));
+  app.use(createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }));
   app.use(createTransferRouter({ transferService, transferRepo, coreBanking, mfaService }));
   app.use(createSupportRouter({ supportService, supportRepo }));
   const auditRepo = createAuditRepository(pool);
   app.use(createAuditRouter({ auditRepo }));
   app.set('supportService', supportService);
-
 
   app.use((_req, res) => res.status(404).render('errors/404', { title: 'Page not found' }));
 

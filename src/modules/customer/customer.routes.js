@@ -21,10 +21,15 @@ const profileSchema = z.object({
 
 function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }) {
   const router = express.Router();
-  router.use(requireAuth);
-  router.use(requireRole('customer', 'admin', 'support_agent', 'kyc_reviewer', 'operations', 'auditor'));
+  // Only protect customer portal paths — do not run on /admin or public routes
+  const portalGuard = [
+    requireAuth,
+    requireRole('customer', 'admin', 'support_agent', 'kyc_reviewer', 'operations', 'auditor')
+  ];
+  router.use('/dashboard', ...portalGuard);
+  router.use('/app', ...portalGuard);
 
-    // Primary customer dashboard
+  // Primary customer dashboard
   router.get('/dashboard', async (req, res, next) => {
     try {
       const userId = req.session.user.id;
@@ -67,9 +72,8 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   });
 
-  // Legacy alias
+  // Legacy alias — old /app links land on dashboard
   router.get('/app', (_req, res) => res.redirect(302, '/dashboard'));
-
 
   router.get('/app/profile', async (req, res, next) => {
     try {
@@ -163,7 +167,6 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   );
 
-   
   function pageLocals(req, extra = {}) {
     const u = req.session.user || {};
     const name = u.email ? String(u.email).split('@')[0] : 'Customer';
@@ -188,7 +191,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         path: '/app/accounts',
         accounts
       }));
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.get('/app/cards', (req, res) => {
@@ -202,7 +207,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     res.render('customer/beneficiaries', pageLocals(req, {
       title: 'Beneficiaries',
       path: '/app/beneficiaries',
-      beneficiaries: [] // wire to DB later
+      beneficiaries: []
     }));
   });
 
@@ -217,7 +222,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         path: '/app/statements',
         history
       }));
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.get('/app/exchange', (req, res) => {
@@ -246,7 +253,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         profile,
         mfaStatus
       }));
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
   return router;
