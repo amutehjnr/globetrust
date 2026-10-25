@@ -34,7 +34,7 @@
           <div class="form-alert form-alert-error"><%= error %></div>
         <% } %>
 
-        <form method="POST" action="/auth/login" class="sign-in-form" novalidate>
+        <form method="POST" action="/auth/sign-in" class="sign-in-form" novalidate>
           <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
 
           <div class="form-group">
