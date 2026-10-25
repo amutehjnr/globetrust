@@ -15,10 +15,26 @@ const {
   recoveryLimiter
 } = require('../../middleware/rateLimit');
 
+/** Staff roles → /admin; customers → /dashboard */
+const STAFF_ROLES = ['admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'];
+
+function defaultHomeForRoles(roles) {
+  const list = Array.isArray(roles) ? roles : [];
+  if (list.some((r) => STAFF_ROLES.includes(r))) return '/admin';
+  return '/dashboard';
+}
+
+function safeNextUrl(raw, roles) {
+  if (typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//')) {
+    return raw;
+  }
+  return defaultHomeForRoles(roles);
+}
+
 function createAuthRouter({ authService }) {
   const router = express.Router();
 
-  // Compatibility aliases
+  // Compatibility aliases (older links / bookmarks)
   router.get('/login', (req, res) => {
     const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
     return res.redirect(302, `/sign-in${q}`);
@@ -26,12 +42,14 @@ function createAuthRouter({ authService }) {
   router.get('/open-account', (_req, res) => res.redirect(302, '/register'));
 
   router.get('/sign-in', (req, res) => {
-    if (req.session?.user) return res.redirect('/dashboard');
+    if (req.session?.user) {
+      return res.redirect(defaultHomeForRoles(req.session.user.roles));
+    }
     res.render('auth/sign-in', {
       title: 'Sign in',
       path: '/sign-in',
       error: null,
-      next: req.query.next || '/dashboard'
+      next: req.query.next || ''
     });
   });
 
@@ -45,26 +63,23 @@ function createAuthRouter({ authService }) {
         userAgent: req.get('user-agent')
       });
 
-      const nextUrl =
-        typeof req.body.next === 'string' &&
-        req.body.next.startsWith('/') &&
-        !req.body.next.startsWith('//')
-          ? req.body.next
-          : '/dashboard';
-
+      // Session fixation mitigation
       await new Promise((resolve, reject) => {
         req.session.regenerate((err) => (err ? reject(err) : resolve()));
       });
 
-      if (result.needsMfa) {
-        req.session.pendingMfaUser = result.user;
-        req.session.pendingMfaNext = nextUrl;
-        return res.redirect('/mfa/verify');
+      let roles = Array.isArray(result.user.roles) ? [...result.user.roles] : [];
+      // Only default to customer when no roles were assigned
+      if (roles.length === 0) {
+        roles = ['customer'];
       }
 
-      const roles = Array.isArray(result.user.roles) ? result.user.roles : [];
-      if (!roles.includes('customer') && !roles.includes('admin')) {
-        roles.push('customer');
+      const nextUrl = safeNextUrl(req.body.next, roles);
+
+      if (result.needsMfa) {
+        req.session.pendingMfaUser = { ...result.user, roles };
+        req.session.pendingMfaNext = nextUrl;
+        return res.redirect('/mfa/verify');
       }
 
       req.session.user = { ...result.user, roles };
@@ -76,7 +91,7 @@ function createAuthRouter({ authService }) {
           title: 'Sign in',
           path: '/sign-in',
           error: err.message,
-          next: req.body.next || '/dashboard'
+          next: req.body.next || ''
         });
       }
       return next(err);
@@ -84,7 +99,9 @@ function createAuthRouter({ authService }) {
   });
 
   router.get('/register', (req, res) => {
-    if (req.session?.user) return res.redirect('/dashboard');
+    if (req.session?.user) {
+      return res.redirect(defaultHomeForRoles(req.session.user.roles));
+    }
     res.render('auth/register', {
       title: 'Register',
       path: '/register',
