@@ -44,6 +44,10 @@ function createAuthRouter({ authService }) {
     const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
     return res.redirect(302, `/sign-in${q}`);
   });
+  router.get('/auth/sign-in', (req, res) => {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(302, `/sign-in${q}`);
+  });
   router.get('/auth/forgot-password', (_req, res) => res.redirect(302, '/forgot-password'));
   router.get('/auth/register', (_req, res) => res.redirect(302, '/register'));
 
@@ -137,9 +141,11 @@ function createAuthRouter({ authService }) {
     }
   }
 
-  // Canonical + legacy form actions (production UI still posts to /auth/login)
+  // Canonical + legacy form actions
+  // Production has posted to /sign-in, /auth/login, and /auth/sign-in
   router.post('/sign-in', loginLimiter, requireCsrf, handleSignIn);
   router.post('/auth/login', loginLimiter, requireCsrf, handleSignIn);
+  router.post('/auth/sign-in', loginLimiter, requireCsrf, handleSignIn);
 
   router.get('/register', (req, res) => {
     if (req.session?.user) {
