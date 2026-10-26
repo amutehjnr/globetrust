@@ -13,56 +13,89 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
   router.use('/app', requireAuth, requireRole('customer', 'admin', 'operations'));
 
   async function resolveCountryAndBanks(userId, overrideCountry, sessionUser) {
+    console.error('[GLOBE_TRANSFER] resolveCountryAndBanks:start', JSON.stringify({
+      userId,
+      overrideCountry: overrideCountry || null,
+      sessionCountry: sessionUser?.countryCode || null,
+      sessionEmail: sessionUser?.email || null,
+      hasCustomerRepo: Boolean(customerRepo),
+      hasGetProfile: Boolean(customerRepo?.getProfile),
+      hasGetCountryCode: Boolean(customerRepo?.getCountryCode)
+    }));
+
     let profile = null;
     let profileCountry = null;
     try {
       if (customerRepo?.getProfile) {
         profile = await customerRepo.getProfile(userId);
         profileCountry = profile?.countryCode || null;
+        console.error('[GLOBE_TRANSFER] getProfile:ok', JSON.stringify({
+          userId,
+          hasProfile: Boolean(profile),
+          countryCode: profileCountry,
+          firstName: profile?.firstName || null,
+          keys: profile ? Object.keys(profile) : []
+        }));
+      } else {
+        console.error('[GLOBE_TRANSFER] getProfile:missing customerRepo.getProfile');
       }
     } catch (err) {
-      console.error('[GLOBE_TRANSFER] getProfile failed', err?.message || err);
+      console.error('[GLOBE_TRANSFER] getProfile:error', err?.message || err);
+      if (err?.stack) console.error(err.stack);
     }
-    // Direct column read if profile object missing country
+
     if (!profileCountry && customerRepo?.getCountryCode) {
       try {
         profileCountry = await customerRepo.getCountryCode(userId);
+        console.error('[GLOBE_TRANSFER] getCountryCode:ok', JSON.stringify({ userId, profileCountry }));
       } catch (err) {
-        console.error('[GLOBE_TRANSFER] getCountryCode failed', err?.message || err);
+        console.error('[GLOBE_TRANSFER] getCountryCode:error', err?.message || err);
+        if (err?.stack) console.error(err.stack);
       }
     }
-    const sessionCountry = sessionUser?.countryCode || null;
 
-    // Priority: query override → DB profile → session → env
+    const sessionCountry = sessionUser?.countryCode || null;
+    const resolvedOverride = resolveCountryCode(overrideCountry);
+    const resolvedProfile = resolveCountryCode(profileCountry);
+    const resolvedSession = resolveCountryCode(sessionCountry);
+    const resolvedEnv = resolveCountryCode(process.env.DEFAULT_COUNTRY_CODE);
+
     const effectiveCountry =
-      resolveCountryCode(overrideCountry) ||
-      resolveCountryCode(profileCountry) ||
-      resolveCountryCode(sessionCountry) ||
-      resolveCountryCode(process.env.DEFAULT_COUNTRY_CODE) ||
-      null;
+      resolvedOverride || resolvedProfile || resolvedSession || resolvedEnv || null;
+
+    console.error('[GLOBE_TRANSFER] country:resolved', JSON.stringify({
+      rawProfileCountry: profileCountry,
+      rawSessionCountry: sessionCountry,
+      rawOverride: overrideCountry || null,
+      resolvedOverride,
+      resolvedProfile,
+      resolvedSession,
+      resolvedEnv,
+      effectiveCountry
+    }));
 
     let banks = [];
     try {
       banks = banksForCountry(effectiveCountry) || [];
+      console.error('[GLOBE_TRANSFER] banksForCountry:ok', JSON.stringify({
+        effectiveCountry,
+        bankCount: banks.length,
+        sample: banks.slice(0, 5).map((b) => ({ code: b.code, name: b.name }))
+      }));
     } catch (err) {
-      console.error('[GLOBE_TRANSFER] banksForCountry failed', err?.message || err);
+      console.error('[GLOBE_TRANSFER] banksForCountry:error', err?.message || err);
+      if (err?.stack) console.error(err.stack);
       banks = [];
     }
+
     if (!banks.length) {
+      console.error('[GLOBE_TRANSFER] banks:empty — using generic fallback');
       banks = [
         { code: 'LOCAL_BANK', name: 'Local bank (other)' },
         { code: 'INTERNATIONAL', name: 'International / correspondent bank' }
       ];
     }
-    console.log('[GLOBE_TRANSFER] banks', JSON.stringify({
-      userId,
-      profileCountry,
-      sessionCountry,
-      overrideCountry: overrideCountry || null,
-      effectiveCountry,
-      bankCount: banks.length,
-      sample: banks.slice(0, 3).map((b) => b.name)
-    }));
+
     return { countryCode: effectiveCountry, profileCountry, profile, banks };
   }
 
@@ -107,23 +140,55 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.get('/app/transfers/banks', async (req, res, next) => {
     try {
-      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id, req.query?.country, req.session.user);
-      res.json({ countryCode, profileCountry, banks, count: banks.length });
+      console.error('[GLOBE_TRANSFER] GET /app/transfers/banks', JSON.stringify({
+        userId: req.session?.user?.id,
+        queryCountry: req.query?.country || null
+      }));
+      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(
+        req.session.user.id,
+        req.query?.country,
+        req.session.user
+      );
+      const payload = { countryCode, profileCountry, banks, count: banks.length };
+      console.error('[GLOBE_TRANSFER] banks API response', JSON.stringify({
+        countryCode,
+        profileCountry,
+        count: banks.length,
+        sample: banks.slice(0, 3).map((b) => b.name)
+      }));
+      res.json(payload);
     } catch (err) {
+      console.error('[GLOBE_TRANSFER] banks API error', err?.message || err);
+      if (err?.stack) console.error(err.stack);
       next(err);
     }
   });
 
   router.get('/app/transfers', requireMfaEnrolled(mfaService), async (req, res, next) => {
     try {
+      console.error('[GLOBE_TRANSFER] GET /app/transfers', JSON.stringify({
+        userId: req.session?.user?.id,
+        email: req.session?.user?.email,
+        roles: req.session?.user?.roles,
+        sessionCountry: req.session?.user?.countryCode || null,
+        query: req.query || {}
+      }));
       const locals = await transferPageLocals(req, {
         idempotencyKey: crypto.randomBytes(16).toString('hex'),
         error: null,
         success: null,
         formValues: {}
       });
+      console.error('[GLOBE_TRANSFER] render locals', JSON.stringify({
+        countryCode: locals.countryCode,
+        profileCountry: locals.profileCountry,
+        bankCount: Array.isArray(locals.banks) ? locals.banks.length : null,
+        linkCount: Array.isArray(locals.links) ? locals.links.length : null
+      }));
       res.render('customer/transfers', locals);
     } catch (err) {
+      console.error('[GLOBE_TRANSFER] GET /app/transfers failed', err?.message || err);
+      if (err?.stack) console.error(err.stack);
       next(err);
     }
   });

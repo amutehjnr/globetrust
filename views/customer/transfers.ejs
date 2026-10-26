@@ -489,18 +489,44 @@
 
   </script>
 
-  <!-- Bank list ensure populated -->
+
+
+  <!-- Bank load diagnostics -->
   <script>
     (function () {
+      function log() {
+        var args = ['[GLOBE_TRANSFER_UI]'].concat([].slice.call(arguments));
+        console.error.apply(console, args);
+      }
+
       var select = document.getElementById('transfer-bank');
       var hint = document.getElementById('transfer-bank-hint');
       var dataEl = document.getElementById('transfer-banks-data');
-      if (!select) return;
 
-      function fill(list, country) {
-        if (!list || !list.length) return;
+      log('page load', {
+        hasSelect: !!select,
+        hasHint: !!hint,
+        hasDataEl: !!dataEl,
+        dataCountry: select ? select.getAttribute('data-country') : null,
+        optionCount: select ? select.options.length : 0
+      });
+
+      if (!select) {
+        log('ERROR: #transfer-bank select not found in DOM');
+        return;
+      }
+
+      function fill(list, country, source) {
+        log('fill()', { source: source, country: country, listLength: list ? list.length : 0, sample: (list || []).slice(0, 3) });
+        if (!list || !list.length) {
+          log('fill() aborted — empty list from', source);
+          return;
+        }
         var seen = {};
-        Array.prototype.forEach.call(select.options, function (o) { if (o.value) seen[o.value] = true; });
+        Array.prototype.forEach.call(select.options, function (o) {
+          if (o.value) seen[o.value] = true;
+        });
+        var added = 0;
         list.forEach(function (b) {
           if (!b || !b.code || seen[b.code]) return;
           var opt = document.createElement('option');
@@ -508,35 +534,56 @@
           opt.textContent = b.name;
           select.appendChild(opt);
           seen[b.code] = true;
+          added += 1;
         });
+        log('fill() done', { added: added, totalOptions: select.options.length });
         if (hint && country) {
           hint.innerHTML = 'Showing ' + list.length + ' banks for <strong>' + country + '</strong>';
         }
       }
 
-      // 1) Embedded server data
+      // 1) Embedded server JSON
       try {
         if (dataEl && dataEl.textContent) {
+          log('embedded JSON raw length', dataEl.textContent.length);
           var embedded = JSON.parse(dataEl.textContent);
-          fill(embedded, select.getAttribute('data-country') || '');
+          log('embedded JSON parsed', { isArray: Array.isArray(embedded), length: embedded && embedded.length });
+          fill(embedded, select.getAttribute('data-country') || '', 'embedded');
+        } else {
+          log('WARNING: no embedded #transfer-banks-data');
         }
-      } catch (e) {}
-
-      // 2) If still only placeholder, fetch API
-      if (select.options.length <= 1) {
-        fetch('/app/transfers/banks', { credentials: 'same-origin' })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            fill(data.banks || [], data.countryCode || '');
-            if (data.countryCode) select.setAttribute('data-country', data.countryCode);
-          })
-          .catch(function () {
-            if (hint) hint.textContent = 'Could not load banks. Open Settings and save your country, then refresh.';
-          });
+      } catch (e) {
+        log('ERROR parsing embedded banks JSON', e && e.message ? e.message : e);
       }
+
+      // 2) API fallback
+      log('fetching /app/transfers/banks ...');
+      fetch('/app/transfers/banks', { credentials: 'same-origin' })
+        .then(function (r) {
+          log('banks API status', r.status, r.ok);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          log('banks API body', {
+            countryCode: data.countryCode,
+            profileCountry: data.profileCountry,
+            count: data.count,
+            banksIsArray: Array.isArray(data.banks),
+            sample: (data.banks || []).slice(0, 3)
+          });
+          fill(data.banks || [], data.countryCode || '', 'api');
+          if (data.countryCode) select.setAttribute('data-country', data.countryCode);
+          if ((!data.banks || !data.banks.length) && hint) {
+            hint.textContent = 'No banks for country ' + (data.countryCode || data.profileCountry || '(none)') + ' — save country in Settings';
+          }
+        })
+        .catch(function (err) {
+          log('ERROR banks API', err && err.message ? err.message : err);
+          if (hint) hint.textContent = 'Could not load banks (see browser console). Save country in Settings, then refresh.';
+        });
     })();
   </script>
-
 
 </body>
 </html>
