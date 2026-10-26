@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const { requireAuth, requireRole, requireMfaEnrolled } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 const { banksForCountry, resolveCountryCode } = require('../../utils/banksByCountry');
+const { enrichBanks, flagUrlForCountry } = require('../../utils/bankLogos');
 const { COUNTRIES } = require('../../utils/countries');
 
 function createTransferRouter({ transferService, transferRepo, coreBanking, mfaService, customerRepo }) {
@@ -96,7 +97,14 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       ];
     }
 
-    return { countryCode: effectiveCountry, profileCountry, profile, banks };
+    banks = enrichBanks(banks, effectiveCountry);
+    return {
+      countryCode: effectiveCountry,
+      profileCountry,
+      profile,
+      banks,
+      countryFlagUrl: flagUrlForCountry(effectiveCountry, 80)
+    };
   }
 
   async function transferPageLocals(req, extra = {}) {
@@ -105,7 +113,8 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     const links = await transferRepo.listLinksWithExternal(userId);
     const history = await transferRepo.listForUser(userId);
     const override = req.query?.country || null;
-    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId, override, req.session.user);
+    const resolved = await resolveCountryAndBanks(userId, override, req.session.user);
+    const { countryCode, profileCountry, profile, banks, countryFlagUrl } = resolved;
     return {
       title: 'Transfers',
       path: '/app/transfers',
@@ -113,6 +122,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       history,
       banks,
       countryCode,
+      countryFlagUrl: countryFlagUrl || null,
       profileCountry,
       profile,
       countries: COUNTRIES,
@@ -144,12 +154,13 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
         userId: req.session?.user?.id,
         queryCountry: req.query?.country || null
       }));
-      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(
+      const resolved = await resolveCountryAndBanks(
         req.session.user.id,
         req.query?.country,
         req.session.user
       );
-      const payload = { countryCode, profileCountry, banks, count: banks.length };
+      const { countryCode, profileCountry, banks, countryFlagUrl } = resolved;
+      const payload = { countryCode, profileCountry, banks, countryFlagUrl, count: banks.length };
       console.error('[GLOBE_TRANSFER] banks API response', JSON.stringify({
         countryCode,
         profileCountry,

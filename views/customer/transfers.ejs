@@ -74,32 +74,59 @@
             </div>
 
             <!-- Destination bank (by profile country) -->
-            <div class="transfer-field">
-              <label for="transfer-bank">
+            <div class="transfer-field transfer-bank-field">
+              <label id="transfer-bank-label">
                 Destination bank
                 <% if (typeof countryCode !== 'undefined' && countryCode) { %>
-                  <span class="transfer-optional"><%= countryCode %></span>
+                  <span class="transfer-optional transfer-country-pill">
+                    <% if (typeof countryFlagUrl !== 'undefined' && countryFlagUrl) { %>
+                      <img class="transfer-flag-sm" src="<%= countryFlagUrl %>" alt="" width="18" height="12" loading="lazy">
+                    <% } %>
+                    <%= countryCode %>
+                  </span>
                 <% } %>
               </label>
-              <select id="transfer-bank" name="destinationBankCode" required
-                data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>">
+
+              <!-- Accessible native select (kept for form submit; visually enhanced by custom UI) -->
+              <select id="transfer-bank" name="destinationBankCode" required class="transfer-bank-native"
+                data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>"
+                aria-labelledby="transfer-bank-label">
                 <option value="" disabled selected>Select bank</option>
                 <% var bankList = (typeof banks !== 'undefined' && Array.isArray(banks)) ? banks : []; %>
                 <% bankList.forEach(function (b) { %>
                   <option value="<%= b.code %>"
+                    data-logo="<%= b.logoUrl || '' %>"
+                    data-flag="<%= b.flagUrl || (typeof countryFlagUrl !== 'undefined' ? countryFlagUrl : '') %>"
+                    data-initials="<%= b.initials || '' %>"
                     <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>>
                     <%= b.name %>
                   </option>
                 <% }) %>
               </select>
+
+              <!-- Custom responsive picker -->
+              <div class="bank-picker" id="bank-picker" data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>">
+                <button type="button" class="bank-picker__trigger" id="bank-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="bank-picker__trigger-main" id="bank-picker-selected">
+                    <span class="bank-picker__placeholder">Select destination bank</span>
+                  </span>
+                  <span class="bank-picker__chevron" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </span>
+                </button>
+                <div class="bank-picker__panel" id="bank-picker-panel" hidden>
+                  <div class="bank-picker__search-wrap">
+                    <input type="search" class="bank-picker__search" id="bank-picker-search" placeholder="Search banks…" autocomplete="off" aria-label="Search banks">
+                  </div>
+                  <ul class="bank-picker__list" id="bank-picker-list" role="listbox" aria-label="Banks"></ul>
+                </div>
+              </div>
+
               <span class="transfer-hint" id="transfer-bank-hint">
                 <% if (bankList.length && countryCode) { %>
                   Showing <%= bankList.length %> banks for <strong><%= countryCode %></strong>
-                  <% if (typeof profileCountry !== 'undefined' && profileCountry && profileCountry !== countryCode) { %>
-                    (profile: <%= profileCountry %>)
-                  <% } %>
                 <% } else if (bankList.length) { %>
-                  <%= bankList.length %> banks · <a href="/app/settings">Set country in Settings</a> for a local list
+                  <%= bankList.length %> banks · <a href="/app/settings">Set country in Settings</a>
                 <% } else { %>
                   <a href="/app/settings">Set your country in Settings</a> so we can load banks
                 <% } %>

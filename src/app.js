@@ -67,7 +67,7 @@ function createApp(pool) {
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
-        imgSrc: ["'self'", "data:", "https://flagcdn.com"],
+        imgSrc: ["'self'", "data:", "https://flagcdn.com", "https://logo.clearbit.com", "https://ui-avatars.com"],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         scriptSrc: ["'self'"],

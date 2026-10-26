@@ -8,42 +8,295 @@
     }
   }
 
-  function fillBankSelect(select, list, country, source) {
-    if (!select) return;
-    log('fillBankSelect', {
-      source: source,
-      country: country,
-      listLength: list ? list.length : 0,
-      sample: (list || []).slice(0, 3)
-    });
+  function initialsFromName(name, code) {
+    var src = String(name || code || '?').trim();
+    var parts = src.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return src.slice(0, 2).toUpperCase();
+  }
 
-    if (!list || !list.length) {
-      log('fillBankSelect aborted — empty list from', source);
+  function logoImg(url, className, alt) {
+    if (!url) return null;
+    var img = document.createElement('img');
+    img.className = className;
+    img.src = url;
+    img.alt = alt || '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', function () {
+      img.style.display = 'none';
+      if (img.nextElementSibling && img.nextElementSibling.classList.contains('bank-picker__avatar')) {
+        img.nextElementSibling.hidden = false;
+      }
+    });
+    return img;
+  }
+
+  function buildLogoCluster(bank) {
+    var wrap = document.createElement('span');
+    wrap.className = 'bank-picker__logos';
+
+    var avatarFallback = document.createElement('span');
+    avatarFallback.className = 'bank-picker__avatar';
+    avatarFallback.textContent = bank.initials || initialsFromName(bank.name, bank.code);
+    avatarFallback.hidden = true;
+
+    var logoSrc = bank.logoUrl || bank.avatarUrl || '';
+    var avatarSrc = bank.avatarUrl || '';
+
+    if (logoSrc) {
+      var logo = logoImg(logoSrc, 'bank-picker__logo', bank.name || '');
+      if (logo) {
+        logo.addEventListener('error', function () {
+          // Try dedicated avatar URL, else letter badge
+          if (avatarSrc && avatarSrc !== logoSrc) {
+            logo.src = avatarSrc;
+            logo.onerror = function () {
+              logo.style.display = 'none';
+              avatarFallback.hidden = false;
+            };
+          } else {
+            logo.style.display = 'none';
+            avatarFallback.hidden = false;
+          }
+        });
+        wrap.appendChild(logo);
+      } else {
+        avatarFallback.hidden = false;
+      }
+    } else {
+      avatarFallback.hidden = false;
+    }
+    wrap.appendChild(avatarFallback);
+
+    if (bank.flagUrl) {
+      var flag = logoImg(bank.flagUrl, 'bank-picker__flag', bank.countryCode || '');
+      if (flag) wrap.appendChild(flag);
+    }
+
+    return wrap;
+  }
+
+  function setTriggerContent(triggerMain, bank) {
+    triggerMain.innerHTML = '';
+    if (!bank || !bank.code) {
+      var ph = document.createElement('span');
+      ph.className = 'bank-picker__placeholder';
+      ph.textContent = 'Select destination bank';
+      triggerMain.appendChild(ph);
+      return;
+    }
+    triggerMain.appendChild(buildLogoCluster(bank));
+    var meta = document.createElement('span');
+    meta.className = 'bank-picker__meta';
+    var name = document.createElement('span');
+    name.className = 'bank-picker__name';
+    name.textContent = bank.name;
+    meta.appendChild(name);
+    triggerMain.appendChild(meta);
+  }
+
+  function syncNativeSelect(select, code) {
+    if (!select) return;
+    var found = false;
+    Array.prototype.forEach.call(select.options, function (opt) {
+      if (opt.value === code) {
+        opt.selected = true;
+        found = true;
+      } else {
+        opt.selected = false;
+      }
+    });
+    if (!found && select.options[0]) {
+      select.options[0].selected = true;
+    }
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function banksFromSelectOptions(select) {
+    var list = [];
+    Array.prototype.forEach.call(select.options, function (opt) {
+      if (!opt.value) return;
+      list.push({
+        code: opt.value,
+        name: opt.textContent.trim(),
+        logoUrl: opt.getAttribute('data-logo') || '',
+        flagUrl: opt.getAttribute('data-flag') || '',
+        initials: opt.getAttribute('data-initials') || initialsFromName(opt.textContent, opt.value)
+      });
+    });
+    return list;
+  }
+
+  function renderBankList(listEl, banks, selectedCode, onPick) {
+    listEl.innerHTML = '';
+    if (!banks.length) {
+      var empty = document.createElement('li');
+      empty.className = 'bank-picker__empty';
+      empty.textContent = 'No banks found';
+      listEl.appendChild(empty);
       return;
     }
 
-    var seen = {};
-    Array.prototype.forEach.call(select.options, function (opt) {
-      if (opt.value) seen[opt.value] = true;
+    banks.forEach(function (bank) {
+      var li = document.createElement('li');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bank-picker__item' + (bank.code === selectedCode ? ' is-selected' : '');
+      btn.setAttribute('role', 'option');
+      btn.setAttribute('data-code', bank.code);
+      btn.setAttribute('data-name', bank.name.toLowerCase());
+      btn.appendChild(buildLogoCluster(bank));
+
+      var meta = document.createElement('span');
+      meta.className = 'bank-picker__meta';
+      var name = document.createElement('span');
+      name.className = 'bank-picker__name';
+      name.textContent = bank.name;
+      var code = document.createElement('span');
+      code.className = 'bank-picker__code';
+      code.textContent = bank.code;
+      meta.appendChild(name);
+      meta.appendChild(code);
+      btn.appendChild(meta);
+
+      btn.addEventListener('click', function () {
+        onPick(bank);
+      });
+
+      li.appendChild(btn);
+      listEl.appendChild(li);
     });
+  }
 
-    var added = 0;
-    list.forEach(function (bank) {
-      if (!bank || !bank.code || seen[bank.code]) return;
-      var option = document.createElement('option');
-      option.value = bank.code;
-      option.textContent = bank.name;
-      select.appendChild(option);
-      seen[bank.code] = true;
-      added += 1;
-    });
-
-    log('fillBankSelect done', { added: added, totalOptions: select.options.length });
-
+  function initBankPicker(banks, countryCode, countryFlagUrl) {
+    var select = document.getElementById('transfer-bank');
+    var picker = document.getElementById('bank-picker');
+    var trigger = document.getElementById('bank-picker-trigger');
+    var triggerMain = document.getElementById('bank-picker-selected');
+    var panel = document.getElementById('bank-picker-panel');
+    var listEl = document.getElementById('bank-picker-list');
+    var search = document.getElementById('bank-picker-search');
     var hint = document.getElementById('transfer-bank-hint');
-    if (hint && country) {
-      hint.textContent = 'Showing ' + list.length + ' banks for ' + country;
+
+    if (!select || !picker || !trigger || !panel || !listEl) {
+      log('bank picker DOM missing');
+      return;
     }
+
+    // Normalize banks with flag fallback
+    banks = (banks || []).map(function (b) {
+      return {
+        code: b.code,
+        name: b.name,
+        logoUrl: b.logoUrl || '',
+        avatarUrl: b.avatarUrl || '',
+        flagUrl: b.flagUrl || countryFlagUrl || '',
+        initials: b.initials || initialsFromName(b.name, b.code),
+        countryCode: countryCode || ''
+      };
+    });
+
+    // Rebuild native options for form submit
+    var prev = select.value;
+    while (select.options.length > 1) select.remove(1);
+    banks.forEach(function (b) {
+      var opt = document.createElement('option');
+      opt.value = b.code;
+      opt.textContent = b.name;
+      opt.setAttribute('data-logo', b.logoUrl || '');
+      opt.setAttribute('data-flag', b.flagUrl || '');
+      opt.setAttribute('data-initials', b.initials || '');
+      if (prev && prev === b.code) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    var selectedCode = select.value || '';
+    var selectedBank = banks.find(function (b) { return b.code === selectedCode; }) || null;
+    setTriggerContent(triggerMain, selectedBank);
+
+    function closePanel() {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function openPanel() {
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      if (search) {
+        search.value = '';
+        filterList('');
+        setTimeout(function () { search.focus(); }, 0);
+      }
+    }
+
+    function onPick(bank) {
+      selectedCode = bank.code;
+      selectedBank = bank;
+      setTriggerContent(triggerMain, bank);
+      syncNativeSelect(select, bank.code);
+      Array.prototype.forEach.call(listEl.querySelectorAll('.bank-picker__item'), function (el) {
+        el.classList.toggle('is-selected', el.getAttribute('data-code') === bank.code);
+      });
+      closePanel();
+    }
+
+    function filterList(q) {
+      q = String(q || '').toLowerCase().trim();
+      var visible = 0;
+      Array.prototype.forEach.call(listEl.querySelectorAll('.bank-picker__item'), function (el) {
+        var name = el.getAttribute('data-name') || '';
+        var code = (el.getAttribute('data-code') || '').toLowerCase();
+        var show = !q || name.indexOf(q) !== -1 || code.indexOf(q) !== -1;
+        el.parentElement.classList.toggle('is-hidden', !show);
+        if (show) visible += 1;
+      });
+      var empty = listEl.querySelector('.bank-picker__empty');
+      if (empty) empty.remove();
+      if (!visible) {
+        var li = document.createElement('li');
+        li.className = 'bank-picker__empty';
+        li.textContent = 'No banks match your search';
+        listEl.appendChild(li);
+      }
+    }
+
+    renderBankList(listEl, banks, selectedCode, onPick);
+
+    trigger.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (panel.hidden) openPanel();
+      else closePanel();
+    });
+
+    if (search) {
+      search.addEventListener('input', function () {
+        filterList(search.value);
+      });
+      search.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          closePanel();
+          trigger.focus();
+        }
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!picker.contains(e.target)) closePanel();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) closePanel();
+    });
+
+    if (hint && countryCode && banks.length) {
+      hint.innerHTML = 'Showing <strong>' + banks.length + '</strong> banks for <strong>' + countryCode + '</strong>';
+    }
+
+    log('bank picker ready', { count: banks.length, countryCode: countryCode });
   }
 
   function loadBanksFromApi() {
@@ -68,22 +321,19 @@
           count: data.count,
           sample: (data.banks || []).slice(0, 3)
         });
-        fillBankSelect(select, data.banks || [], data.countryCode || '', 'api');
-        if (data.countryCode) {
-          select.setAttribute('data-country', data.countryCode);
+        var banks = data.banks || [];
+        if (!banks.length) {
+          banks = banksFromSelectOptions(select);
         }
-        if ((!data.banks || !data.banks.length) && hint) {
-          hint.textContent =
-            'No banks for country ' +
-            (data.countryCode || data.profileCountry || '(none)') +
-            ' — save country in Settings';
-        }
+        initBankPicker(banks, data.countryCode || select.getAttribute('data-country') || '', data.countryFlagUrl || '');
+        if (data.countryCode) select.setAttribute('data-country', data.countryCode);
       })
       .catch(function (err) {
         log('ERROR banks API', err && err.message ? err.message : err);
-        if (hint) {
-          hint.textContent =
-            'Could not load banks. Save country in Settings, then refresh.';
+        var fallback = banksFromSelectOptions(select);
+        initBankPicker(fallback, select.getAttribute('data-country') || '', '');
+        if (hint && !fallback.length) {
+          hint.textContent = 'Could not load banks. Save country in Settings, then refresh.';
         }
       });
   }
@@ -103,14 +353,6 @@
     var summaryFrom = document.getElementById('sum-from');
     var summaryTo = document.getElementById('sum-to');
     var summaryAmount = document.getElementById('sum-amount');
-    var bankSelect = document.getElementById('transfer-bank');
-
-    log('page load', {
-      hasForm: !!form,
-      hasBankSelect: !!bankSelect,
-      bankOptionCount: bankSelect ? bankSelect.options.length : 0,
-      dataCountry: bankSelect ? bankSelect.getAttribute('data-country') : null
-    });
 
     function getSelectedOption() {
       return source && source.options[source.selectedIndex]
@@ -211,6 +453,13 @@
     }
 
     form.addEventListener('submit', function (event) {
+      var bank = document.getElementById('transfer-bank');
+      if (bank && !bank.value) {
+        event.preventDefault();
+        var trigger = document.getElementById('bank-picker-trigger');
+        if (trigger) trigger.focus();
+        return;
+      }
       if (!amount || !destination) return;
       var parsedAmount = Number(amount.value);
       var destinationValue = destination.value.trim();
@@ -229,8 +478,6 @@
     updateDestinationHint();
     updateNarrativeCounter();
     updateSummary();
-
-    // Always load banks from API (CSP-safe, no inline scripts)
     loadBanksFromApi();
   }
 
