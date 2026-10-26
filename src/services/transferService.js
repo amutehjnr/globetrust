@@ -19,7 +19,7 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
           out.push({
             ...link,
             balance: bal,
-            note: bal.isDemo ? 'sandbox_demo_balance' : null
+            note: null
           });
         } catch (err) {
           logger.error({ err, linkId: link.id }, 'Balance fetch failed');
@@ -34,6 +34,7 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
       sourceAccountLinkId,
       amount,
       destinationAccountRef,
+      destinationBankCode,
       destinationCurrency,
       narrative,
       idempotencyKey
@@ -94,7 +95,7 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
         externalReference: null
       });
 
-      await transferRepo.addEvent(requestId, 'created', { isDemo: true });
+      await transferRepo.addEvent(requestId, 'created', { mode: process.env.CORE_BANKING_MODE || 'manual' });
 
       const result = await coreBanking.initiateTransfer({
         idempotencyKey: `${userId}:${idempotencyKey}`,
@@ -103,7 +104,9 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
         amount: normalized,
         destinationAccountRef,
         destinationCurrency: destinationCurrency || link.currencyCode,
-        narrative
+        narrative: destinationBankCode
+          ? `[${destinationBankCode}] ${narrative || ''}`.trim()
+          : narrative
       });
 
       if (result.status === 'succeeded') {
@@ -114,11 +117,36 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
           completed: true
         });
         await transferRepo.addEvent(requestId, 'provider_succeeded', {
-          providerReference: result.providerReference,
-          isDemo: true
+          providerReference: result.providerReference
         });
 
-        // Debit alert (best-effort — never blocks transfer)
+        if (alertService?.notifyTransferSuccess) {
+          try {
+            await alertService.notifyTransferSuccess({
+              userId,
+              amount: normalized,
+              currency: link.currencyCode,
+              narrative: narrative || `TRANSFER to ${destinationAccountRef}`,
+              accountRef: link.externalAccountRef || link.id,
+              direction: 'debit'
+            });
+          } catch (alertErr) {
+            logger?.error?.({ alertErr, requestId }, 'Debit alert failed');
+          }
+        }
+      } else if (result.status === 'submitted' || result.status === 'pending_approval' || result.status === 'processing') {
+        await transferRepo.updateStatus(requestId, {
+          status: result.status === 'pending_approval' ? 'pending_approval' : 'submitted',
+          externalReference: result.providerReference,
+          failureCode: null,
+          completed: false
+        });
+        await transferRepo.addEvent(requestId, 'submitted_for_processing', {
+          providerReference: result.providerReference,
+          mode: 'manual'
+        });
+
+        // Alert that debit was instructed (manual queue)
         if (alertService?.notifyTransferSuccess) {
           try {
             await alertService.notifyTransferSuccess({
@@ -141,8 +169,7 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
           completed: true
         });
         await transferRepo.addEvent(requestId, 'provider_failed', {
-          failureCode: result.failureCode,
-          isDemo: true
+          failureCode: result.failureCode
         });
       }
 

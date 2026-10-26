@@ -7,6 +7,7 @@
 
 module.exports = {
   PROVIDER_SANDBOX: 'sandbox_core',
+  PROVIDER_MANUAL: 'globe_trust_manual',
   /** @typedef {{ accountRef: string, currency: string, available: string, ledger: string, asOf: string, isDemo: boolean }} BalanceSnapshot */
   /** @typedef {{ status: string, providerReference: string, rawStatus?: string }} TransferStatus */
 };

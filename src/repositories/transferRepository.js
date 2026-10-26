@@ -125,18 +125,30 @@ function createTransferRepository(pool) {
          LIMIT ?`,
         [uuidToBinary(userId), limit]
       );
-      return rows.map((r) => ({
-        id: binaryToUuid(r.id),
-        providerCode: r.provider_code,
-        externalReference: r.external_reference,
-        sourceCurrency: r.source_currency,
-        sourceAmount: r.source_amount,
-        destinationCurrency: r.destination_currency,
-        status: r.status,
-        failureCode: r.failure_code,
-        createdAt: r.created_at,
-        completedAt: r.completed_at
-      }));
+      return rows.map((r) => {
+        let ref = r.external_reference || '';
+        // Hide legacy sandbox-looking prefixes in the UI
+        if (typeof ref === 'string') {
+          ref = ref.replace(/^SBX-/i, 'GTB-');
+        }
+        const destinationLabel = ref
+          ? `Transfer · ${ref}`
+          : 'Transfer';
+        return {
+          id: binaryToUuid(r.id),
+          providerCode: ['sandbox_core', 'globe_trust_manual'].includes(r.provider_code) ? 'globe_trust' : r.provider_code,
+          externalReference: ref,
+          reference: ref,
+          destinationLabel,
+          sourceCurrency: r.source_currency,
+          sourceAmount: r.source_amount,
+          destinationCurrency: r.destination_currency,
+          status: r.status,
+          failureCode: r.failure_code,
+          createdAt: r.created_at,
+          completedAt: r.completed_at
+        };
+      });
     },
 
     async getOwned(userId, requestId) {
@@ -196,21 +208,36 @@ function createTransferRepository(pool) {
         [uuidToBinary(userId)]
       );
 
+      const provider =
+        (process.env.CORE_BANKING_MODE || 'manual').toLowerCase() === 'sandbox'
+          ? 'sandbox_core'
+          : 'globe_trust';
+
       const [existing] = await pool.query(
         `SELECT id FROM bank_account_links
-         WHERE user_id = ? AND provider_code = 'sandbox_core' AND currency_code = ? AND unlinked_at IS NULL
+         WHERE user_id = ? AND currency_code = ? AND unlinked_at IS NULL
+           AND provider_code IN ('sandbox_core', 'globe_trust', 'globe_trust_manual')
          LIMIT 1`,
         [uuidToBinary(userId), currency]
       );
-      if (existing[0]) return binaryToUuid(existing[0].id);
+      if (existing[0]) {
+        // Promote legacy sandbox provider label
+        await pool.query(
+          `UPDATE bank_account_links
+           SET provider_code = ?, display_label = CONCAT('Globe Trust ', currency_code, ' Current')
+           WHERE id = ?`,
+          [provider, existing[0].id]
+        );
+        return binaryToUuid(existing[0].id);
+      }
 
       const id = newBinaryId();
       const ref = Buffer.from(`gtb-${userId.slice(0, 8)}-${currency}`, 'utf8');
       await pool.query(
         `INSERT INTO bank_account_links
           (id, user_id, provider_code, external_account_ref, currency_code, display_label, account_type, link_status)
-         VALUES (?, ?, 'sandbox_core', ?, ?, ?, 'current', 'active')`,
-        [id, uuidToBinary(userId), ref, currency, `Globe Trust ${currency} Current`]
+         VALUES (?, ?, ?, ?, ?, ?, 'current', 'active')`,
+        [id, uuidToBinary(userId), provider, ref, currency, `Globe Trust ${currency} Current`]
       );
       return binaryToUuid(id);
     },

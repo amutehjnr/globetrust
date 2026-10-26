@@ -92,6 +92,11 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
                 : null;
               const ref = result.request.externalReference || result.request.id || '—';
               const status = result.request.status || 'submitted';
+              if (status === 'submitted' || status === 'pending_approval') {
+                return bank
+                  ? `Transfer received for processing to ${bank}. Reference: ${ref}. Our team will complete it shortly.`
+                  : `Transfer received for processing. Reference: ${ref}. Our team will complete it shortly.`;
+              }
               return bank
                 ? `Transfer ${status} to ${bank}. Reference: ${ref}.`
                 : `Transfer ${status}. Reference: ${ref}.`;
@@ -149,7 +154,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
         // Sandbox: acknowledge only — reconciliation jobs would update requests by provider ref
         await transferRepo.markWebhookProcessed(coreBanking.code, eventId, 'processed');
-        return res.status(200).json({ ok: true, isDemo: true });
+        return res.status(200).json({ ok: true });
       } catch (err) {
         return res.status(400).json({ ok: false, error: 'bad_webhook' });
       }
