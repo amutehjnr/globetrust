@@ -16,7 +16,7 @@
       <div class="transfers-header">
         <div>
           <h1>Transfer requests</h1>
-          <p>Send money to banks in your country — select the destination bank and account number.</p>
+          <p>Select the destination bank and enter the account number.</p>
         </div>
       </div>
 
@@ -73,38 +73,9 @@
               </div>
             </div>
 
-            <!-- Country for bank directory -->
+            <!-- Destination bank (by profile country) -->
             <div class="transfer-field">
-              <label for="transfer-country">Beneficiary country</label>
-              <select id="transfer-country" name="beneficiaryCountry" autocomplete="country">
-                <% var selectedCountry = (typeof countryCode !== 'undefined' && countryCode) ? countryCode : ''; %>
-                <option value="" <%= !selectedCountry ? 'selected' : '' %>>Select country</option>
-                <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) {
-                     if (c.code === 'OTHER') return;
-                %>
-                  <option value="<%= c.code %>" <%= selectedCountry === c.code ? 'selected' : '' %>>
-                    <%= c.name %>
-                  </option>
-                <% }) %>
-              </select>
-              <span class="transfer-hint">
-                Banks below match this country
-                <% if (typeof profileCountry !== 'undefined' && profileCountry) { %>
-                  · profile: <%= profileCountry %>
-                <% } else { %>
-                  · <a href="/app/settings">set default in Settings</a>
-                <% } %>
-              </span>
-            </div>
-
-            <!-- Destination bank (by selected country) -->
-            <div class="transfer-field">
-              <label for="transfer-bank">
-                Destination bank
-                <% if (typeof countryCode !== 'undefined' && countryCode) { %>
-                  <span class="transfer-optional"><%= countryCode %></span>
-                <% } %>
-              </label>
+              <label for="transfer-bank">Destination bank</label>
               <select id="transfer-bank" name="destinationBankCode" required>
                 <option value="" disabled <%= !(typeof formValues !== 'undefined' && formValues.destinationBankCode) ? 'selected' : '' %>>
                   Select bank
@@ -121,12 +92,9 @@
               </select>
               <span class="transfer-hint" id="transfer-bank-hint">
                 <% if (bankList.length) { %>
-                  <%= bankList.length %> banks available<%= countryCode ? (' for ' + countryCode) : '' %>
-                  <% if (typeof profileCountry === 'undefined' || !profileCountry) { %>
-                    · <a href="/app/settings">Set your country</a> for a precise list
-                  <% } %>
+                  <%= bankList.length %> banks<%= countryCode ? (' · ' + countryCode) : '' %>
                 <% } else { %>
-                  Loading banks… or <a href="/app/settings">set your country</a>
+                  <a href="/app/settings">Set your country in Settings</a> to load banks
                 <% } %>
               </span>
             </div>
@@ -544,43 +512,6 @@
     })();
   </script>
 
-
-  <script>
-    (function () {
-      var countrySelect = document.getElementById('transfer-country');
-      var bankSelect = document.getElementById('transfer-bank');
-      var hint = document.getElementById('transfer-bank-hint');
-      if (!countrySelect || !bankSelect) return;
-
-      function fillBanks(list, country) {
-        var current = bankSelect.value;
-        while (bankSelect.options.length > 1) bankSelect.remove(1);
-        (list || []).forEach(function (b) {
-          var opt = document.createElement('option');
-          opt.value = b.code;
-          opt.textContent = b.name;
-          if (b.code === current) opt.selected = true;
-          bankSelect.appendChild(opt);
-        });
-        if (hint) {
-          hint.textContent = (list && list.length)
-            ? (list.length + ' banks available' + (country ? (' for ' + country) : ''))
-            : 'No banks for this country';
-        }
-      }
-
-      countrySelect.addEventListener('change', function () {
-        var code = countrySelect.value;
-        if (!code) return;
-        fetch('/app/transfers/banks?country=' + encodeURIComponent(code), { credentials: 'same-origin' })
-          .then(function (r) { return r.json(); })
-          .then(function (data) { fillBanks(data.banks || [], data.countryCode || code); })
-          .catch(function () {
-            if (hint) hint.textContent = 'Could not load banks for ' + code;
-          });
-      });
-    })();
-  </script>
 
 </body>
 </html>
