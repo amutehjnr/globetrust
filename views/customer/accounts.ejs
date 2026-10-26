@@ -5,7 +5,7 @@
     <h1>Accounts</h1>
     <p>Your linked accounts and available balances.</p>
   </div>
-  <span class="db-chip">Live balances</span>
+  <span class="db-chip">Your accounts</span>
 </div>
 
 <% if (!accounts || !accounts.length) { %>
@@ -90,9 +90,6 @@
         <% if (a.balance) { %>
           <div class="accounts-card-meta">
             <span>Ledger: <%= Number(a.balance.ledger).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
-            <% if (false && a.balance && a.balance.isDemo) { %>
-              <span class="accounts-card-demo">Demo funds</span>
-            <% } %>
           </div>
         <% } %>
 

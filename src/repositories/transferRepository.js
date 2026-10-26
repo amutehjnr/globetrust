@@ -7,6 +7,14 @@ function hashIdempotencyKey(key) {
   return crypto.createHash('sha256').update(String(key)).digest();
 }
 
+function normalizeDisplayLabel(label, currencyCode) {
+  const cur = currencyCode || '';
+  if (!label || /sandbox/i.test(String(label))) {
+    return `Globe Trust ${cur} Current`.trim();
+  }
+  return label;
+}
+
 function createTransferRepository(pool) {
   return {
     hashIdempotencyKey,
@@ -100,7 +108,7 @@ function createTransferRepository(pool) {
         providerCode: r.provider_code,
         externalAccountRef: Buffer.from(r.external_account_ref).toString('utf8'),
         currencyCode: r.currency_code,
-        displayLabel: r.display_label,
+        displayLabel: normalizeDisplayLabel(r.display_label, r.currency_code),
         accountType: r.account_type,
         linkStatus: r.link_status,
         linkedAt: r.linked_at
@@ -166,19 +174,25 @@ function createTransferRepository(pool) {
         providerCode: rows[0].provider_code,
         externalAccountRef: rows[0].external_account_ref.toString('utf8'),
         currencyCode: rows[0].currency_code,
-        displayLabel: rows[0].display_label,
+        displayLabel: normalizeDisplayLabel(rows[0].display_label, rows[0].currency_code),
         linkStatus: rows[0].link_status
       };
     },
 
     async ensureSandboxLink(userId, currency = 'NGN') {
-      // Relabel legacy sandbox display names for this user
+      // Always strip sandbox wording from account labels for this user
       await pool.query(
         `UPDATE bank_account_links
          SET display_label = CONCAT('Globe Trust ', currency_code, ' Current')
          WHERE user_id = ?
            AND unlinked_at IS NULL
-           AND (display_label LIKE 'Sandbox %' OR display_label IS NULL)`,
+           AND (
+             display_label LIKE '%[Ss]andbox%'
+             OR display_label LIKE 'Sandbox %'
+             OR display_label LIKE '%sandbox%'
+             OR display_label IS NULL
+             OR display_label = ''
+           )`,
         [uuidToBinary(userId)]
       );
 
@@ -191,7 +205,7 @@ function createTransferRepository(pool) {
       if (existing[0]) return binaryToUuid(existing[0].id);
 
       const id = newBinaryId();
-      const ref = Buffer.from(`sandbox-${userId.slice(0, 8)}-${currency}`, 'utf8');
+      const ref = Buffer.from(`gtb-${userId.slice(0, 8)}-${currency}`, 'utf8');
       await pool.query(
         `INSERT INTO bank_account_links
           (id, user_id, provider_code, external_account_ref, currency_code, display_label, account_type, link_status)
