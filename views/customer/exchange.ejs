@@ -3,10 +3,21 @@
 <div class="db-greeting">
   <div>
     <h1>Exchange rates</h1>
-    <p>Indicative mid-market style rates for planning (not a live quote).</p>
+    <p>Live mid-market rates for major global currencies.</p>
   </div>
-  <span class="db-chip">Updated periodically</span>
+  <span class="db-chip">Live market</span>
 </div>
+
+<% if (typeof ratesError !== 'undefined' && ratesError) { %>
+  <div class="db-alert db-alert--err" style="margin-bottom:16px;"><%= ratesError %></div>
+<% } %>
+
+<% if (typeof ratesAsOf !== 'undefined' && ratesAsOf) { %>
+  <p class="db-muted" style="margin:0 0 16px;font-size:13px;">
+    As of <strong><%= ratesAsOf %></strong>
+    <% if (typeof ratesSource !== 'undefined' && ratesSource) { %> · <%= ratesSource %><% } %>
+  </p>
+<% } %>
 
 <% if (!rates || !rates.length) { %>
 
@@ -18,7 +29,7 @@
       </svg>
     </div>
     <h3>No rates available</h3>
-    <p>Exchange rates will appear here once the treasury feed is connected.</p>
+    <p>We could not load live market rates right now. Please refresh in a moment.</p>
   </section>
 
 <% } else { %>
@@ -34,7 +45,7 @@
         var changeClass = isUp ? 'up' : (isDown ? 'down' : 'flat');
         var changeLabel = isUp ? 'up' : (isDown ? 'down' : 'unchanged');
 
-        /* Extract base and quote from pair like "USD/NGN" */
+        /* Extract base and quote from pair */
         var parts = String(r.pair || '').split('/');
         var base  = (parts[0] || '').trim();
         var quote = (parts[1] || '').trim();
@@ -85,8 +96,7 @@
     </div>
 
     <p class="rate-convert-lead">
-      Live conversion and booking will use the bank's treasury rates after go-live.
-      Use <a href="/app/transfers">Transfers</a> for sandbox moves between linked accounts.
+      Converter uses the live mid-market rates shown above for guidance only.
     </p>
 
     <form class="rate-convert-form" id="rate-convert-form" onsubmit="return false;">
@@ -164,9 +174,9 @@
       }
 
       /* Pick defaults: first base currency from rates */
-      var firstPair = String((rates[0] && rates[0].pair) || 'USD/NGN').split('/');
+      var firstPair = String((rates[0] && rates[0].pair) || 'USD/USD').split('/');
       var defaultFrom = (firstPair[0] || 'USD').trim();
-      var defaultTo   = (firstPair[1] || 'NGN').trim();
+      var defaultTo   = (firstPair[1] || 'USD').trim();
 
       fillSelect(fromEl, defaultFrom);
       fillSelect(toEl,   defaultTo);
@@ -295,7 +305,7 @@
     }
   }
 
-  var firstPair = String((rates[0] && rates[0].pair) || 'USD/NGN')
+  var firstPair = String((rates[0] && rates[0].pair) || 'USD/USD')
     .split('/');
 
   fillSelect(fromEl, currencyCode(firstPair[0]));

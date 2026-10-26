@@ -6,6 +6,7 @@ const { z } = require('zod');
 const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 const { COUNTRIES, normalizeCountryCode } = require('../../utils/countries');
+const { getTopMarketRates } = require('../../services/fxService');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -184,6 +185,16 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     return {
       displayName: name,
       initials: name.slice(0, 2).toUpperCase(),
+      path: extra.path || req.path || '',
+      profile: null,
+      cards: [],
+      beneficiaries: [],
+      history: [],
+      rates: [],
+      accounts: [],
+      mfaStatus: { enrolled: false, required: true },
+      error: null,
+      success: null,
       ...extra
     };
   }
@@ -205,48 +216,94 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     } catch (err) { next(err); }
   });
 
-  router.get('/app/cards', (req, res) => {
-    res.render('customer/cards', pageLocals(req, {
-      title: 'Cards',
-      path: '/app/cards'
-    }));
+  router.get('/app/cards', async (req, res, next) => {
+    try {
+      let profile = null;
+      try {
+        profile = await customerRepo.getProfile(req.session.user.id);
+      } catch (_) {}
+      res.render('customer/cards', pageLocals(req, {
+        title: 'Cards',
+        path: '/app/cards',
+        profile,
+        cards: []
+      }));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.get('/app/beneficiaries', (req, res) => {
-    res.render('customer/beneficiaries', pageLocals(req, {
-      title: 'Beneficiaries',
-      path: '/app/beneficiaries',
-      beneficiaries: [] // wire to DB later
-    }));
+  router.get('/app/beneficiaries', async (req, res, next) => {
+    try {
+      let profile = null;
+      try {
+        profile = await customerRepo.getProfile(req.session.user.id);
+      } catch (_) {}
+      res.render('customer/beneficiaries', pageLocals(req, {
+        title: 'Beneficiaries',
+        path: '/app/beneficiaries',
+        profile,
+        beneficiaries: []
+      }));
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.get('/app/statements', async (req, res, next) => {
     try {
       let history = [];
+      let profile = null;
+      try {
+        profile = await customerRepo.getProfile(req.session.user.id);
+      } catch (_) {}
       if (transferRepo) {
         history = await transferRepo.listForUser(req.session.user.id, 50);
       }
       res.render('customer/statements', pageLocals(req, {
         title: 'Statements',
         path: '/app/statements',
-        history
+        profile,
+        history: history || []
       }));
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.get('/app/exchange', (req, res) => {
-    res.render('customer/exchange', pageLocals(req, {
-      title: 'Exchange rates',
-      path: '/app/exchange',
-      rates: [
-        { pair: 'USD / NGN', mid: '1,580.00', change: '+0.4%' },
-        { pair: 'GBP / NGN', mid: '2,010.00', change: '-0.2%' },
-        { pair: 'EUR / NGN', mid: '1,720.00', change: '+0.1%' },
-        { pair: 'USD / EUR', mid: '0.92', change: '0.0%' },
-        { pair: 'USD / GBP', mid: '0.79', change: '-0.1%' },
-        { pair: 'EUR / GBP', mid: '0.86', change: '+0.1%' }
-      ]
-    }));
+  router.get('/app/exchange', async (req, res, next) => {
+    try {
+      let profile = null;
+      try {
+        profile = await customerRepo.getProfile(req.session.user.id);
+      } catch (_) {}
+
+      let rates = [];
+      let ratesAsOf = null;
+      let ratesSource = null;
+      let ratesError = null;
+      try {
+        const fx = await getTopMarketRates();
+        rates = fx.rates || [];
+        ratesAsOf = fx.asOf;
+        ratesSource = fx.source;
+      } catch (fxErr) {
+        console.error('[GLOBE_FX] live rates failed', fxErr?.message || fxErr);
+        ratesError = 'Live market rates are temporarily unavailable. Please try again shortly.';
+      }
+
+      res.render('customer/exchange', pageLocals(req, {
+        title: 'Exchange rates',
+        path: '/app/exchange',
+        profile,
+        rates,
+        ratesAsOf,
+        ratesSource,
+        ratesError
+      }));
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.get('/app/settings', async (req, res, next) => {
