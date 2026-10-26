@@ -18,7 +18,7 @@
   var cardNumber = primary && primary.last4 ? '•••• •••• •••• ' + primary.last4 : '•••• •••• •••• 3456';
   var cardHolder = primary && primary.holderName
     ? primary.holderName
-    : (profile && profile.firstName ? (profile.firstName + ' ' + (profile.lastName || '')).trim() : 'YOUR NAME');
+    : (typeof profile !== 'undefined' && profile && profile.firstName ? (profile.firstName + ' ' + (profile.lastName || '')).trim() : 'YOUR NAME');
   var cardExpiry = primary && primary.expiry ? primary.expiry : '09/28';
   var cardBrand  = primary && primary.brand ? primary.brand : 'VISA';
   var cardType   = primary && primary.type ? primary.type : 'Debit';
