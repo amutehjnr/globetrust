@@ -99,6 +99,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     try {
       const data = profileSchema.parse(req.body);
       await customerRepo.updateProfile(req.session.user.id, data);
+      if (req.session.user && data.countryCode !== undefined) {
+        req.session.user.countryCode = data.countryCode || null;
+      }
       const profile = await customerRepo.getProfile(req.session.user.id);
       res.render('customer/profile', {
         title: 'Profile',
@@ -288,6 +291,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         countryCode: code || '',
         preferredLocale: profile?.preferredLocale || 'en'
       });
+      if (req.session.user) {
+        req.session.user.countryCode = code || null;
+      }
       const updated = await customerRepo.getProfile(req.session.user.id);
       let mfaStatus = { enrolled: false, required: true };
       if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);

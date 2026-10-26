@@ -75,28 +75,36 @@
 
             <!-- Destination bank (by profile country) -->
             <div class="transfer-field">
-              <label for="transfer-bank">Destination bank</label>
-              <select id="transfer-bank" name="destinationBankCode" required>
-                <option value="" disabled <%= !(typeof formValues !== 'undefined' && formValues.destinationBankCode) ? 'selected' : '' %>>
-                  Select bank
-                </option>
-                <% var bankList = (typeof banks !== 'undefined' && banks && banks.length) ? banks : []; %>
+              <label for="transfer-bank">
+                Destination bank
+                <% if (typeof countryCode !== 'undefined' && countryCode) { %>
+                  <span class="transfer-optional"><%= countryCode %></span>
+                <% } %>
+              </label>
+              <select id="transfer-bank" name="destinationBankCode" required
+                data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>">
+                <option value="" disabled selected>Select bank</option>
+                <% var bankList = (typeof banks !== 'undefined' && Array.isArray(banks)) ? banks : []; %>
                 <% bankList.forEach(function (b) { %>
-                  <option
-                    value="<%= b.code %>"
-                    <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>
-                  >
+                  <option value="<%= b.code %>"
+                    <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>>
                     <%= b.name %>
                   </option>
                 <% }) %>
               </select>
               <span class="transfer-hint" id="transfer-bank-hint">
-                <% if (bankList.length) { %>
-                  <%= bankList.length %> banks<%= countryCode ? (' · ' + countryCode) : '' %>
+                <% if (bankList.length && countryCode) { %>
+                  Showing <%= bankList.length %> banks for <strong><%= countryCode %></strong>
+                  <% if (typeof profileCountry !== 'undefined' && profileCountry && profileCountry !== countryCode) { %>
+                    (profile: <%= profileCountry %>)
+                  <% } %>
+                <% } else if (bankList.length) { %>
+                  <%= bankList.length %> banks · <a href="/app/settings">Set country in Settings</a> for a local list
                 <% } else { %>
-                  <a href="/app/settings">Set your country in Settings</a> to load banks
+                  <a href="/app/settings">Set your country in Settings</a> so we can load banks
                 <% } %>
               </span>
+              <script type="application/json" id="transfer-banks-data"><%- JSON.stringify(bankList) %></script>
             </div>
 
             <!-- Destination -->
@@ -481,34 +489,51 @@
 
   </script>
 
-  <!-- Bank list fallback -->
+  <!-- Bank list ensure populated -->
   <script>
     (function () {
       var select = document.getElementById('transfer-bank');
       var hint = document.getElementById('transfer-bank-hint');
+      var dataEl = document.getElementById('transfer-banks-data');
       if (!select) return;
-      var optionCount = select.querySelectorAll('option').length;
-      if (optionCount > 1) return; // already populated from server
 
-      fetch('/app/transfers/banks', { credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var list = (data && data.banks) || [];
-          list.forEach(function (b) {
-            var opt = document.createElement('option');
-            opt.value = b.code;
-            opt.textContent = b.name;
-            select.appendChild(opt);
-          });
-          if (hint) {
-            hint.textContent = list.length
-              ? (list.length + ' banks available' + (data.countryCode ? (' for ' + data.countryCode) : ''))
-              : 'No banks found — set your country in Settings';
-          }
-        })
-        .catch(function () {
-          if (hint) hint.textContent = 'Could not load banks. Refresh the page or set your country in Settings.';
+      function fill(list, country) {
+        if (!list || !list.length) return;
+        var seen = {};
+        Array.prototype.forEach.call(select.options, function (o) { if (o.value) seen[o.value] = true; });
+        list.forEach(function (b) {
+          if (!b || !b.code || seen[b.code]) return;
+          var opt = document.createElement('option');
+          opt.value = b.code;
+          opt.textContent = b.name;
+          select.appendChild(opt);
+          seen[b.code] = true;
         });
+        if (hint && country) {
+          hint.innerHTML = 'Showing ' + list.length + ' banks for <strong>' + country + '</strong>';
+        }
+      }
+
+      // 1) Embedded server data
+      try {
+        if (dataEl && dataEl.textContent) {
+          var embedded = JSON.parse(dataEl.textContent);
+          fill(embedded, select.getAttribute('data-country') || '');
+        }
+      } catch (e) {}
+
+      // 2) If still only placeholder, fetch API
+      if (select.options.length <= 1) {
+        fetch('/app/transfers/banks', { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            fill(data.banks || [], data.countryCode || '');
+            if (data.countryCode) select.setAttribute('data-country', data.countryCode);
+          })
+          .catch(function () {
+            if (hint) hint.textContent = 'Could not load banks. Open Settings and save your country, then refresh.';
+          });
+      }
     })();
   </script>
 

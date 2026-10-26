@@ -12,22 +12,32 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.use('/app', requireAuth, requireRole('customer', 'admin', 'operations'));
 
-  async function resolveCountryAndBanks(userId, overrideCountry) {
+  async function resolveCountryAndBanks(userId, overrideCountry, sessionUser) {
     let profile = null;
     let profileCountry = null;
     try {
-      if (customerRepo && typeof customerRepo.getProfile === 'function') {
+      if (customerRepo?.getProfile) {
         profile = await customerRepo.getProfile(userId);
         profileCountry = profile?.countryCode || null;
       }
     } catch (err) {
       console.error('[GLOBE_TRANSFER] getProfile failed', err?.message || err);
     }
+    // Direct column read if profile object missing country
+    if (!profileCountry && customerRepo?.getCountryCode) {
+      try {
+        profileCountry = await customerRepo.getCountryCode(userId);
+      } catch (err) {
+        console.error('[GLOBE_TRANSFER] getCountryCode failed', err?.message || err);
+      }
+    }
+    const sessionCountry = sessionUser?.countryCode || null;
 
-    // Priority: explicit override (form/query) → profile → env default → none
+    // Priority: query override → DB profile → session → env
     const effectiveCountry =
       resolveCountryCode(overrideCountry) ||
       resolveCountryCode(profileCountry) ||
+      resolveCountryCode(sessionCountry) ||
       resolveCountryCode(process.env.DEFAULT_COUNTRY_CODE) ||
       null;
 
@@ -36,7 +46,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       banks = banksForCountry(effectiveCountry) || [];
     } catch (err) {
       console.error('[GLOBE_TRANSFER] banksForCountry failed', err?.message || err);
-      banks = banksForCountry(null) || [];
+      banks = [];
     }
     if (!banks.length) {
       banks = [
@@ -47,9 +57,11 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     console.log('[GLOBE_TRANSFER] banks', JSON.stringify({
       userId,
       profileCountry,
+      sessionCountry,
       overrideCountry: overrideCountry || null,
       effectiveCountry,
-      bankCount: banks.length
+      bankCount: banks.length,
+      sample: banks.slice(0, 3).map((b) => b.name)
     }));
     return { countryCode: effectiveCountry, profileCountry, profile, banks };
   }
@@ -59,8 +71,8 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     await transferRepo.ensureSandboxLink(userId, 'NGN');
     const links = await transferRepo.listLinksWithExternal(userId);
     const history = await transferRepo.listForUser(userId);
-    const override = req.query?.country || req.body?.countryCode || null;
-    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId, override);
+    const override = req.query?.country || null;
+    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId, override, req.session.user);
     return {
       title: 'Transfers',
       path: '/app/transfers',
@@ -95,7 +107,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.get('/app/transfers/banks', async (req, res, next) => {
     try {
-      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id, req.query?.country);
+      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id, req.query?.country, req.session.user);
       res.json({ countryCode, profileCountry, banks, count: banks.length });
     } catch (err) {
       next(err);
