@@ -1,3 +1,4 @@
+
 /* =========================================================
    GLOBE TRUST BANK — TRANSFERS PAGE
    File: public/css/transfers.css
@@ -829,11 +830,9 @@
   border: 1px solid #ece4d6;
 }
 
+/* Country flags only appear on country labels (e.g. .transfer-country-pill), not on bank rows */
 .bank-picker__flag {
-  width: 28px;
-  height: 20px;
-  border-radius: 4px;
-  object-fit: cover;
+  display: none;
 }
 
 .bank-picker__avatar {

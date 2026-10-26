@@ -175,7 +175,7 @@ function flagUrlForCountry(countryCode, size = 40) {
 
 function enrichBanks(banks, countryCode) {
   const list = Array.isArray(banks) ? banks : [];
-  const flag = flagUrlForCountry(countryCode, 80);
+  // Country flag is separate (UI shows it next to country only — not on each bank).
   return list.map((b) => {
     const logos = primaryAndFallbackLogo(b.code, b.name);
     return {
@@ -183,7 +183,6 @@ function enrichBanks(banks, countryCode) {
       name: b.name,
       logoUrl: logos.logoUrl,
       avatarUrl: logos.avatarUrl,
-      flagUrl: flag,
       initials: initialsFromName(b.name, b.code)
     };
   });

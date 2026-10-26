@@ -96,7 +96,7 @@
                 <% bankList.forEach(function (b) { %>
                   <option value="<%= b.code %>"
                     data-logo="<%= b.logoUrl || '' %>"
-                    data-flag="<%= b.flagUrl || (typeof countryFlagUrl !== 'undefined' ? countryFlagUrl : '') %>"
+                    data-avatar="<%= b.avatarUrl || '' %>"
                     data-initials="<%= b.initials || '' %>"
                     <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>>
                     <%= b.name %>

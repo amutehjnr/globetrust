@@ -35,7 +35,8 @@
     return img;
   }
 
-  function buildLogoCluster(bank) {
+  /** Bank logo only — country flags are NOT shown on bank rows. */
+  function buildBankLogo(bank) {
     var wrap = document.createElement('span');
     wrap.className = 'bank-picker__logos';
 
@@ -51,7 +52,6 @@
       var logo = logoImg(logoSrc, 'bank-picker__logo', bank.name || '');
       if (logo) {
         logo.addEventListener('error', function () {
-          // Try dedicated avatar URL, else letter badge
           if (avatarSrc && avatarSrc !== logoSrc) {
             logo.src = avatarSrc;
             logo.onerror = function () {
@@ -71,12 +71,6 @@
       avatarFallback.hidden = false;
     }
     wrap.appendChild(avatarFallback);
-
-    if (bank.flagUrl) {
-      var flag = logoImg(bank.flagUrl, 'bank-picker__flag', bank.countryCode || '');
-      if (flag) wrap.appendChild(flag);
-    }
-
     return wrap;
   }
 
@@ -89,7 +83,7 @@
       triggerMain.appendChild(ph);
       return;
     }
-    triggerMain.appendChild(buildLogoCluster(bank));
+    triggerMain.appendChild(buildBankLogo(bank));
     var meta = document.createElement('span');
     meta.className = 'bank-picker__meta';
     var name = document.createElement('span');
@@ -124,7 +118,7 @@
         code: opt.value,
         name: opt.textContent.trim(),
         logoUrl: opt.getAttribute('data-logo') || '',
-        flagUrl: opt.getAttribute('data-flag') || '',
+        avatarUrl: opt.getAttribute('data-avatar') || '',
         initials: opt.getAttribute('data-initials') || initialsFromName(opt.textContent, opt.value)
       });
     });
@@ -149,7 +143,7 @@
       btn.setAttribute('role', 'option');
       btn.setAttribute('data-code', bank.code);
       btn.setAttribute('data-name', bank.name.toLowerCase());
-      btn.appendChild(buildLogoCluster(bank));
+      btn.appendChild(buildBankLogo(bank));
 
       var meta = document.createElement('span');
       meta.className = 'bank-picker__meta';
@@ -194,9 +188,7 @@
         name: b.name,
         logoUrl: b.logoUrl || '',
         avatarUrl: b.avatarUrl || '',
-        flagUrl: b.flagUrl || countryFlagUrl || '',
-        initials: b.initials || initialsFromName(b.name, b.code),
-        countryCode: countryCode || ''
+        initials: b.initials || initialsFromName(b.name, b.code)
       };
     });
 
@@ -208,7 +200,7 @@
       opt.value = b.code;
       opt.textContent = b.name;
       opt.setAttribute('data-logo', b.logoUrl || '');
-      opt.setAttribute('data-flag', b.flagUrl || '');
+      opt.setAttribute('data-avatar', b.avatarUrl || '');
       opt.setAttribute('data-initials', b.initials || '');
       if (prev && prev === b.code) opt.selected = true;
       select.appendChild(opt);
