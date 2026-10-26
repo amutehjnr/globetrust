@@ -1,0 +1,155 @@
+<%- include('../partials/customer-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Deposit</h1>
+    <p>Fund your Globe Trust account from a bank in your country.</p>
+  </div>
+  <% if (typeof countryCode !== 'undefined' && countryCode) { %>
+    <span class="db-chip transfer-country-pill" style="display:inline-flex;align-items:center;gap:6px;">
+      <% if (typeof countryFlagUrl !== 'undefined' && countryFlagUrl) { %>
+        <img class="transfer-flag-sm" src="<%= countryFlagUrl %>" alt="" width="18" height="12" loading="lazy">
+      <% } %>
+      <%= countryCode %>
+    </span>
+  <% } %>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err" style="margin-bottom:16px;"><%= error %></div>
+<% } %>
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="db-alert db-alert--ok" style="margin-bottom:16px;"><%= success %></div>
+<% } %>
+
+<section class="db-panel" style="max-width:640px;">
+  <div class="db-panel__head">
+    <h2>New deposit</h2>
+  </div>
+
+  <form method="post" action="/app/deposit" id="deposit-form" class="transfers-form" style="padding:8px 0 0;">
+    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+    <div class="transfer-field">
+      <label for="deposit-account">Credit to (Globe Trust account)</label>
+      <select id="deposit-account" name="destinationAccountLinkId" required>
+        <option value="" disabled <%= !(formValues && formValues.destinationAccountLinkId) ? 'selected' : '' %>>Select account</option>
+        <% (accounts || []).forEach(function (a) { %>
+          <option
+            value="<%= a.id %>"
+            data-currency="<%= a.currencyCode || a.currency || '' %>"
+            <%= formValues && formValues.destinationAccountLinkId === a.id ? 'selected' : '' %>
+          >
+            <%= a.displayLabel || a.currencyCode || 'Account' %>
+            <% if (a.available != null) { %> · Bal <%= a.available %><% } %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="transfer-field transfer-bank-field">
+      <label id="deposit-bank-label">
+        From bank
+        <% if (typeof countryCode !== 'undefined' && countryCode) { %>
+          <span class="transfer-optional"><%= countryCode %></span>
+        <% } %>
+      </label>
+
+      <select id="deposit-bank" name="sourceBankCode" required class="transfer-bank-native"
+        data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>"
+        aria-labelledby="deposit-bank-label">
+        <option value="" disabled selected>Select bank</option>
+        <% var bankList = (typeof banks !== 'undefined' && Array.isArray(banks)) ? banks : []; %>
+        <% bankList.forEach(function (b) { %>
+          <option value="<%= b.code %>"
+            data-logo="<%= b.logoUrl || '' %>"
+            data-avatar="<%= b.avatarUrl || '' %>"
+            data-initials="<%= b.initials || '' %>"
+            <%= formValues && formValues.sourceBankCode === b.code ? 'selected' : '' %>>
+            <%= b.name %>
+          </option>
+        <% }) %>
+      </select>
+
+      <div class="bank-picker" id="bank-picker" data-country="<%= typeof countryCode !== 'undefined' && countryCode ? countryCode : '' %>">
+        <button type="button" class="bank-picker__trigger" id="bank-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span class="bank-picker__trigger-main" id="bank-picker-selected">
+            <span class="bank-picker__placeholder">Select source bank</span>
+          </span>
+          <span class="bank-picker__chevron" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </button>
+        <div class="bank-picker__panel" id="bank-picker-panel" hidden>
+          <div class="bank-picker__search-wrap">
+            <input type="search" class="bank-picker__search" id="bank-picker-search" placeholder="Search banks…" autocomplete="off" aria-label="Search banks">
+          </div>
+          <ul class="bank-picker__list" id="bank-picker-list" role="listbox" aria-label="Banks"></ul>
+        </div>
+      </div>
+      <span class="transfer-hint" id="transfer-bank-hint">
+        <% if (bankList.length && countryCode) { %>
+          Showing <%= bankList.length %> banks for <strong><%= countryCode %></strong>
+        <% } else { %>
+          <a href="/app/settings">Set your country in Settings</a> to load local banks
+        <% } %>
+      </span>
+    </div>
+
+    <div class="transfer-field">
+      <label for="deposit-source-account">Your account number at that bank</label>
+      <input
+        type="text"
+        id="deposit-source-account"
+        name="sourceAccountNumber"
+        required
+        minlength="4"
+        maxlength="34"
+        placeholder="Account number or IBAN"
+        autocomplete="off"
+        value="<%= formValues && formValues.sourceAccountNumber ? formValues.sourceAccountNumber : '' %>"
+      >
+    </div>
+
+    <div class="transfer-field">
+      <label for="deposit-amount">Amount</label>
+      <div class="transfer-input-group">
+        <span class="transfer-currency-prefix" id="deposit-currency">—</span>
+        <input
+          type="text"
+          id="deposit-amount"
+          name="amount"
+          required
+          inputmode="decimal"
+          placeholder="0.00"
+          autocomplete="off"
+          value="<%= formValues && formValues.amount ? formValues.amount : '' %>"
+        >
+      </div>
+    </div>
+
+    <div class="transfer-field">
+      <label for="deposit-narrative">
+        Reference <span class="transfer-optional">optional</span>
+      </label>
+      <input
+        type="text"
+        id="deposit-narrative"
+        name="narrative"
+        maxlength="140"
+        placeholder="e.g. Salary deposit"
+        value="<%= formValues && formValues.narrative ? formValues.narrative : '' %>"
+      >
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+      <button type="submit" class="db-promo__btn">Submit deposit</button>
+      <a href="/dashboard" class="db-btn-ghost" style="align-self:center;">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<link rel="stylesheet" href="/css/transfers.css">
+<script src="/js/deposit.js" defer></script>
+
+<%- include('../partials/customer-shell-end') %>

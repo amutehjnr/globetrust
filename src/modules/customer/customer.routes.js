@@ -7,6 +7,9 @@ const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 const { COUNTRIES, normalizeCountryCode } = require('../../utils/countries');
 const { getTopMarketRates } = require('../../services/fxService');
+const { banksForCountry, resolveCountryCode } = require('../../utils/banksByCountry');
+const { enrichBanks, flagUrlForCountry } = require('../../utils/bankLogos');
+const crypto = require('node:crypto');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -305,6 +308,156 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       next(err);
     }
   });
+
+
+  async function resolveDepositBanks(userId, sessionUser) {
+    let profile = null;
+    let profileCountry = null;
+    try {
+      profile = await customerRepo.getProfile(userId);
+      profileCountry = profile?.countryCode || null;
+    } catch (_) {}
+    if (!profileCountry && customerRepo.getCountryCode) {
+      try {
+        profileCountry = await customerRepo.getCountryCode(userId);
+      } catch (_) {}
+    }
+    const sessionCountry = sessionUser?.countryCode || null;
+    const countryCode =
+      resolveCountryCode(profileCountry) ||
+      resolveCountryCode(sessionCountry) ||
+      null;
+    let banks = enrichBanks(banksForCountry(countryCode), countryCode);
+    return {
+      profile,
+      countryCode,
+      countryFlagUrl: flagUrlForCountry(countryCode, 80),
+      banks
+    };
+  }
+
+  router.get('/app/deposit', async (req, res, next) => {
+    try {
+      const userId = req.session.user.id;
+      let accounts = [];
+      if (transferRepo && transferService) {
+        await transferRepo.ensureSandboxLink(userId, 'NGN');
+        await transferRepo.ensureSandboxLink(userId, 'USD');
+        const links = await transferRepo.listLinksWithExternal(userId);
+        accounts = await transferService.getBalancesForLinks(links);
+      }
+      const { profile, countryCode, countryFlagUrl, banks } = await resolveDepositBanks(
+        userId,
+        req.session.user
+      );
+      res.render('customer/deposit', pageLocals(req, {
+        title: 'Deposit',
+        path: '/app/deposit',
+        profile,
+        accounts: (accounts || []).filter((a) => a.linkStatus !== 'inactive'),
+        banks,
+        countryCode,
+        countryFlagUrl,
+        formValues: {},
+        error: null,
+        success: null
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/app/deposit', requireCsrf, async (req, res, next) => {
+    try {
+      const userId = req.session.user.id;
+      const amount = Number(String(req.body.amount || '').replace(/,/g, ''));
+      const sourceBankCode = String(req.body.sourceBankCode || '').trim();
+      const sourceAccountNumber = String(req.body.sourceAccountNumber || '').trim();
+      const destinationAccountLinkId = String(req.body.destinationAccountLinkId || '').trim();
+      const narrative = String(req.body.narrative || '').trim().slice(0, 140);
+
+      const { profile, countryCode, countryFlagUrl, banks } = await resolveDepositBanks(
+        userId,
+        req.session.user
+      );
+
+      let accounts = [];
+      if (transferRepo && transferService) {
+        const links = await transferRepo.listLinksWithExternal(userId);
+        accounts = await transferService.getBalancesForLinks(links);
+      }
+
+      const formValues = {
+        amount: req.body.amount,
+        sourceBankCode,
+        sourceAccountNumber,
+        destinationAccountLinkId,
+        narrative
+      };
+
+      const renderForm = (error, success = null) =>
+        res.status(error ? 400 : 200).render('customer/deposit', pageLocals(req, {
+          title: 'Deposit',
+          path: '/app/deposit',
+          profile,
+          accounts,
+          banks,
+          countryCode,
+          countryFlagUrl,
+          formValues,
+          error,
+          success
+        }));
+
+      if (!(amount > 0) || Number.isNaN(amount)) {
+        return renderForm('Enter a valid deposit amount.');
+      }
+      if (!sourceBankCode) {
+        return renderForm('Select the bank you are depositing from.');
+      }
+      if (!sourceAccountNumber || sourceAccountNumber.length < 4) {
+        return renderForm('Enter your account number at the source bank (min 4 characters).');
+      }
+      if (!destinationAccountLinkId) {
+        return renderForm('Select the Globe Trust account to credit.');
+      }
+
+      const bankName =
+        (banks || []).find((b) => b.code === sourceBankCode)?.name || sourceBankCode;
+      const ref = `DEP-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+
+      // Manual processing — instruction accepted for ops to complete
+      console.error('[GLOBE_DEPOSIT] submitted', JSON.stringify({
+        userId,
+        ref,
+        amount,
+        countryCode,
+        sourceBankCode,
+        bankName,
+        destinationAccountLinkId,
+        narrative: narrative || null
+      }));
+
+      return res.render('customer/deposit', pageLocals(req, {
+        title: 'Deposit',
+        path: '/app/deposit',
+        profile,
+        accounts,
+        banks,
+        countryCode,
+        countryFlagUrl,
+        formValues: {},
+        error: null,
+        success:
+          `Deposit request received for processing. ` +
+          `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ` +
+          `from ${bankName}. Reference: ${ref}.`
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
 
   router.get('/app/settings', async (req, res, next) => {
     try {
