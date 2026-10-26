@@ -283,17 +283,26 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
           countryError: 'Please select a valid country.'
         }));
       }
-      const profile = await customerRepo.getProfile(req.session.user.id);
-      await customerRepo.updateProfile(req.session.user.id, {
-        firstName: profile?.firstName || 'Customer',
-        lastName: profile?.lastName || 'User',
-        middleName: profile?.middleName || '',
-        countryCode: code || '',
-        preferredLocale: profile?.preferredLocale || 'en'
-      });
+      // Persist country even when profile row was missing
+      if (customerRepo.setCountryCode) {
+        await customerRepo.setCountryCode(req.session.user.id, code);
+      } else {
+        const profile = await customerRepo.getProfile(req.session.user.id);
+        await customerRepo.updateProfile(req.session.user.id, {
+          firstName: profile?.firstName || 'Customer',
+          lastName: profile?.lastName || 'User',
+          middleName: profile?.middleName || '',
+          countryCode: code || '',
+          preferredLocale: profile?.preferredLocale || 'en'
+        });
+      }
       if (req.session.user) {
         req.session.user.countryCode = code || null;
       }
+      console.error('[GLOBE_SETTINGS] country saved', JSON.stringify({
+        userId: req.session.user.id,
+        countryCode: code
+      }));
       const updated = await customerRepo.getProfile(req.session.user.id);
       let mfaStatus = { enrolled: false, required: true };
       if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);

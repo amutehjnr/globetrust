@@ -20,19 +20,23 @@ function parseCode(body) {
   return r.data.code;
 }
 
-function createMfaRouter({ mfaService }) {
+function createMfaRouter({ mfaService, customerRepo }) {
   const router = express.Router();
 
+  // --- Enrolment (authenticated, not yet fully enrolled) ---
   router.get('/mfa/enrol', requireAuth, async (req, res, next) => {
     try {
       const status = await mfaService.getStatus(req.session.user.id);
       if (status.enrolled) {
-        return res.redirect('/dashboard');
+        const roles = req.session.user?.roles || [];
+        const staff = ['admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'];
+        return res.redirect(roles.some((r) => staff.includes(r)) ? '/admin' : '/dashboard');
       }
       const enrolment = await mfaService.beginEnrolment(
         req.session.user.id,
         req.session.user.email
       );
+      // Keep pending secret only server-side; do not put secret in session long-term ideally
       req.session.mfaEnrolPending = true;
       res.render('auth/mfa-enrol', {
         title: 'Set up authenticator',
@@ -58,6 +62,7 @@ function createMfaRouter({ mfaService }) {
       });
     } catch (err) {
       if (err.status === 400) {
+        // Re-show enrol form with same secret if still pending
         try {
           const enrolment = await mfaService.beginEnrolment(
             req.session.user.id,
@@ -79,6 +84,7 @@ function createMfaRouter({ mfaService }) {
     }
   });
 
+  // --- Login step-up ---
   router.get('/mfa/verify', (req, res) => {
     if (!req.session?.pendingMfaUser) {
       return res.redirect('/sign-in');
@@ -99,25 +105,34 @@ function createMfaRouter({ mfaService }) {
       const code = parseCode(req.body);
       await mfaService.verifyLoginCode(pending.id, code);
 
+      const STAFF = ['admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'];
+      let roles = Array.isArray(pending.roles) ? [...pending.roles] : [];
+      if (roles.length === 0) roles = ['customer'];
+
+      const defaultHome = roles.some((r) => STAFF.includes(r)) ? '/admin' : '/dashboard';
       const nextUrl =
         typeof req.session.pendingMfaNext === 'string' &&
         req.session.pendingMfaNext.startsWith('/') &&
         !req.session.pendingMfaNext.startsWith('//')
           ? req.session.pendingMfaNext
-          : '/dashboard';
+          : defaultHome;
 
       await new Promise((resolve, reject) => {
         req.session.regenerate((err) => (err ? reject(err) : resolve()));
       });
 
-      const roles = Array.isArray(pending.roles) ? [...pending.roles] : [];
-      if (!roles.includes('customer') && !roles.includes('admin')) {
-        roles.push('customer');
-      }
       req.session.user = { ...pending, roles };
+      try {
+        if (customerRepo?.getCountryCode) {
+          req.session.user.countryCode = await customerRepo.getCountryCode(pending.id);
+        }
+      } catch (_) {}
       delete req.session.pendingMfaUser;
       delete req.session.pendingMfaNext;
-      return res.redirect(nextUrl);
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => (err ? reject(err) : resolve()));
+      });
+      return res.redirect(303, nextUrl);
     } catch (err) {
       if (err.status === 400 || err.status === 401) {
         return res.status(err.status).render('auth/mfa-verify', {

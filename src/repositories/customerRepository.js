@@ -31,20 +31,76 @@ function createCustomerRepository(pool) {
       };
     },
 
-    async updateProfile(userId, { firstName, lastName, middleName, countryCode, preferredLocale }) {
-      await pool.query(
-        `UPDATE customer_profiles
-         SET first_name = ?, last_name = ?, middle_name = ?, country_code = ?, preferred_locale = ?
-         WHERE user_id = ?`,
-        [
-          firstName,
-          lastName,
-          middleName || null,
-          countryCode || null,
-          preferredLocale || 'en',
-          uuidToBinary(userId)
-        ]
+    async getCountryCode(userId) {
+      const [rows] = await pool.query(
+        `SELECT country_code FROM customer_profiles WHERE user_id = ? LIMIT 1`,
+        [uuidToBinary(userId)]
       );
+      return rows[0]?.country_code || null;
+    },
+
+    async updateProfile(userId, { firstName, lastName, middleName, countryCode, preferredLocale }) {
+      const uid = uuidToBinary(userId);
+      const [existing] = await pool.query(
+        `SELECT user_id FROM customer_profiles WHERE user_id = ? LIMIT 1`,
+        [uid]
+      );
+
+      if (existing[0]) {
+        await pool.query(
+          `UPDATE customer_profiles
+           SET first_name = ?, last_name = ?, middle_name = ?, country_code = ?, preferred_locale = ?
+           WHERE user_id = ?`,
+          [
+            firstName,
+            lastName,
+            middleName || null,
+            countryCode || null,
+            preferredLocale || 'en',
+            uid
+          ]
+        );
+      } else {
+        // Profile row missing (e.g. admin-created user) — create it so country persists
+        const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
+        await pool.query(
+          `INSERT INTO customer_profiles
+            (user_id, customer_reference, first_name, last_name, middle_name, country_code, preferred_locale)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uid,
+            ref,
+            firstName || 'Customer',
+            lastName || 'User',
+            middleName || null,
+            countryCode || null,
+            preferredLocale || 'en'
+          ]
+        );
+        console.error('[GLOBE_PROFILE] created missing customer_profiles row', JSON.stringify({ userId, countryCode }));
+      }
+    },
+
+    async setCountryCode(userId, countryCode) {
+      const uid = uuidToBinary(userId);
+      const code = countryCode || null;
+      const [result] = await pool.query(
+        `UPDATE customer_profiles SET country_code = ? WHERE user_id = ?`,
+        [code, uid]
+      );
+      if (result.affectedRows === 0) {
+        const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
+        await pool.query(
+          `INSERT INTO customer_profiles
+            (user_id, customer_reference, first_name, last_name, country_code, preferred_locale)
+           VALUES (?, ?, 'Customer', 'User', ?, 'en')`,
+          [uid, ref, code]
+        );
+        console.error('[GLOBE_PROFILE] setCountryCode inserted profile', JSON.stringify({ userId, countryCode: code }));
+      } else {
+        console.error('[GLOBE_PROFILE] setCountryCode updated', JSON.stringify({ userId, countryCode: code, affected: result.affectedRows }));
+      }
+      return code;
     },
 
     async listAccountLinks(userId) {

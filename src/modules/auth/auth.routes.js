@@ -32,7 +32,7 @@ function safeNextUrl(raw, roles) {
   return defaultHomeForRoles(roles);
 }
 
-function createAuthRouter({ authService }) {
+function createAuthRouter({ authService, customerRepo }) {
   const router = express.Router();
 
   // Compatibility aliases (older links / bookmarks)
@@ -114,6 +114,20 @@ function createAuthRouter({ authService }) {
 
       req.session.user = { ...result.user, roles };
       req.session.mustEnrollMfa = result.mustEnrollMfa;
+      try {
+        if (customerRepo?.getCountryCode) {
+          req.session.user.countryCode = await customerRepo.getCountryCode(result.user.id);
+        } else if (customerRepo?.getProfile) {
+          const p = await customerRepo.getProfile(result.user.id);
+          req.session.user.countryCode = p?.countryCode || null;
+        }
+        console.error('[GLOBE_LOGIN] country loaded', JSON.stringify({
+          userId: result.user.id,
+          countryCode: req.session.user.countryCode || null
+        }));
+      } catch (e) {
+        console.error('[GLOBE_LOGIN] country load failed', e?.message || e);
+      }
 
       // Ensure session is saved before redirect (critical on serverless)
       await new Promise((resolve, reject) => {
