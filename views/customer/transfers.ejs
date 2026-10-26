@@ -73,7 +73,31 @@
               </div>
             </div>
 
-            <!-- Destination bank (by user country) -->
+            <!-- Country for bank directory -->
+            <div class="transfer-field">
+              <label for="transfer-country">Beneficiary country</label>
+              <select id="transfer-country" name="beneficiaryCountry" autocomplete="country">
+                <% var selectedCountry = (typeof countryCode !== 'undefined' && countryCode) ? countryCode : ''; %>
+                <option value="" <%= !selectedCountry ? 'selected' : '' %>>Select country</option>
+                <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) {
+                     if (c.code === 'OTHER') return;
+                %>
+                  <option value="<%= c.code %>" <%= selectedCountry === c.code ? 'selected' : '' %>>
+                    <%= c.name %>
+                  </option>
+                <% }) %>
+              </select>
+              <span class="transfer-hint">
+                Banks below match this country
+                <% if (typeof profileCountry !== 'undefined' && profileCountry) { %>
+                  · profile: <%= profileCountry %>
+                <% } else { %>
+                  · <a href="/app/settings">set default in Settings</a>
+                <% } %>
+              </span>
+            </div>
+
+            <!-- Destination bank (by selected country) -->
             <div class="transfer-field">
               <label for="transfer-bank">
                 Destination bank
@@ -517,6 +541,44 @@
         .catch(function () {
           if (hint) hint.textContent = 'Could not load banks. Refresh the page or set your country in Settings.';
         });
+    })();
+  </script>
+
+
+  <script>
+    (function () {
+      var countrySelect = document.getElementById('transfer-country');
+      var bankSelect = document.getElementById('transfer-bank');
+      var hint = document.getElementById('transfer-bank-hint');
+      if (!countrySelect || !bankSelect) return;
+
+      function fillBanks(list, country) {
+        var current = bankSelect.value;
+        while (bankSelect.options.length > 1) bankSelect.remove(1);
+        (list || []).forEach(function (b) {
+          var opt = document.createElement('option');
+          opt.value = b.code;
+          opt.textContent = b.name;
+          if (b.code === current) opt.selected = true;
+          bankSelect.appendChild(opt);
+        });
+        if (hint) {
+          hint.textContent = (list && list.length)
+            ? (list.length + ' banks available' + (country ? (' for ' + country) : ''))
+            : 'No banks for this country';
+        }
+      }
+
+      countrySelect.addEventListener('change', function () {
+        var code = countrySelect.value;
+        if (!code) return;
+        fetch('/app/transfers/banks?country=' + encodeURIComponent(code), { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) { fillBanks(data.banks || [], data.countryCode || code); })
+          .catch(function () {
+            if (hint) hint.textContent = 'Could not load banks for ' + code;
+          });
+      });
     })();
   </script>
 

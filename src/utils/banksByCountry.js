@@ -1223,16 +1223,45 @@ for (const { code } of COUNTRIES) {
     : fallbackBanks(code);
 }
 
+/**
+ * Accept ISO code (US) or common names (United States) → ISO code.
+ */
+function resolveCountryCode(input) {
+  if (input == null || input === '') return null;
+  const raw = String(input).trim();
+  if (!raw) return null;
+  const upper = raw.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upper) && BANKS_BY_COUNTRY[upper]) return upper;
+  if (upper === 'OTHER') return null;
+
+  // Match by country name (case-insensitive)
+  const { COUNTRIES } = require('./countries');
+  const byName = COUNTRIES.find(
+    (c) => c.code !== 'OTHER' && c.name.toLowerCase() === raw.toLowerCase()
+  );
+  if (byName && BANKS_BY_COUNTRY[byName.code]) return byName.code;
+
+  // Loose contains (e.g. "United States of America")
+  const loose = COUNTRIES.find(
+    (c) =>
+      c.code !== 'OTHER' &&
+      (raw.toLowerCase().includes(c.name.toLowerCase()) ||
+        c.name.toLowerCase().includes(raw.toLowerCase()))
+  );
+  if (loose && BANKS_BY_COUNTRY[loose.code]) return loose.code;
+
+  if (/^[A-Z]{2}$/.test(upper)) return upper;
+  return null;
+}
+
 function banksForCountry(countryCode) {
-  const raw = String(countryCode || '').trim().toUpperCase();
-  const fallback = (process.env.DEFAULT_COUNTRY_CODE || 'NG').toUpperCase();
-  const code = raw && BANKS_BY_COUNTRY[raw] ? raw : (BANKS_BY_COUNTRY[fallback] ? fallback : raw);
+  const code = resolveCountryCode(countryCode);
 
   if (code && BANKS_BY_COUNTRY[code] && BANKS_BY_COUNTRY[code].length) {
     return BANKS_BY_COUNTRY[code].slice();
   }
 
-  // Unknown country — still never return empty
+  // Unknown / missing — generic options only (do NOT force Nigeria)
   return [
     { code: 'LOCAL_BANK', name: 'Local bank (other)' },
     { code: 'INTERNATIONAL', name: 'International / correspondent bank' },
@@ -1243,5 +1272,6 @@ function banksForCountry(countryCode) {
 module.exports = {
   BANKS_BY_COUNTRY,
   SPECIFIC_BANKS,
-  banksForCountry
+  banksForCountry,
+  resolveCountryCode
 };

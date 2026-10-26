@@ -4,32 +4,39 @@ const express = require('express');
 const crypto = require('node:crypto');
 const { requireAuth, requireRole, requireMfaEnrolled } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
-const { banksForCountry } = require('../../utils/banksByCountry');
+const { banksForCountry, resolveCountryCode } = require('../../utils/banksByCountry');
+const { COUNTRIES } = require('../../utils/countries');
 
 function createTransferRouter({ transferService, transferRepo, coreBanking, mfaService, customerRepo }) {
   const router = express.Router();
 
   router.use('/app', requireAuth, requireRole('customer', 'admin', 'operations'));
 
-  async function resolveCountryAndBanks(userId) {
-    let countryCode = null;
+  async function resolveCountryAndBanks(userId, overrideCountry) {
     let profile = null;
+    let profileCountry = null;
     try {
       if (customerRepo && typeof customerRepo.getProfile === 'function') {
         profile = await customerRepo.getProfile(userId);
-        countryCode = profile?.countryCode || null;
+        profileCountry = profile?.countryCode || null;
       }
     } catch (err) {
       console.error('[GLOBE_TRANSFER] getProfile failed', err?.message || err);
     }
-    // Default so bank list is never empty in UI
-    const effectiveCountry = countryCode || process.env.DEFAULT_COUNTRY_CODE || 'NG';
+
+    // Priority: explicit override (form/query) → profile → env default → none
+    const effectiveCountry =
+      resolveCountryCode(overrideCountry) ||
+      resolveCountryCode(profileCountry) ||
+      resolveCountryCode(process.env.DEFAULT_COUNTRY_CODE) ||
+      null;
+
     let banks = [];
     try {
       banks = banksForCountry(effectiveCountry) || [];
     } catch (err) {
       console.error('[GLOBE_TRANSFER] banksForCountry failed', err?.message || err);
-      banks = banksForCountry('NG') || [];
+      banks = banksForCountry(null) || [];
     }
     if (!banks.length) {
       banks = [
@@ -39,11 +46,12 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     }
     console.log('[GLOBE_TRANSFER] banks', JSON.stringify({
       userId,
-      profileCountry: countryCode,
+      profileCountry,
+      overrideCountry: overrideCountry || null,
       effectiveCountry,
       bankCount: banks.length
     }));
-    return { countryCode: effectiveCountry, profileCountry: countryCode, profile, banks };
+    return { countryCode: effectiveCountry, profileCountry, profile, banks };
   }
 
   async function transferPageLocals(req, extra = {}) {
@@ -51,7 +59,8 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     await transferRepo.ensureSandboxLink(userId, 'NGN');
     const links = await transferRepo.listLinksWithExternal(userId);
     const history = await transferRepo.listForUser(userId);
-    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId);
+    const override = req.query?.country || req.body?.countryCode || null;
+    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId, override);
     return {
       title: 'Transfers',
       path: '/app/transfers',
@@ -61,6 +70,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       countryCode,
       profileCountry,
       profile,
+      countries: COUNTRIES,
       displayName: (req.session.user.email || 'customer').split('@')[0],
       initials: (req.session.user.email || 'CU').slice(0, 2).toUpperCase(),
       ...extra
@@ -85,7 +95,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.get('/app/transfers/banks', async (req, res, next) => {
     try {
-      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id);
+      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id, req.query?.country);
       res.json({ countryCode, profileCountry, banks, count: banks.length });
     } catch (err) {
       next(err);
