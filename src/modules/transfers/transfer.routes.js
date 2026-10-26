@@ -11,20 +11,47 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.use('/app', requireAuth, requireRole('customer', 'admin', 'operations'));
 
+  async function resolveCountryAndBanks(userId) {
+    let countryCode = null;
+    let profile = null;
+    try {
+      if (customerRepo && typeof customerRepo.getProfile === 'function') {
+        profile = await customerRepo.getProfile(userId);
+        countryCode = profile?.countryCode || null;
+      }
+    } catch (err) {
+      console.error('[GLOBE_TRANSFER] getProfile failed', err?.message || err);
+    }
+    // Default so bank list is never empty in UI
+    const effectiveCountry = countryCode || process.env.DEFAULT_COUNTRY_CODE || 'NG';
+    let banks = [];
+    try {
+      banks = banksForCountry(effectiveCountry) || [];
+    } catch (err) {
+      console.error('[GLOBE_TRANSFER] banksForCountry failed', err?.message || err);
+      banks = banksForCountry('NG') || [];
+    }
+    if (!banks.length) {
+      banks = [
+        { code: 'LOCAL_BANK', name: 'Local bank (other)' },
+        { code: 'INTERNATIONAL', name: 'International / correspondent bank' }
+      ];
+    }
+    console.log('[GLOBE_TRANSFER] banks', JSON.stringify({
+      userId,
+      profileCountry: countryCode,
+      effectiveCountry,
+      bankCount: banks.length
+    }));
+    return { countryCode: effectiveCountry, profileCountry: countryCode, profile, banks };
+  }
+
   async function transferPageLocals(req, extra = {}) {
     const userId = req.session.user.id;
     await transferRepo.ensureSandboxLink(userId, 'NGN');
     const links = await transferRepo.listLinksWithExternal(userId);
     const history = await transferRepo.listForUser(userId);
-    let countryCode = null;
-    let profile = null;
-    if (customerRepo?.getProfile) {
-      try {
-        profile = await customerRepo.getProfile(userId);
-        countryCode = profile?.countryCode || null;
-      } catch (_) {}
-    }
-    const banks = banksForCountry(countryCode);
+    const { countryCode, profileCountry, profile, banks } = await resolveCountryAndBanks(userId);
     return {
       title: 'Transfers',
       path: '/app/transfers',
@@ -32,6 +59,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       history,
       banks,
       countryCode,
+      profileCountry,
       profile,
       displayName: (req.session.user.email || 'customer').split('@')[0],
       initials: (req.session.user.email || 'CU').slice(0, 2).toUpperCase(),
@@ -50,6 +78,15 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
         path: '/app/accounts',
         accounts: withBalances
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/app/transfers/banks', async (req, res, next) => {
+    try {
+      const { countryCode, profileCountry, banks } = await resolveCountryAndBanks(req.session.user.id);
+      res.json({ countryCode, profileCountry, banks, count: banks.length });
     } catch (err) {
       next(err);
     }

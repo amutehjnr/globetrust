@@ -85,7 +85,8 @@
                 <option value="" disabled <%= !(typeof formValues !== 'undefined' && formValues.destinationBankCode) ? 'selected' : '' %>>
                   Select bank
                 </option>
-                <% (typeof banks !== 'undefined' ? banks : []).forEach(function (b) { %>
+                <% var bankList = (typeof banks !== 'undefined' && banks && banks.length) ? banks : []; %>
+                <% bankList.forEach(function (b) { %>
                   <option
                     value="<%= b.code %>"
                     <%= typeof formValues !== 'undefined' && formValues.destinationBankCode === b.code ? 'selected' : '' %>
@@ -94,13 +95,16 @@
                   </option>
                 <% }) %>
               </select>
-              <% if (!countryCode) { %>
-                <span class="transfer-hint">Set your country in <a href="/app/settings">Settings</a> for a full local bank list.</span>
-              <% } else if (!(banks && banks.length)) { %>
-                <span class="transfer-hint">No bank directory for this country yet — choose a generic option.</span>
-              <% } else { %>
-                <span class="transfer-hint"><%= banks.length %> banks available for <%= countryCode %></span>
-              <% } %>
+              <span class="transfer-hint" id="transfer-bank-hint">
+                <% if (bankList.length) { %>
+                  <%= bankList.length %> banks available<%= countryCode ? (' for ' + countryCode) : '' %>
+                  <% if (typeof profileCountry === 'undefined' || !profileCountry) { %>
+                    · <a href="/app/settings">Set your country</a> for a precise list
+                  <% } %>
+                <% } else { %>
+                  Loading banks… or <a href="/app/settings">set your country</a>
+                <% } %>
+              </span>
             </div>
 
             <!-- Destination -->
@@ -484,5 +488,37 @@
 })();
 
   </script>
+
+  <!-- Bank list fallback -->
+  <script>
+    (function () {
+      var select = document.getElementById('transfer-bank');
+      var hint = document.getElementById('transfer-bank-hint');
+      if (!select) return;
+      var optionCount = select.querySelectorAll('option').length;
+      if (optionCount > 1) return; // already populated from server
+
+      fetch('/app/transfers/banks', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var list = (data && data.banks) || [];
+          list.forEach(function (b) {
+            var opt = document.createElement('option');
+            opt.value = b.code;
+            opt.textContent = b.name;
+            select.appendChild(opt);
+          });
+          if (hint) {
+            hint.textContent = list.length
+              ? (list.length + ' banks available' + (data.countryCode ? (' for ' + data.countryCode) : ''))
+              : 'No banks found — set your country in Settings';
+          }
+        })
+        .catch(function () {
+          if (hint) hint.textContent = 'Could not load banks. Refresh the page or set your country in Settings.';
+        });
+    })();
+  </script>
+
 </body>
 </html>

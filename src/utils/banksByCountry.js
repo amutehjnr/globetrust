@@ -1224,11 +1224,15 @@ for (const { code } of COUNTRIES) {
 }
 
 function banksForCountry(countryCode) {
-  const code = String(countryCode || '').toUpperCase();
-  if (code && BANKS_BY_COUNTRY[code]) {
-    return BANKS_BY_COUNTRY[code];
+  const raw = String(countryCode || '').trim().toUpperCase();
+  const fallback = (process.env.DEFAULT_COUNTRY_CODE || 'NG').toUpperCase();
+  const code = raw && BANKS_BY_COUNTRY[raw] ? raw : (BANKS_BY_COUNTRY[fallback] ? fallback : raw);
+
+  if (code && BANKS_BY_COUNTRY[code] && BANKS_BY_COUNTRY[code].length) {
+    return BANKS_BY_COUNTRY[code].slice();
   }
-  // Unknown / missing country — still return usable options
+
+  // Unknown country — still never return empty
   return [
     { code: 'LOCAL_BANK', name: 'Local bank (other)' },
     { code: 'INTERNATIONAL', name: 'International / correspondent bank' },
