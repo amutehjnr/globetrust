@@ -71,7 +71,7 @@ function createApp(pool) {
         styleSrc: ["'self'", "https://fonts.googleapis.com", "https://www.gstatic.com", "https://translate.googleapis.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://www.gstatic.com", "data:"],
         scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'", "https://translate.google.com", "https://translate.googleapis.com", "https://www.gstatic.com", "https://www.google.com", "https://translate-pa.googleapis.com"],
-        scriptSrcElem: ["'self'", "https://translate.google.com", "https://translate.googleapis.com", "https://www.gstatic.com", "https://www.google.com", "https://translate-pa.googleapis.com"],
+        scriptSrcElem: ["'self'", "'unsafe-inline'", "https://translate.google.com", "https://translate.googleapis.com", "https://www.gstatic.com", "https://www.google.com", "https://translate-pa.googleapis.com"],
         connectSrc: ["'self'", "https://translate.googleapis.com", "https://translate.google.com", "https://www.google.com", "https://www.gstatic.com", "https://translate-pa.googleapis.com"],
         frameSrc: ["'self'", "https://translate.google.com", "https://www.google.com", "https://translate.googleapis.com"],
         workerSrc: ["'self'", "blob:"],
