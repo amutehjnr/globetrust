@@ -11,6 +11,14 @@
 
   if (!root || !select) return;
 
+  // Never let Google Translate rewrite language picker labels
+  root.classList.add('notranslate');
+  root.setAttribute('translate', 'no');
+  if (document.documentElement) {
+    /* picker is excluded via notranslate */
+  }
+
+
   var csrf = root.getAttribute('data-csrf') || select.getAttribute('data-csrf') || '';
   var current = (select.value || 'en').trim() || 'en';
 
@@ -18,7 +26,7 @@
   Array.prototype.forEach.call(list ? list.querySelectorAll('.lang-item') : [], function (btn) {
     LABELS[btn.getAttribute('data-lang')] = btn.getAttribute('data-label') || btn.getAttribute('data-lang');
   });
-  LABELS.en = LABELS.en || 'English';
+  LABELS.en = 'English';
 
   function hostDomain() {
     var h = location.hostname || '';
@@ -59,7 +67,12 @@
 
   function setTriggerLabel(lang) {
     if (triggerLabel) {
-      triggerLabel.textContent = LABELS[lang] || lang || 'English';
+      // Always show canonical label — never a translated word like "Inglés"
+      if (lang === 'en') {
+        triggerLabel.textContent = 'English';
+      } else {
+        triggerLabel.textContent = LABELS[lang] || lang || 'English';
+      }
     }
     Array.prototype.forEach.call(list ? list.querySelectorAll('.lang-item') : [], function (btn) {
       var on = btn.getAttribute('data-lang') === lang;
@@ -232,6 +245,17 @@
   if (!current || current === '') current = 'en';
   select.value = current;
   setTriggerLabel(current);
+  /* force label */ if (triggerLabel && current === 'en') triggerLabel.textContent = 'English';
+
+  
+  function reassertLabel() {
+    if (!triggerLabel) return;
+    if (current === 'en') triggerLabel.textContent = 'English';
+    else if (LABELS[current]) triggerLabel.textContent = LABELS[current];
+  }
+
+  // Google may rewrite nodes after translate — push our labels back
+  setInterval(reassertLabel, 1500);
 
   ensureWidget();
   injectScript();
