@@ -519,6 +519,16 @@
     })();
   </script>
 
+
+  <!-- Full-screen submit loader -->
+  <div class="db-loading-overlay" id="db-loading-overlay" hidden aria-live="polite" aria-busy="true">
+    <div class="db-loading-overlay__card">
+      <div class="db-loading-overlay__spinner" aria-hidden="true"></div>
+      <p class="db-loading-overlay__title">Processing your request</p>
+      <p class="db-loading-overlay__hint">Please wait…</p>
+    </div>
+  </div>
+
   <!-- ========== ACTION MODALS ========== -->
   <div class="db-modal-root" id="db-modal-root" hidden>
     <div class="db-modal-backdrop" data-close-modal></div>

@@ -1836,3 +1836,57 @@ button.db-bal-card--link {
 @keyframes db-spin {
   to { transform: rotate(360deg); }
 }
+
+
+/* Full-screen popup loader */
+.db-loading-overlay[hidden] {
+  display: none !important;
+}
+
+.db-loading-overlay:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(16, 34, 56, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.db-loading-overlay__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: min(280px, 100%);
+  padding: 28px 32px;
+  background: #fff;
+  border: 1px solid #e5d9c3;
+  border-radius: 16px;
+  box-shadow: 0 20px 48px rgba(16, 34, 56, 0.22);
+  text-align: center;
+}
+
+.db-loading-overlay__spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid #efe6d6;
+  border-top-color: #c5a15b;
+  border-radius: 50%;
+  animation: db-spin 0.75s linear infinite;
+}
+
+.db-loading-overlay__title {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #102238;
+}
+
+.db-loading-overlay__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}

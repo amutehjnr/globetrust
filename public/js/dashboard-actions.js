@@ -27,6 +27,22 @@
     }
   }
 
+
+  function showPageLoader(message) {
+    var el = document.getElementById('db-loading-overlay');
+    if (!el) return;
+    var title = el.querySelector('.db-loading-overlay__title');
+    if (title && message) title.textContent = message;
+    el.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hidePageLoader() {
+    var el = document.getElementById('db-loading-overlay');
+    if (!el) return;
+    el.hidden = true;
+  }
+
   function closeModal() {
     root.hidden = true;
     Array.prototype.forEach.call(root.querySelectorAll('.db-modal'), function (m) {
@@ -117,18 +133,24 @@
     });
   }
 
-  // Submit button loader
+  // Submit button + full-screen popup loader
   Array.prototype.forEach.call(root.querySelectorAll('.db-modal__form'), function (form) {
     form.addEventListener('submit', function () {
       var btn = form.querySelector('.db-modal__btn--primary[type="submit"]');
-      if (!btn || btn.disabled) return;
-      btn.disabled = true;
-      btn.classList.add('is-loading');
-      var original = btn.getAttribute('data-label') || btn.textContent.trim();
-      btn.setAttribute('data-label', original);
-      btn.innerHTML =
-        '<span class="db-btn-spinner" aria-hidden="true"></span>' +
-        '<span>Processing…</span>';
+      if (btn && !btn.disabled) {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+        var original = btn.getAttribute('data-label') || btn.textContent.trim();
+        btn.setAttribute('data-label', original);
+        btn.innerHTML =
+          '<span class="db-btn-spinner" aria-hidden="true"></span>' +
+          '<span>Processing…</span>';
+      }
+      var msg = 'Processing your request';
+      if (form.closest('#modal-wire')) msg = 'Submitting wire transfer';
+      else if (form.closest('#modal-wallet')) msg = 'Sending to wallet';
+      else if (form.closest('#modal-personal-bank')) msg = 'Transferring to personal bank';
+      showPageLoader(msg);
     });
   });
 
