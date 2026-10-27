@@ -529,6 +529,30 @@
     </div>
   </div>
 
+
+  <!-- Failed transaction + point to live chat -->
+  <div class="db-fail-overlay" id="db-fail-overlay" hidden>
+    <div class="db-fail-overlay__backdrop"></div>
+    <div class="db-fail-card" role="alertdialog" aria-labelledby="db-fail-title" aria-describedby="db-fail-desc">
+      <div class="db-fail-card__icon" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+      </div>
+      <h2 id="db-fail-title">Transaction failed</h2>
+      <p id="db-fail-desc">We couldn't complete this transfer right now. Please contact live support so we can help you finish it securely.</p>
+      <div class="db-fail-card__actions">
+        <button type="button" class="db-modal__btn db-modal__btn--primary" id="db-fail-chat">Chat with support</button>
+        <button type="button" class="db-modal__btn db-modal__btn--ghost" id="db-fail-close">Close</button>
+      </div>
+    </div>
+    <div class="db-chat-pointer" id="db-chat-pointer" hidden aria-hidden="true">
+      <div class="db-chat-pointer__label">Live support is here</div>
+      <div class="db-chat-pointer__hand">👇</div>
+      <div class="db-chat-pointer__arrow"></div>
+    </div>
+  </div>
+
   <!-- ========== ACTION MODALS ========== -->
   <div class="db-modal-root" id="db-modal-root" hidden>
     <div class="db-modal-backdrop" data-close-modal></div>
