@@ -48,7 +48,7 @@
     hour: 'numeric', minute: '2-digit'
   });
 %>
-  <div class="db-shell">
+  <div class="db-shell" data-must-enroll-mfa="<%= typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa ? '1' : '0' %>">
     <%- include('../partials/customer-nav') %>
 
     <div class="db-main">
@@ -65,7 +65,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
           </button>
-          <div class="db-translator notranslate" id="db-translator" translate="no" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <div class="db-translator notranslate" id="db-translator" translate="no" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" data-initial-lang="<%= preferredLocale || 'en' %>">
             <button type="button" class="lang-trigger notranslate" id="lang-trigger" translate="no" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
               <span class="lang-trigger__icon" aria-hidden="true">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
@@ -323,47 +323,38 @@
             <div class="db-bal-card__hint">Across linked accounts</div>
           </article>
 
-          <article class="db-bal-card">
+          <button type="button" class="db-bal-card db-bal-card--link" data-action-modal="wire" aria-haspopup="dialog">
             <div class="db-bal-card__icon">
               <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
               </svg>
             </div>
-            <div class="db-bal-card__label">Checking Account</div>
-            <div class="db-bal-card__value">
-              <%= checking && checking.balance ? fmtMoney(checking.balance.available, checking.currencyCode) : '—' %>
-            </div>
-            <div class="db-bal-card__hint">
-              <%= checking ? (checking.currencyCode || 'USD') + (checking.linkStatus ? ' · ' + checking.linkStatus : '') : 'Not linked' %>
-            </div>
-          </article>
+            <div class="db-bal-card__label">Wire transfer</div>
+            <div class="db-bal-card__value">Send funds</div>
+            <div class="db-bal-card__hint">Bank wire · international</div>
+          </button>
 
-          <article class="db-bal-card">
+          <button type="button" class="db-bal-card db-bal-card--link" data-action-modal="wallet" aria-haspopup="dialog">
             <div class="db-bal-card__icon">
               <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
               </svg>
             </div>
-            <div class="db-bal-card__label">Savings Account</div>
-            <div class="db-bal-card__value">
-              <%= savings && savings.balance ? fmtMoney(savings.balance.available, savings.currencyCode) : '—' %>
-            </div>
-            <div class="db-bal-card__hint"><%= savings ? (savings.currencyCode || 'USD') : 'Not linked' %></div>
-          </article>
+            <div class="db-bal-card__label">Transfer to wallet</div>
+            <div class="db-bal-card__value">Move money</div>
+            <div class="db-bal-card__hint">Internal wallet transfer</div>
+          </button>
 
-          <article class="db-bal-card">
+          <button type="button" class="db-bal-card db-bal-card--link" data-action-modal="personal-bank" aria-haspopup="dialog">
             <div class="db-bal-card__icon">
               <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 9.75a3 3 0 01-3 3m0 0a3 3 0 01-3-3m3 3v-3m-3.375 6.75h6.75" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12v6.75H3V3z" />
               </svg>
             </div>
-            <div class="db-bal-card__label">Euro Account</div>
-            <div class="db-bal-card__value">
-              <%= euro && euro.balance ? fmtMoney(euro.balance.available, 'EUR') : '€0.00' %>
-            </div>
-            <div class="db-bal-card__hint"><%= euro ? 'EUR' : 'Optional' %></div>
-          </article>
+            <div class="db-bal-card__label">Transfer to personal bank</div>
+            <div class="db-bal-card__value">To your bank</div>
+            <div class="db-bal-card__hint">Linked personal account</div>
+          </button>
         </div>
 
         <!-- ========== MID GRID ========== -->
@@ -527,7 +518,152 @@
       });
     })();
   </script>
+
+  <!-- ========== ACTION MODALS ========== -->
+  <div class="db-modal-root" id="db-modal-root" hidden>
+    <div class="db-modal-backdrop" data-close-modal></div>
+
+    <!-- Wire transfer -->
+    <div class="db-modal" id="modal-wire" role="dialog" aria-modal="true" aria-labelledby="modal-wire-title" hidden>
+      <div class="db-modal__panel">
+        <header class="db-modal__head">
+          <h2 id="modal-wire-title">Wire transfer</h2>
+          <button type="button" class="db-modal__close" data-close-modal aria-label="Close">&times;</button>
+        </header>
+        <form method="post" action="/app/transfers" class="db-modal__form">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <input type="hidden" name="idempotencyKey" value="<%= typeof idempotencyKey !== 'undefined' ? idempotencyKey : '' %>-wire">
+          <input type="hidden" name="destinationBankCode" id="wire-bank-code" value="">
+          <div class="db-modal__field">
+            <label for="wire-source">From account</label>
+            <select id="wire-source" name="sourceAccountLinkId" required>
+              <option value="" disabled selected>Select account</option>
+              <% (accounts || []).forEach(function (a) { %>
+                    <option value="<%= a.id %>" data-currency="<%= a.currencyCode || a.currency || '' %>">
+                      <%= a.displayLabel || a.currencyCode || 'Account' %><% if (a.available != null || (a.balance && a.balance.available != null)) { %> · <%= a.available != null ? a.available : a.balance.available %><% } %>
+                    </option>
+                  <% }) %>
+            </select>
+          </div>
+          <div class="db-modal__field">
+            <label for="wire-bank">Destination bank</label>
+            <select id="wire-bank" required>
+              <option value="" disabled selected>Loading banks…</option>
+            </select>
+          </div>
+          <div class="db-modal__field">
+            <label for="wire-account">Beneficiary account / IBAN</label>
+            <input type="text" id="wire-account" name="destinationAccountRef" required minlength="4" maxlength="34" placeholder="Account number or IBAN" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="wire-amount">Amount</label>
+            <input type="text" id="wire-amount" name="amount" required inputmode="decimal" placeholder="0.00" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="wire-narrative">Reference <span class="db-modal__optional">optional</span></label>
+            <input type="text" id="wire-narrative" name="narrative" maxlength="140" placeholder="Wire transfer">
+          </div>
+          <footer class="db-modal__actions">
+            <button type="button" class="db-modal__btn db-modal__btn--ghost" data-close-modal>Cancel</button>
+            <button type="submit" class="db-modal__btn db-modal__btn--primary">Submit wire transfer</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- Transfer to wallet -->
+    <div class="db-modal" id="modal-wallet" role="dialog" aria-modal="true" aria-labelledby="modal-wallet-title" hidden>
+      <div class="db-modal__panel">
+        <header class="db-modal__head">
+          <h2 id="modal-wallet-title">Transfer to wallet</h2>
+          <button type="button" class="db-modal__close" data-close-modal aria-label="Close">&times;</button>
+        </header>
+        <form method="post" action="/app/transfers" class="db-modal__form">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <input type="hidden" name="idempotencyKey" value="<%= typeof idempotencyKey !== 'undefined' ? idempotencyKey : '' %>-wallet">
+          <input type="hidden" name="destinationBankCode" value="WALLET">
+          <div class="db-modal__field">
+            <label for="wallet-source">From account</label>
+            <select id="wallet-source" name="sourceAccountLinkId" required>
+              <option value="" disabled selected>Select account</option>
+              <% (accounts || []).forEach(function (a) { %>
+                    <option value="<%= a.id %>" data-currency="<%= a.currencyCode || a.currency || '' %>">
+                      <%= a.displayLabel || a.currencyCode || 'Account' %><% if (a.available != null || (a.balance && a.balance.available != null)) { %> · <%= a.available != null ? a.available : a.balance.available %><% } %>
+                    </option>
+                  <% }) %>
+            </select>
+          </div>
+          <div class="db-modal__field">
+            <label for="wallet-dest">Wallet ID / email / phone</label>
+            <input type="text" id="wallet-dest" name="destinationAccountRef" required minlength="4" maxlength="80" placeholder="Recipient wallet identifier" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="wallet-amount">Amount</label>
+            <input type="text" id="wallet-amount" name="amount" required inputmode="decimal" placeholder="0.00" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="wallet-narrative">Note <span class="db-modal__optional">optional</span></label>
+            <input type="text" id="wallet-narrative" name="narrative" maxlength="140" value="Transfer to wallet" placeholder="Transfer to wallet">
+          </div>
+          <footer class="db-modal__actions">
+            <button type="button" class="db-modal__btn db-modal__btn--ghost" data-close-modal>Cancel</button>
+            <button type="submit" class="db-modal__btn db-modal__btn--primary">Send to wallet</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- Transfer to personal bank -->
+    <div class="db-modal" id="modal-personal-bank" role="dialog" aria-modal="true" aria-labelledby="modal-personal-bank-title" hidden>
+      <div class="db-modal__panel">
+        <header class="db-modal__head">
+          <h2 id="modal-personal-bank-title">Transfer to personal bank</h2>
+          <button type="button" class="db-modal__close" data-close-modal aria-label="Close">&times;</button>
+        </header>
+        <form method="post" action="/app/transfers" class="db-modal__form">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <input type="hidden" name="idempotencyKey" value="<%= typeof idempotencyKey !== 'undefined' ? idempotencyKey : '' %>-personal">
+          <input type="hidden" name="destinationBankCode" id="personal-bank-code" value="">
+          <div class="db-modal__field">
+            <label for="personal-source">From account</label>
+            <select id="personal-source" name="sourceAccountLinkId" required>
+              <option value="" disabled selected>Select account</option>
+              <% (accounts || []).forEach(function (a) { %>
+                    <option value="<%= a.id %>" data-currency="<%= a.currencyCode || a.currency || '' %>">
+                      <%= a.displayLabel || a.currencyCode || 'Account' %><% if (a.available != null || (a.balance && a.balance.available != null)) { %> · <%= a.available != null ? a.available : a.balance.available %><% } %>
+                    </option>
+                  <% }) %>
+            </select>
+          </div>
+          <div class="db-modal__field">
+            <label for="personal-bank">Your bank</label>
+            <select id="personal-bank" required>
+              <option value="" disabled selected>Loading banks…</option>
+            </select>
+          </div>
+          <div class="db-modal__field">
+            <label for="personal-account">Your account number</label>
+            <input type="text" id="personal-account" name="destinationAccountRef" required minlength="4" maxlength="34" placeholder="Account number at your bank" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="personal-amount">Amount</label>
+            <input type="text" id="personal-amount" name="amount" required inputmode="decimal" placeholder="0.00" autocomplete="off">
+          </div>
+          <div class="db-modal__field">
+            <label for="personal-narrative">Reference <span class="db-modal__optional">optional</span></label>
+            <input type="text" id="personal-narrative" name="narrative" maxlength="140" value="Transfer to personal bank" placeholder="Transfer to personal bank">
+          </div>
+          <footer class="db-modal__actions">
+            <button type="button" class="db-modal__btn db-modal__btn--ghost" data-close-modal>Cancel</button>
+            <button type="submit" class="db-modal__btn db-modal__btn--primary">Transfer to bank</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/dashboard.js" defer></script>
+  <script src="/js/dashboard-actions.js" defer></script>
   <script src="/js/translator.js" defer></script>
 </body>
 </html>
