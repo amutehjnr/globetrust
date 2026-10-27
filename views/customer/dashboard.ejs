@@ -675,5 +675,38 @@
   <script src="/js/dashboard.js" defer></script>
   <script src="/js/dashboard-actions.js" defer></script>
   <script src="/js/translator.js" defer></script>
+
+  <div class="lc-widget notranslate" id="lc-widget" translate="no" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    <div class="lc-panel" id="lc-panel" hidden>
+      <header class="lc-panel__head">
+        <div>
+          <h3>Live chat</h3>
+          <small>Globe Trust support</small>
+        </div>
+        <button type="button" class="lc-panel__close" id="lc-close" aria-label="Close chat">&times;</button>
+      </header>
+      <p class="lc-status" id="lc-status" style="padding:8px 14px 0;margin:0;">Ready</p>
+      <div class="lc-panel__body" id="lc-body">
+        <p class="lc-empty">Opening chat…</p>
+      </div>
+      <div class="lc-panel__foot">
+        <form class="lc-panel__form" id="lc-form">
+          <input type="text" id="lc-input" maxlength="2000" placeholder="Type a message…" autocomplete="off" required>
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+    <button type="button" class="lc-launcher" id="lc-launcher" aria-expanded="false" aria-controls="lc-panel">
+      <span class="lc-launcher__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75h6.75m-6.75 3h3.375M21 12c0 4.556-4.03 8.25-9 8.25a9.76 9.76 0 01-2.53-.33L5 21l1.2-3.6A7.9 7.9 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+        </svg>
+      </span>
+      <span>Live chat</span>
+    </button>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/live-chat.js" defer></script>
+
 </body>
 </html>
