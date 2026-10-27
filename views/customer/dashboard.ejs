@@ -82,51 +82,207 @@
               </span>
             <% } %>
           </a>
-
-          <div class="db-translator" id="db-translator">
-            <label class="db-translator__label" for="db-language">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3c2.5 3 4 6 4 9s-1.5 6-4 9c-2.5-3-4-6-4-9s1.5-6 4-9z" />
-              </svg>
-            </label>
-            <select id="db-language" class="db-translator__select" aria-label="Translate page" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>
-              <option value="en" <%= preferredLocale === 'en' ? 'selected' : '' %>>English</option>
-              <option value="fr" <%= preferredLocale === 'fr' ? 'selected' : '' %>>Français</option>
-              <option value="es" <%= preferredLocale === 'es' ? 'selected' : '' %>>Español</option>
-              <option value="pt" <%= preferredLocale === 'pt' ? 'selected' : '' %>>Português</option>
-              <option value="de" <%= preferredLocale === 'de' ? 'selected' : '' %>>Deutsch</option>
-              <option value="it" <%= preferredLocale === 'it' ? 'selected' : '' %>>Italiano</option>
-              <option value="nl" <%= preferredLocale === 'nl' ? 'selected' : '' %>>Nederlands</option>
-              <option value="ru" <%= preferredLocale === 'ru' ? 'selected' : '' %>>Русский</option>
-              <option value="zh-CN" <%= preferredLocale === 'zh-CN' || preferredLocale === 'zh' ? 'selected' : '' %>>中文 (简体)</option>
-              <option value="zh-TW" <%= preferredLocale === 'zh-TW' ? 'selected' : '' %>>中文 (繁體)</option>
-              <option value="ja" <%= preferredLocale === 'ja' ? 'selected' : '' %>>日本語</option>
-              <option value="ko" <%= preferredLocale === 'ko' ? 'selected' : '' %>>한국어</option>
-              <option value="ar" <%= preferredLocale === 'ar' ? 'selected' : '' %>>العربية</option>
-              <option value="hi" <%= preferredLocale === 'hi' ? 'selected' : '' %>>हिन्दी</option>
-              <option value="bn" <%= preferredLocale === 'bn' ? 'selected' : '' %>>বাংলা</option>
-              <option value="tr" <%= preferredLocale === 'tr' ? 'selected' : '' %>>Türkçe</option>
-              <option value="pl" <%= preferredLocale === 'pl' ? 'selected' : '' %>>Polski</option>
-              <option value="vi" <%= preferredLocale === 'vi' ? 'selected' : '' %>>Tiếng Việt</option>
-              <option value="th" <%= preferredLocale === 'th' ? 'selected' : '' %>>ไทย</option>
-              <option value="id" <%= preferredLocale === 'id' ? 'selected' : '' %>>Bahasa Indonesia</option>
-              <option value="ms" <%= preferredLocale === 'ms' ? 'selected' : '' %>>Bahasa Melayu</option>
-              <option value="sv" <%= preferredLocale === 'sv' ? 'selected' : '' %>>Svenska</option>
-              <option value="da" <%= preferredLocale === 'da' ? 'selected' : '' %>>Dansk</option>
-              <option value="fi" <%= preferredLocale === 'fi' ? 'selected' : '' %>>Suomi</option>
-              <option value="no" <%= preferredLocale === 'no' ? 'selected' : '' %>>Norsk</option>
-              <option value="cs" <%= preferredLocale === 'cs' ? 'selected' : '' %>>Čeština</option>
-              <option value="ro" <%= preferredLocale === 'ro' ? 'selected' : '' %>>Română</option>
-              <option value="hu" <%= preferredLocale === 'hu' ? 'selected' : '' %>>Magyar</option>
-              <option value="el" <%= preferredLocale === 'el' ? 'selected' : '' %>>Ελληνικά</option>
-              <option value="he" <%= preferredLocale === 'he' ? 'selected' : '' %>>עברית</option>
-              <option value="uk" <%= preferredLocale === 'uk' ? 'selected' : '' %>>Українська</option>
-              <option value="fa" <%= preferredLocale === 'fa' ? 'selected' : '' %>>فارسی</option>
-              <option value="ur" <%= preferredLocale === 'ur' ? 'selected' : '' %>>اردو</option>
-              <option value="ta" <%= preferredLocale === 'ta' ? 'selected' : '' %>>தமிழ்</option>
-              <option value="tl" <%= preferredLocale === 'tl' ? 'selected' : '' %>>Filipino</option>
-              <option value="ca" <%= preferredLocale === 'ca' ? 'selected' : '' %>>Català</option>
+          <div class="db-translator" id="db-translator" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            <button type="button" class="lang-trigger" id="lang-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+              <span class="lang-trigger__icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3c2.5 3 4 6 4 9s-1.5 6-4 9c-2.5-3-4-6-4-9s1.5-6 4-9z" />
+                </svg>
+              </span>
+              <span class="lang-trigger__label" id="lang-trigger-label">English</span>
+              <span class="lang-trigger__chevron" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div class="lang-panel" id="lang-panel" hidden>
+              <div class="lang-panel__search">
+                <input type="search" id="lang-search" class="lang-search" placeholder="Search language…" autocomplete="off" aria-label="Search language">
+              </div>
+              <div class="lang-panel__list" id="lang-list" role="listbox" aria-label="Languages">
+                <button type="button" class="lang-item" role="option" data-lang="en" data-label="English">
+                  <span class="lang-item__native">English</span>
+                  <span class="lang-item__en">English</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="fr" data-label="Français">
+                  <span class="lang-item__native">Français</span>
+                  <span class="lang-item__en">French</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="es" data-label="Español">
+                  <span class="lang-item__native">Español</span>
+                  <span class="lang-item__en">Spanish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="pt" data-label="Português">
+                  <span class="lang-item__native">Português</span>
+                  <span class="lang-item__en">Portuguese</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="de" data-label="Deutsch">
+                  <span class="lang-item__native">Deutsch</span>
+                  <span class="lang-item__en">German</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="it" data-label="Italiano">
+                  <span class="lang-item__native">Italiano</span>
+                  <span class="lang-item__en">Italian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="nl" data-label="Nederlands">
+                  <span class="lang-item__native">Nederlands</span>
+                  <span class="lang-item__en">Dutch</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ru" data-label="Русский">
+                  <span class="lang-item__native">Русский</span>
+                  <span class="lang-item__en">Russian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="zh-CN" data-label="中文 (简体)">
+                  <span class="lang-item__native">中文 (简体)</span>
+                  <span class="lang-item__en">Chinese Simplified</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="zh-TW" data-label="中文 (繁體)">
+                  <span class="lang-item__native">中文 (繁體)</span>
+                  <span class="lang-item__en">Chinese Traditional</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ja" data-label="日本語">
+                  <span class="lang-item__native">日本語</span>
+                  <span class="lang-item__en">Japanese</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ko" data-label="한국어">
+                  <span class="lang-item__native">한국어</span>
+                  <span class="lang-item__en">Korean</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ar" data-label="العربية">
+                  <span class="lang-item__native">العربية</span>
+                  <span class="lang-item__en">Arabic</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="hi" data-label="हिन्दी">
+                  <span class="lang-item__native">हिन्दी</span>
+                  <span class="lang-item__en">Hindi</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="bn" data-label="বাংলা">
+                  <span class="lang-item__native">বাংলা</span>
+                  <span class="lang-item__en">Bengali</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="tr" data-label="Türkçe">
+                  <span class="lang-item__native">Türkçe</span>
+                  <span class="lang-item__en">Turkish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="pl" data-label="Polski">
+                  <span class="lang-item__native">Polski</span>
+                  <span class="lang-item__en">Polish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="vi" data-label="Tiếng Việt">
+                  <span class="lang-item__native">Tiếng Việt</span>
+                  <span class="lang-item__en">Vietnamese</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="th" data-label="ไทย">
+                  <span class="lang-item__native">ไทย</span>
+                  <span class="lang-item__en">Thai</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="id" data-label="Bahasa Indonesia">
+                  <span class="lang-item__native">Bahasa Indonesia</span>
+                  <span class="lang-item__en">Indonesian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ms" data-label="Bahasa Melayu">
+                  <span class="lang-item__native">Bahasa Melayu</span>
+                  <span class="lang-item__en">Malay</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="sv" data-label="Svenska">
+                  <span class="lang-item__native">Svenska</span>
+                  <span class="lang-item__en">Swedish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="da" data-label="Dansk">
+                  <span class="lang-item__native">Dansk</span>
+                  <span class="lang-item__en">Danish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="fi" data-label="Suomi">
+                  <span class="lang-item__native">Suomi</span>
+                  <span class="lang-item__en">Finnish</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="no" data-label="Norsk">
+                  <span class="lang-item__native">Norsk</span>
+                  <span class="lang-item__en">Norwegian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="cs" data-label="Čeština">
+                  <span class="lang-item__native">Čeština</span>
+                  <span class="lang-item__en">Czech</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ro" data-label="Română">
+                  <span class="lang-item__native">Română</span>
+                  <span class="lang-item__en">Romanian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="hu" data-label="Magyar">
+                  <span class="lang-item__native">Magyar</span>
+                  <span class="lang-item__en">Hungarian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="el" data-label="Ελληνικά">
+                  <span class="lang-item__native">Ελληνικά</span>
+                  <span class="lang-item__en">Greek</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="he" data-label="עברית">
+                  <span class="lang-item__native">עברית</span>
+                  <span class="lang-item__en">Hebrew</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="uk" data-label="Українська">
+                  <span class="lang-item__native">Українська</span>
+                  <span class="lang-item__en">Ukrainian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="fa" data-label="فارسی">
+                  <span class="lang-item__native">فارسی</span>
+                  <span class="lang-item__en">Persian</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ur" data-label="اردو">
+                  <span class="lang-item__native">اردو</span>
+                  <span class="lang-item__en">Urdu</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ta" data-label="தமிழ்">
+                  <span class="lang-item__native">தமிழ்</span>
+                  <span class="lang-item__en">Tamil</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="tl" data-label="Filipino">
+                  <span class="lang-item__native">Filipino</span>
+                  <span class="lang-item__en">Filipino</span>
+                </button>
+                <button type="button" class="lang-item" role="option" data-lang="ca" data-label="Català">
+                  <span class="lang-item__native">Català</span>
+                  <span class="lang-item__en">Catalan</span>
+                </button>
+              </div>
+            </div>
+            <select id="db-language" class="lang-native-select" aria-hidden="true" tabindex="-1">
+              <option value="en" selected>English</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+              <option value="pt">Português</option>
+              <option value="de">Deutsch</option>
+              <option value="it">Italiano</option>
+              <option value="nl">Nederlands</option>
+              <option value="ru">Русский</option>
+              <option value="zh-CN">中文 (简体)</option>
+              <option value="zh-TW">中文 (繁體)</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="ar">العربية</option>
+              <option value="hi">हिन्दी</option>
+              <option value="bn">বাংলা</option>
+              <option value="tr">Türkçe</option>
+              <option value="pl">Polski</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="th">ไทย</option>
+              <option value="id">Bahasa Indonesia</option>
+              <option value="ms">Bahasa Melayu</option>
+              <option value="sv">Svenska</option>
+              <option value="da">Dansk</option>
+              <option value="fi">Suomi</option>
+              <option value="no">Norsk</option>
+              <option value="cs">Čeština</option>
+              <option value="ro">Română</option>
+              <option value="hu">Magyar</option>
+              <option value="el">Ελληνικά</option>
+              <option value="he">עברית</option>
+              <option value="uk">Українська</option>
+              <option value="fa">فارسی</option>
+              <option value="ur">اردو</option>
+              <option value="ta">தமிழ்</option>
+              <option value="tl">Filipino</option>
+              <option value="ca">Català</option>
             </select>
           </div>
           <div id="google_translate_element" class="db-translator__google" hidden></div>
