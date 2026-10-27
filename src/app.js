@@ -68,10 +68,11 @@ function createApp(pool) {
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
         imgSrc: ["'self'", "data:", "https://flagcdn.com", "https://logo.clearbit.com", "https://ui-avatars.com"],
-        styleSrc: ["'self'", "https://fonts.googleapis.com"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "https://www.gstatic.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        scriptSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://translate.google.com", "https://translate.googleapis.com"],
+        connectSrc: ["'self'", "https://translate.googleapis.com", "https://translate.google.com"],
+        frameSrc: ["'self'", "https://translate.google.com", "https://www.google.com"],
         upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
       }
     },

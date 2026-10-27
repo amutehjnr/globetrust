@@ -16,6 +16,15 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024, files: 1 }
 });
 
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1 * 1024 * 1024, files: 1 },
+  fileFilter(_req, file, cb) {
+    const ok = ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
+    cb(ok ? null : new Error('Photo must be JPEG, PNG, or WebP.'), ok);
+  }
+});
+
 const profileSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),
@@ -130,6 +139,78 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       next(err);
     }
   });
+
+  
+  router.post('/app/profile/photo', requireCsrf, (req, res, next) => {
+    photoUpload.single('photo')(req, res, async (err) => {
+      if (err) {
+        const profile = await customerRepo.getProfile(req.session.user.id).catch(() => null);
+        return res.status(400).render('customer/profile', {
+          title: 'Profile',
+          path: '/app/profile',
+          profile,
+          countries: COUNTRIES,
+          error: err.message || 'Could not upload photo.',
+          success: null
+        });
+      }
+      try {
+        if (!req.file) {
+          const profile = await customerRepo.getProfile(req.session.user.id);
+          return res.status(400).render('customer/profile', {
+            title: 'Profile',
+            path: '/app/profile',
+            profile,
+            countries: COUNTRIES,
+            error: 'Choose a photo to upload.',
+            success: null
+          });
+        }
+        const b64 = req.file.buffer.toString('base64');
+        const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
+        // Keep under ~900KB in DB
+        if (dataUrl.length > 900000) {
+          const profile = await customerRepo.getProfile(req.session.user.id);
+          return res.status(400).render('customer/profile', {
+            title: 'Profile',
+            path: '/app/profile',
+            profile,
+            countries: COUNTRIES,
+            error: 'Photo is too large. Use an image under 700KB.',
+            success: null
+          });
+        }
+        await customerRepo.updateProfilePhoto(req.session.user.id, dataUrl);
+        if (req.session.user) req.session.user.profilePhotoUrl = dataUrl;
+        const profile = await customerRepo.getProfile(req.session.user.id);
+        return res.render('customer/profile', {
+          title: 'Profile',
+          path: '/app/profile',
+          profile,
+          countries: COUNTRIES,
+          error: null,
+          success: 'Profile photo updated.'
+        });
+      } catch (e) {
+        next(e);
+      }
+    });
+  });
+
+  router.post('/app/profile/locale', requireCsrf, async (req, res, next) => {
+    try {
+      const locale = String(req.body.locale || 'en').slice(0, 12);
+      await customerRepo.updatePreferredLocale(req.session.user.id, locale);
+      if (req.session.user) req.session.user.preferredLocale = locale;
+      if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.json({ ok: true, locale });
+      }
+      return res.redirect(303, req.get('referer') || '/dashboard');
+    } catch (err) {
+      next(err);
+    }
+  });
+
 
   router.get('/app/kyc', async (req, res, next) => {
     try {

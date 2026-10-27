@@ -1,4 +1,3 @@
-
 /* =========================================================
    GLOBE TRUST BANK — CUSTOMER DASHBOARD
    Palette: ivory, midnight navy, champagne gold
@@ -155,48 +154,110 @@
   height: 21px;
 }
 
-.db-user {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-}
-
-.db-user__avatar {
-  display: grid;
-  place-items: center;
+.db-user-photo {
+  display: block;
   flex: 0 0 42px;
   width: 42px;
   height: 42px;
-  border: 1px solid #e3d1aa;
   border-radius: 50%;
-  background: linear-gradient(145deg, #f4e8cd, #d8bd87);
-  color: #263047;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.db-user__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.db-user__meta strong {
   overflow: hidden;
-  max-width: 190px;
-  color: var(--db-ink);
-  font-size: 12px;
-  font-weight: 700;
-  text-overflow: ellipsis;
+  border: 2px solid #e3d1aa;
+  background: #f4e8cd;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(16, 34, 56, 0.08);
+}
+
+.db-user-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.db-user-photo__empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #5a6a7e;
+  background: linear-gradient(145deg, #f4e8cd, #e8d5a8);
+}
+
+.db-translator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 200px;
+}
+
+.db-translator__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--db-muted);
+  font-size: 11px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.db-user__meta small {
-  color: var(--db-muted);
-  font-size: 11px;
+.db-translator__text {
+  display: none;
+}
+
+.db-translator__select {
+  min-width: 0;
+  max-width: 140px;
+  height: 36px;
+  padding: 0 28px 0 10px;
+  color: var(--db-ink);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23788391' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid #ded8ce;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+}
+
+.db-translator__select:hover,
+.db-translator__select:focus {
+  border-color: #c5a15b;
+  box-shadow: 0 0 0 3px rgba(197, 161, 91, 0.15);
+}
+
+/* Hide Google's default banner clutter */
+.goog-te-banner-frame,
+.skiptranslate > iframe.skiptranslate {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
+.goog-logo-link,
+.goog-te-gadget span {
+  display: none !important;
+}
+.goog-te-gadget {
+  font-size: 0 !important;
+}
+
+@media (min-width: 720px) {
+  .db-translator__text {
+    display: inline;
+  }
+  .db-translator__select {
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-translator__select {
+    max-width: 110px;
+    font-size: 11px;
+  }
 }
 
 .db-content {

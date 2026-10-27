@@ -23,6 +23,7 @@ function createCustomerRepository(pool) {
         dateOfBirth: r.date_of_birth,
         countryCode: r.country_code,
         preferredLocale: r.preferred_locale,
+        profilePhotoUrl: r.profile_photo_url || null,
         email: r.email,
         phoneE164: r.phone_e164,
         status: r.status,
@@ -79,6 +80,31 @@ function createCustomerRepository(pool) {
         );
         console.error('[GLOBE_PROFILE] created missing customer_profiles row', JSON.stringify({ userId, countryCode }));
       }
+    },
+
+    
+    async updateProfilePhoto(userId, photoUrl) {
+      const uid = uuidToBinary(userId);
+      const [result] = await pool.query(
+        `UPDATE customer_profiles SET profile_photo_url = ? WHERE user_id = ?`,
+        [photoUrl || null, uid]
+      );
+      if (result.affectedRows === 0) {
+        const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
+        await pool.query(
+          `INSERT INTO customer_profiles
+            (user_id, customer_reference, first_name, last_name, profile_photo_url, preferred_locale)
+           VALUES (?, ?, 'Customer', 'User', ?, 'en')`,
+          [uid, ref, photoUrl || null]
+        );
+      }
+    },
+
+    async updatePreferredLocale(userId, locale) {
+      await pool.query(
+        `UPDATE customer_profiles SET preferred_locale = ? WHERE user_id = ?`,
+        [String(locale || 'en').slice(0, 12), uuidToBinary(userId)]
+      );
     },
 
     async setCountryCode(userId, countryCode) {
