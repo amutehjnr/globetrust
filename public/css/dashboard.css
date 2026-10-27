@@ -1643,3 +1643,169 @@ a.db-bal-card--link:focus-visible {
   outline: 2px solid #c5a15b;
   outline-offset: 2px;
 }
+
+/* ========== Action modals ========== */
+button.db-bal-card--link {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border: 1px solid var(--db-border, #e8dfd0);
+  background: #fff;
+  cursor: pointer;
+}
+
+.db-modal-root[hidden] {
+  display: none !important;
+}
+
+.db-modal-root:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.db-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 34, 56, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.db-modal[hidden] {
+  display: none !important;
+}
+
+.db-modal {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  max-height: min(90vh, 640px);
+  overflow: auto;
+}
+
+.db-modal__panel {
+  background: #fff;
+  border: 1px solid #e5d9c3;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(16, 34, 56, 0.2);
+}
+
+.db-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid #efe6d6;
+}
+
+.db-modal__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #102238;
+}
+
+.db-modal__close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: #f5f0e6;
+  color: #5a6a7e;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.db-modal__close:hover {
+  background: #ebe3d2;
+  color: #102238;
+}
+
+.db-modal__form {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.db-modal__field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: #3d4a5c;
+}
+
+.db-modal__optional {
+  font-weight: 500;
+  color: #9aa3ad;
+}
+
+.db-modal__field input,
+.db-modal__field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #ded8ce;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.92rem;
+  color: #102238;
+  background: #fff;
+  outline: none;
+}
+
+.db-modal__field input:focus,
+.db-modal__field select:focus {
+  border-color: #c5a15b;
+  box-shadow: 0 0 0 3px rgba(197, 161, 91, 0.15);
+}
+
+.db-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.db-modal__btn {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.db-modal__btn--ghost {
+  background: #fff;
+  border-color: #ded8ce;
+  color: #3d4a5c;
+}
+
+.db-modal__btn--primary {
+  background: linear-gradient(135deg, #c5a15b, #a67c3a);
+  color: #fff;
+  border-color: #a67c3a;
+}
+
+.db-modal__btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 480px) {
+  .db-modal__actions {
+    flex-direction: column-reverse;
+  }
+  .db-modal__btn {
+    width: 100%;
+  }
+}
