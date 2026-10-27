@@ -116,4 +116,20 @@
       if (bank && hidden) hidden.value = bank.value || '';
     });
   }
+
+  // Submit button loader
+  Array.prototype.forEach.call(root.querySelectorAll('.db-modal__form'), function (form) {
+    form.addEventListener('submit', function () {
+      var btn = form.querySelector('.db-modal__btn--primary[type="submit"]');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+      var original = btn.getAttribute('data-label') || btn.textContent.trim();
+      btn.setAttribute('data-label', original);
+      btn.innerHTML =
+        '<span class="db-btn-spinner" aria-hidden="true"></span>' +
+        '<span>Processing…</span>';
+    });
+  });
+
 })();

@@ -1809,3 +1809,30 @@ button.db-bal-card--link {
     width: 100%;
   }
 }
+
+
+/* Submit button loader */
+.db-modal__btn--primary.is-loading {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0.92;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.db-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: db-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes db-spin {
+  to { transform: rotate(360deg); }
+}
