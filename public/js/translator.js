@@ -20,7 +20,27 @@
 
 
   var csrf = root.getAttribute('data-csrf') || select.getAttribute('data-csrf') || '';
-  var current = (select.value || 'en').trim() || 'en';
+  var STORAGE_KEY = 'globetrust_lang';
+
+  function readStoredLang() {
+    try {
+      var ls = localStorage.getItem(STORAGE_KEY);
+      if (ls) return ls;
+    } catch (_) {}
+    var cookie = '';
+    try {
+      var m = document.cookie.match(/(?:^|; )googtrans=([^;]*)/);
+      if (m) {
+        var parts = decodeURIComponent(m[1]).split('/');
+        if (parts.length >= 3 && parts[2]) return parts[2];
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  var fromServer = (root.getAttribute('data-initial-lang') || '').trim();
+  var fromStore = readStoredLang();
+  var current = (fromStore || fromServer || select.value || 'en').trim() || 'en';
 
   var LABELS = {};
   Array.prototype.forEach.call(list ? list.querySelectorAll('.lang-item') : [], function (btn) {
@@ -171,6 +191,7 @@
     current = lang || 'en';
     setTriggerLabel(current);
     persistLocale(current);
+    try { localStorage.setItem(STORAGE_KEY, current); } catch (_) {}
     closePanel();
 
     if (current === 'en') {
@@ -244,8 +265,9 @@
   }
   if (!current || current === '') current = 'en';
   select.value = current;
+  try { localStorage.setItem(STORAGE_KEY, current); } catch (_) {}
   setTriggerLabel(current);
-  /* force label */ if (triggerLabel && current === 'en') triggerLabel.textContent = 'English';
+  if (triggerLabel && current === 'en') triggerLabel.textContent = 'English';
 
   
   function reassertLabel() {

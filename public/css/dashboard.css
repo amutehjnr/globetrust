@@ -1617,3 +1617,29 @@ body {
     margin-top: 4px;
   }
 }
+
+/* Keep language picker labels untranslated */
+.db-translator.notranslate,
+.db-translator .lang-trigger__label,
+.db-translator .lang-item__native,
+.db-translator .lang-item__en {
+  /* structural only — translate=no handles exclusion */
+}
+
+/* Clickable action cards */
+a.db-bal-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+a.db-bal-card--link:hover {
+  transform: translateY(-2px);
+  border-color: #d4bc8a;
+  box-shadow: 0 8px 24px rgba(16, 34, 56, 0.1);
+}
+a.db-bal-card--link:focus-visible {
+  outline: 2px solid #c5a15b;
+  outline-offset: 2px;
+}
