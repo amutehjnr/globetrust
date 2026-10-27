@@ -27,9 +27,19 @@
       </div>
       <div class="db-topbar__right">
         <button type="button" class="db-icon-btn" aria-label="Notifications">🔔</button>
-        
           <div class="db-translator" id="db-translator" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-            
+            <button type="button" class="lang-trigger" id="lang-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+              <span class="lang-trigger__icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3c2.5 3 4 6 4 9s-1.5 6-4 9c-2.5-3-4-6-4-9s1.5-6 4-9z" />
+                </svg>
+              </span>
+              <span class="lang-trigger__label" id="lang-trigger-label">English</span>
+              <span class="lang-trigger__chevron" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </button>
             <div class="lang-panel" id="lang-panel" hidden>
               <div class="lang-panel__search">
                 <input type="search" id="lang-search" class="lang-search" placeholder="Search language…" autocomplete="off" aria-label="Search language">

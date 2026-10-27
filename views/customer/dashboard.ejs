@@ -65,13 +65,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
           </button>
-          <a href="/app/profile" class="db-user-photo" title="Profile">
-            <% if (profilePhotoUrl) { %>
-              <img src="<%= profilePhotoUrl %>" alt="<%= fullName %>" width="40" height="40" loading="lazy" decoding="async">
-            <% } else { %>
-              <span class="db-user-photo__fallback" aria-hidden="true"><%= initials %></span>
-            <% } %>
-          </a>
           <div class="db-translator" id="db-translator" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             <button type="button" class="lang-trigger" id="lang-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
               <span class="lang-trigger__icon" aria-hidden="true">
