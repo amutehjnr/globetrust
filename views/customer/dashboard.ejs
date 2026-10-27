@@ -17,7 +17,9 @@
   var lastName = (profile && profile.lastName) ? profile.lastName : '';
   var fullName = (firstName !== 'there' ? firstName + (lastName ? ' ' + lastName : '') : 'Customer');
   var initials = ((firstName !== 'there' ? firstName.charAt(0) : 'C') + (lastName ? lastName.charAt(0) : '')).toUpperCase();
-  var avatarUrl = (profile && profile.avatarUrl) ? profile.avatarUrl : '';
+  var profilePhotoUrl = (profile && profile.profilePhotoUrl) ? profile.profilePhotoUrl : '';
+  var preferredLocale = (profile && profile.preferredLocale) ? profile.preferredLocale : 'en';
+  var avatarUrl = profilePhotoUrl || '';
   if (!avatarUrl && fullName) {
     avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) +
       '&background=102238&color=f5e6c8&size=128&bold=true&format=png';
@@ -67,7 +69,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
           </button>
-          <a href="/app/profile" class="db-user-photo" title="Profile">
+          <!-- <a href="/app/profile" class="db-user-photo" title="Profile">
             <% if (typeof profilePhotoUrl !== 'undefined' && profilePhotoUrl) { %>
               <img src="<%= profilePhotoUrl %>" alt="" width="42" height="42" loading="lazy" decoding="async">
             <% } else if (typeof avatarUrl !== 'undefined' && avatarUrl) { %>
@@ -79,7 +81,7 @@
                 </svg>
               </span>
             <% } %>
-          </a>
+          </a> -->
 
           <div class="db-translator" id="db-translator">
             <label class="db-translator__label" for="db-language">
@@ -117,9 +119,24 @@
         <% } %>
 
         <div class="db-greeting">
-          <div>
-            <h1>Welcome back, <em><%= firstName %></em>.</h1>
-            <p>Here's your account overview.</p>
+          <div class="db-greeting__identity">
+            <div class="db-greeting__photo">
+              <% if (typeof profilePhotoUrl !== 'undefined' && profilePhotoUrl) { %>
+                <img src="<%= profilePhotoUrl %>" alt="" width="56" height="56" loading="lazy" decoding="async">
+              <% } else if (profile && profile.profilePhotoUrl) { %>
+                <img src="<%= profile.profilePhotoUrl %>" alt="" width="56" height="56" loading="lazy" decoding="async">
+              <% } else { %>
+                <span class="db-greeting__photo-empty" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
+                  </svg>
+                </span>
+              <% } %>
+            </div>
+            <div class="db-greeting__text">
+              <h1>Welcome, <em><%= fullName %></em>, Globe intercontinental bank.</h1>
+              <p>Here's your account overview.</p>
+            </div>
           </div>
           <div class="db-greeting__meta">
             <span><%= nowStr %></span>
