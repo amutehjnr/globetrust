@@ -69,7 +69,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
           </button>
-          <!-- <a href="/app/profile" class="db-user-photo" title="Profile">
+          <a href="/app/profile" class="db-user-photo" title="Profile">
             <% if (typeof profilePhotoUrl !== 'undefined' && profilePhotoUrl) { %>
               <img src="<%= profilePhotoUrl %>" alt="" width="42" height="42" loading="lazy" decoding="async">
             <% } else if (typeof avatarUrl !== 'undefined' && avatarUrl) { %>
@@ -81,7 +81,7 @@
                 </svg>
               </span>
             <% } %>
-          </a> -->
+          </a>
 
           <div class="db-translator" id="db-translator">
             <label class="db-translator__label" for="db-language">
@@ -90,18 +90,43 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3c2.5 3 4 6 4 9s-1.5 6-4 9c-2.5-3-4-6-4-9s1.5-6 4-9z" />
               </svg>
             </label>
-            <select id="db-language" class="db-translator__select" aria-label="Translate page" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-              <option value="en" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'en' ? 'selected' : '' %>>English</option>
-              <option value="fr" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'fr' ? 'selected' : '' %>>Français</option>
-              <option value="es" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'es' ? 'selected' : '' %>>Español</option>
-              <option value="pt" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'pt' ? 'selected' : '' %>>Português</option>
-              <option value="ar" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'ar' ? 'selected' : '' %>>العربية</option>
-              <option value="zh-CN" <%= typeof preferredLocale !== 'undefined' && (preferredLocale === 'zh-CN' || preferredLocale === 'zh') ? 'selected' : '' %>>中文</option>
-              <option value="de" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'de' ? 'selected' : '' %>>Deutsch</option>
-              <option value="hi" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'hi' ? 'selected' : '' %>>हिन्दी</option>
-              <option value="yo" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'yo' ? 'selected' : '' %>>Yorùbá</option>
-              <option value="ha" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'ha' ? 'selected' : '' %>>Hausa</option>
-              <option value="ig" <%= typeof preferredLocale !== 'undefined' && preferredLocale === 'ig' ? 'selected' : '' %>>Igbo</option>
+            <select id="db-language" class="db-translator__select" aria-label="Translate page" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>
+              <option value="en" <%= preferredLocale === 'en' ? 'selected' : '' %>>English</option>
+              <option value="fr" <%= preferredLocale === 'fr' ? 'selected' : '' %>>Français</option>
+              <option value="es" <%= preferredLocale === 'es' ? 'selected' : '' %>>Español</option>
+              <option value="pt" <%= preferredLocale === 'pt' ? 'selected' : '' %>>Português</option>
+              <option value="de" <%= preferredLocale === 'de' ? 'selected' : '' %>>Deutsch</option>
+              <option value="it" <%= preferredLocale === 'it' ? 'selected' : '' %>>Italiano</option>
+              <option value="nl" <%= preferredLocale === 'nl' ? 'selected' : '' %>>Nederlands</option>
+              <option value="ru" <%= preferredLocale === 'ru' ? 'selected' : '' %>>Русский</option>
+              <option value="zh-CN" <%= preferredLocale === 'zh-CN' || preferredLocale === 'zh' ? 'selected' : '' %>>中文 (简体)</option>
+              <option value="zh-TW" <%= preferredLocale === 'zh-TW' ? 'selected' : '' %>>中文 (繁體)</option>
+              <option value="ja" <%= preferredLocale === 'ja' ? 'selected' : '' %>>日本語</option>
+              <option value="ko" <%= preferredLocale === 'ko' ? 'selected' : '' %>>한국어</option>
+              <option value="ar" <%= preferredLocale === 'ar' ? 'selected' : '' %>>العربية</option>
+              <option value="hi" <%= preferredLocale === 'hi' ? 'selected' : '' %>>हिन्दी</option>
+              <option value="bn" <%= preferredLocale === 'bn' ? 'selected' : '' %>>বাংলা</option>
+              <option value="tr" <%= preferredLocale === 'tr' ? 'selected' : '' %>>Türkçe</option>
+              <option value="pl" <%= preferredLocale === 'pl' ? 'selected' : '' %>>Polski</option>
+              <option value="vi" <%= preferredLocale === 'vi' ? 'selected' : '' %>>Tiếng Việt</option>
+              <option value="th" <%= preferredLocale === 'th' ? 'selected' : '' %>>ไทย</option>
+              <option value="id" <%= preferredLocale === 'id' ? 'selected' : '' %>>Bahasa Indonesia</option>
+              <option value="ms" <%= preferredLocale === 'ms' ? 'selected' : '' %>>Bahasa Melayu</option>
+              <option value="sv" <%= preferredLocale === 'sv' ? 'selected' : '' %>>Svenska</option>
+              <option value="da" <%= preferredLocale === 'da' ? 'selected' : '' %>>Dansk</option>
+              <option value="fi" <%= preferredLocale === 'fi' ? 'selected' : '' %>>Suomi</option>
+              <option value="no" <%= preferredLocale === 'no' ? 'selected' : '' %>>Norsk</option>
+              <option value="cs" <%= preferredLocale === 'cs' ? 'selected' : '' %>>Čeština</option>
+              <option value="ro" <%= preferredLocale === 'ro' ? 'selected' : '' %>>Română</option>
+              <option value="hu" <%= preferredLocale === 'hu' ? 'selected' : '' %>>Magyar</option>
+              <option value="el" <%= preferredLocale === 'el' ? 'selected' : '' %>>Ελληνικά</option>
+              <option value="he" <%= preferredLocale === 'he' ? 'selected' : '' %>>עברית</option>
+              <option value="uk" <%= preferredLocale === 'uk' ? 'selected' : '' %>>Українська</option>
+              <option value="fa" <%= preferredLocale === 'fa' ? 'selected' : '' %>>فارسی</option>
+              <option value="ur" <%= preferredLocale === 'ur' ? 'selected' : '' %>>اردو</option>
+              <option value="ta" <%= preferredLocale === 'ta' ? 'selected' : '' %>>தமிழ்</option>
+              <option value="tl" <%= preferredLocale === 'tl' ? 'selected' : '' %>>Filipino</option>
+              <option value="ca" <%= preferredLocale === 'ca' ? 'selected' : '' %>>Català</option>
             </select>
           </div>
           <div id="google_translate_element" class="db-translator__google" hidden></div>
@@ -134,7 +159,7 @@
               <% } %>
             </div>
             <div class="db-greeting__text">
-              <h1>Welcome, <em><%= fullName %></em>, Globe intercontinental bank.</h1>
+              <h1>Welcome, <em><%= fullName %></em>.</h1>
               <p>Here's your account overview.</p>
             </div>
           </div>
