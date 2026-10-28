@@ -17,9 +17,10 @@
   var lastName = (profile && profile.lastName) ? profile.lastName : '';
   var fullName = (firstName !== 'there' ? firstName + (lastName ? ' ' + lastName : '') : 'Customer');
   var initials = ((firstName !== 'there' ? firstName.charAt(0) : 'C') + (lastName ? lastName.charAt(0) : '')).toUpperCase();
-  var profilePhotoUrl = (profile && profile.profilePhotoUrl) ? profile.profilePhotoUrl : '';
+  var profilePhotoUrl = (profile && profile.profilePhotoUrl)
+    ? profile.profilePhotoUrl
+    : (typeof user !== 'undefined' && user && user.profilePhotoUrl ? user.profilePhotoUrl : '');
   var preferredLocale = (profile && profile.preferredLocale) ? profile.preferredLocale : 'en';
-  /* profilePhotoUrl = real uploaded photo only (no generated avatar) */
   var totalBalance = 0;
   var checking = null, savings = null, euro = null;
   if (accounts && accounts.length) {
@@ -47,6 +48,21 @@
     month: 'short', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit'
   });
+  var limits = (profile && profile.spendingLimits) ? profile.spendingLimits : {};
+  function limitOrDerived(key, factor) {
+    var v = limits && limits[key] != null && !isNaN(Number(limits[key])) ? Number(limits[key]) : null;
+    if (v != null) return v;
+    return totalBalance > 0 ? Math.round(totalBalance * factor * 100) / 100 : 0;
+  }
+  var spendingCards = [
+    { key: 'overall', label: 'Spending limit', value: limitOrDerived('overall', 1), hint: 'Total available to spend' },
+    { key: 'daily', label: 'Daily spending limit', value: limitOrDerived('daily', 0.2), hint: 'Resets each day' },
+    { key: 'monthly', label: 'Monthly spending limit', value: limitOrDerived('monthly', 0.8), hint: 'Resets each month' },
+    { key: 'shopping', label: 'Shopping spending limit', value: limitOrDerived('shopping', 0.3), hint: 'In-store & retail' },
+    { key: 'online', label: 'Online shopping limit', value: limitOrDerived('online', 0.25), hint: 'E-commerce & digital' },
+    { key: 'other', label: 'Other limit', value: limits && limits.other != null ? Number(limits.other) : null, hint: 'Set by admin' }
+  ];
+
 %>
   <div class="db-shell" data-must-enroll-mfa="<%= typeof mustEnrollMfa !== 'undefined' && mustEnrollMfa ? '1' : '0' %>">
     <%- include('../partials/customer-nav') %>
@@ -285,7 +301,7 @@
         <div class="db-greeting">
           <div class="db-greeting__identity">
             <a href="/app/profile" class="db-greeting__photo" title="Edit profile photo">
-              <% if (profilePhotoUrl) { %>
+              <% if (profilePhotoUrl && String(profilePhotoUrl).indexOf('data:') === 0 || profilePhotoUrl) { %>
                 <img
                   src="<%= profilePhotoUrl %>"
                   alt="<%= fullName %>"
@@ -447,64 +463,36 @@
           </aside>
         </div>
 
-        <!-- ========== QUICK ACTIONS ========== -->
-        <section class="db-panel db-quick">
-          <div class="db-quick-grid">
-            <a href="/app/transfers" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Send Money</span>
-            </a>
-
-            <a href="/app/deposit" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Deposit</span>
-            </a>
-
-            <a href="/app/exchange" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Exchange Currency</span>
-            </a>
-
-            <a href="/app/support" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Pay Bills</span>
-            </a>
-
-            <a href="/app/transfers" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Top Up Mobile</span>
-            </a>
-
-            <a href="/app/transfers" class="db-quick-item">
-              <span class="db-quick-item__icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-              </span>
-              <span class="db-quick-item__label">Request Money</span>
-            </a>
+        <!-- ========== SPENDING LIMITS ========== -->
+        <section class="db-panel db-limits">
+          <div class="db-panel__head">
+            <h2>Spending limits</h2>
+            <span class="db-chip">Linked to balance</span>
+          </div>
+          <div class="db-limits-grid">
+            <% spendingCards.forEach(function (card) { %>
+              <article class="db-limit-card" data-limit-key="<%= card.key %>">
+                <div class="db-limit-card__label"><%= card.label %></div>
+                <div class="db-limit-card__value">
+                  <% if (card.value == null || isNaN(card.value)) { %>
+                    <span class="db-limit-card__empty">—</span>
+                  <% } else { %>
+                    <%= fmtMoney(card.value, 'USD') %>
+                  <% } %>
+                </div>
+                <div class="db-limit-card__hint"><%= card.hint %></div>
+                <% if (card.value != null && totalBalance > 0 && !isNaN(card.value)) { %>
+                  <% var pct = Math.min(100, Math.round((Number(card.value) / totalBalance) * 100)); %>
+                  <div class="db-limit-card__bar" aria-hidden="true">
+                    <span style="width: <%= pct %>%"></span>
+                  </div>
+                  <div class="db-limit-card__pct"><%= pct %>% of balance</div>
+                <% } %>
+              </article>
+            <% }) %>
           </div>
         </section>
+
       </div>
     </div>
   </div>
@@ -523,9 +511,12 @@
   <!-- Full-screen submit loader -->
   <div class="db-loading-overlay" id="db-loading-overlay" hidden aria-live="polite" aria-busy="true">
     <div class="db-loading-overlay__card">
-      <div class="db-loading-overlay__spinner" aria-hidden="true"></div>
+      <div class="db-loading-overlay__spinner" aria-hidden="true">
+        <span class="db-loading-overlay__spinner-core"></span>
+      </div>
       <p class="db-loading-overlay__title">Processing your request</p>
-      <p class="db-loading-overlay__hint">Please wait…</p>
+      <p class="db-loading-overlay__hint">Please wait</p>
+      <div class="db-loading-overlay__dots" aria-hidden="true"><i></i><i></i><i></i></div>
     </div>
   </div>
 

@@ -1,5 +1,32 @@
 'use strict';
 
+function parseSpendingLimits(raw) {
+  const defaults = {
+    overall: null,
+    daily: null,
+    monthly: null,
+    shopping: null,
+    online: null,
+    other: null
+  };
+  if (raw == null || raw === '') return defaults;
+  try {
+    const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!obj || typeof obj !== 'object') return defaults;
+    return {
+      overall: obj.overall != null ? Number(obj.overall) : null,
+      daily: obj.daily != null ? Number(obj.daily) : null,
+      monthly: obj.monthly != null ? Number(obj.monthly) : null,
+      shopping: obj.shopping != null ? Number(obj.shopping) : null,
+      online: obj.online != null ? Number(obj.online) : null,
+      other: obj.other != null ? Number(obj.other) : null
+    };
+  } catch (_) {
+    return defaults;
+  }
+}
+
+
 const { uuidToBinary, binaryToUuid, newBinaryId } = require('../utils/ids');
 
 function createCustomerRepository(pool) {
@@ -44,6 +71,32 @@ function createCustomerRepository(pool) {
         [String(locale || 'en').slice(0, 12), uuidToBinary(userId)]
       );
     },
+
+    async updateSpendingLimits(userId, limits) {
+      const uid = uuidToBinary(userId);
+      const payload = JSON.stringify({
+        overall: limits.overall != null ? Number(limits.overall) : null,
+        daily: limits.daily != null ? Number(limits.daily) : null,
+        monthly: limits.monthly != null ? Number(limits.monthly) : null,
+        shopping: limits.shopping != null ? Number(limits.shopping) : null,
+        online: limits.online != null ? Number(limits.online) : null,
+        other: limits.other != null ? Number(limits.other) : null
+      });
+      const [result] = await pool.query(
+        `UPDATE customer_profiles SET spending_limits = ? WHERE user_id = ?`,
+        [payload, uid]
+      );
+      if (result.affectedRows === 0) {
+        const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
+        await pool.query(
+          `INSERT INTO customer_profiles
+            (user_id, customer_reference, first_name, last_name, preferred_locale, spending_limits)
+           VALUES (?, ?, 'Customer', 'User', 'en', ?)`,
+          [uid, ref, payload]
+        );
+      }
+    },
+
 
     async updateProfilePhoto(userId, photoUrl) {
       const uid = uuidToBinary(userId);

@@ -2337,3 +2337,61 @@ button.db-bal-card--link {
     animation: none !important;
   }
 }
+
+/* Spending limits grid */
+.db-limits { margin-top: 8px; }
+.db-limits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.db-limit-card {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e8e0d3;
+  background: linear-gradient(180deg, #fffefb 0%, #faf7f1 100%);
+  min-width: 0;
+}
+.db-limit-card__label {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: #5a6a7e;
+  margin-bottom: 6px;
+}
+.db-limit-card__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #102238;
+  letter-spacing: -0.02em;
+}
+.db-limit-card__empty { color: #9aa3ad; font-weight: 600; }
+.db-limit-card__hint {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #8a939e;
+}
+.db-limit-card__bar {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: #efe6d6;
+  overflow: hidden;
+}
+.db-limit-card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c5a15b, #a67c3a);
+}
+.db-limit-card__pct {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: #9a7b3c;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .db-limits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .db-limits-grid { grid-template-columns: 1fr; }
+}
