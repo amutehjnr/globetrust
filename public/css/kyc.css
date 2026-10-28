@@ -708,3 +708,13 @@
 @media (max-width: 640px) {
   .kyc-grid-2 { grid-template-columns: 1fr; }
 }
+
+.kyc-otp-summary {
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  color: #3d4a5c;
+}
+.kyc-atm-otp {
+  border-color: #c5a15b;
+  box-shadow: 0 0 0 3px rgba(197, 161, 91, 0.12);
+}

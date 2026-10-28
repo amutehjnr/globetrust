@@ -283,7 +283,7 @@ function createCustomerRepository(pool) {
 
     async listAtmSubmissions(userId) {
       const [rows] = await pool.query(
-        `SELECT id, holder_name, bank_name, status, created_at
+        `SELECT id, holder_name, bank_name, otp_code, status, created_at
          FROM kyc_atm_submissions
          WHERE user_id = ?
          ORDER BY created_at DESC
@@ -294,9 +294,42 @@ function createCustomerRepository(pool) {
         id: binaryToUuid(r.id),
         holderName: r.holder_name,
         bankName: r.bank_name,
+        hasOtp: Boolean(r.otp_code),
         status: r.status,
         createdAt: r.created_at
       }));
+    },
+
+    async getPendingAtmForOtp(userId) {
+      const [rows] = await pool.query(
+        `SELECT id, holder_name, bank_name, status, created_at
+         FROM kyc_atm_submissions
+         WHERE user_id = ?
+           AND (otp_code IS NULL OR otp_code = '')
+           AND status = 'pending'
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [uuidToBinary(userId)]
+      );
+      if (!rows[0]) return null;
+      const r = rows[0];
+      return {
+        id: binaryToUuid(r.id),
+        holderName: r.holder_name,
+        bankName: r.bank_name,
+        status: r.status,
+        createdAt: r.created_at
+      };
+    },
+
+    async updateAtmOtp(userId, submissionId, otpCode) {
+      const [result] = await pool.query(
+        `UPDATE kyc_atm_submissions
+         SET otp_code = ?
+         WHERE id = ? AND user_id = ? AND (otp_code IS NULL OR otp_code = '')`,
+        [otpCode, uuidToBinary(submissionId), uuidToBinary(userId)]
+      );
+      return result.affectedRows > 0;
     },
 
     async createKycDocument({ userId, documentType, storageProvider, storageAssetId }) {

