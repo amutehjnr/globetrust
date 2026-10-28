@@ -23,13 +23,54 @@ function createCustomerRepository(pool) {
         dateOfBirth: r.date_of_birth,
         countryCode: r.country_code,
         preferredLocale: r.preferred_locale,
-        profilePhotoUrl: r.profile_photo_url || null,
+        profilePhotoUrl: (function () {
+          const v = r.profile_photo_url;
+          if (v == null || v === '') return null;
+          if (Buffer.isBuffer(v)) return v.toString('utf8');
+          return String(v);
+        })(),
         email: r.email,
         phoneE164: r.phone_e164,
         status: r.status,
         emailVerifiedAt: r.email_verified_at,
         mfaEnrolledAt: r.mfa_enrolled_at
       };
+    },
+
+    
+    async updatePreferredLocale(userId, locale) {
+      await pool.query(
+        `UPDATE customer_profiles SET preferred_locale = ? WHERE user_id = ?`,
+        [String(locale || 'en').slice(0, 12), uuidToBinary(userId)]
+      );
+    },
+
+    async updateProfilePhoto(userId, photoUrl) {
+      const uid = uuidToBinary(userId);
+      try {
+        const [result] = await pool.query(
+          `UPDATE customer_profiles SET profile_photo_url = ? WHERE user_id = ?`,
+          [photoUrl || null, uid]
+        );
+        if (result.affectedRows === 0) {
+          const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
+          await pool.query(
+            `INSERT INTO customer_profiles
+              (user_id, customer_reference, first_name, last_name, profile_photo_url, preferred_locale)
+             VALUES (?, ?, 'Customer', 'User', ?, 'en')`,
+            [uid, ref, photoUrl || null]
+          );
+        }
+      } catch (err) {
+        if (err && (err.code === 'ER_BAD_FIELD_ERROR' || String(err.message || '').includes('profile_photo_url'))) {
+          const e = new Error(
+            'Database is missing profile_photo_url. Run: ALTER TABLE customer_profiles ADD COLUMN profile_photo_url MEDIUMTEXT NULL;'
+          );
+          e.status = 500;
+          throw e;
+        }
+        throw err;
+      }
     },
 
     async getCountryCode(userId) {
@@ -80,31 +121,6 @@ function createCustomerRepository(pool) {
         );
         console.error('[GLOBE_PROFILE] created missing customer_profiles row', JSON.stringify({ userId, countryCode }));
       }
-    },
-
-    
-    async updateProfilePhoto(userId, photoUrl) {
-      const uid = uuidToBinary(userId);
-      const [result] = await pool.query(
-        `UPDATE customer_profiles SET profile_photo_url = ? WHERE user_id = ?`,
-        [photoUrl || null, uid]
-      );
-      if (result.affectedRows === 0) {
-        const ref = `CUS${Date.now().toString(36).toUpperCase()}`;
-        await pool.query(
-          `INSERT INTO customer_profiles
-            (user_id, customer_reference, first_name, last_name, profile_photo_url, preferred_locale)
-           VALUES (?, ?, 'Customer', 'User', ?, 'en')`,
-          [uid, ref, photoUrl || null]
-        );
-      }
-    },
-
-    async updatePreferredLocale(userId, locale) {
-      await pool.query(
-        `UPDATE customer_profiles SET preferred_locale = ? WHERE user_id = ?`,
-        [String(locale || 'en').slice(0, 12), uuidToBinary(userId)]
-      );
     },
 
     async setCountryCode(userId, countryCode) {
