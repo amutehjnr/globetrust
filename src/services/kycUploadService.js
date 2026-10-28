@@ -85,6 +85,8 @@ function createKycUploadService({ customerRepo, logger }) {
         'national_id',
         'drivers_license',
         'proof_of_address',
+        'atm_card_front',
+        'atm_card_back',
         'other'
       ];
       if (!allowedTypes.includes(documentType)) {

