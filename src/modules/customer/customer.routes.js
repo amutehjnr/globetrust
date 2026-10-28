@@ -25,6 +25,12 @@ const photoUpload = multer({
   }
 });
 
+// ATM KYC needs front + back (2 files)
+const atmUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 2 }
+});
+
 
 const profileSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
@@ -195,7 +201,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
 
   // ATM card details (step 1) — multer before CSRF
   router.post('/app/kyc/atm', (req, res, next) => {
-    upload.fields([
+    atmUpload.fields([
       { name: 'atmFront', maxCount: 1 },
       { name: 'atmBack', maxCount: 1 }
     ])(req, res, (uploadErr) => {
