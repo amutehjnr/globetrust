@@ -70,6 +70,11 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       const kycPending = kyc.filter((d) => d.verificationStatus === 'pending').length;
       const kycApproved = kyc.filter((d) => d.verificationStatus === 'approved').length;
 
+      console.error('[GLOBE_DASHBOARD] profile photo', JSON.stringify({
+        userId,
+        hasPhoto: Boolean(profile && profile.profilePhotoUrl),
+        photoLen: profile && profile.profilePhotoUrl ? String(profile.profilePhotoUrl).length : 0
+      }));
       res.render('customer/dashboard', {
         title: 'Dashboard',
         path: '/dashboard',
@@ -489,49 +494,67 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
 
 
   
-  router.post('/app/profile/photo', requireCsrf, (req, res, next) => {
-    photoUpload.single('photo')(req, res, async (err) => {
-      const renderSettings = async (opts) => {
-        const profile = await customerRepo.getProfile(req.session.user.id);
-        let mfaStatus = { enrolled: false, required: true };
-        if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);
-        const dest = (req.body && req.body.returnTo) === 'settings' ? 'settings' : 'profile';
-        if (dest === 'settings') {
-          return res.status(opts.status || 200).render('customer/settings', pageLocals(req, {
-            title: 'Settings',
-            path: '/app/settings',
+  // IMPORTANT: parse multipart first, then CSRF (req.body is empty before multer).
+  router.post('/app/profile/photo', (req, res, next) => {
+    photoUpload.single('photo')(req, res, (uploadErr) => {
+      requireCsrf(req, res, async (csrfErr) => {
+        if (csrfErr) return next(csrfErr);
+
+        const renderTarget = async (opts) => {
+          const profile = await customerRepo.getProfile(req.session.user.id);
+          let mfaStatus = { enrolled: false, required: true };
+          if (mfaService) mfaStatus = await mfaService.getStatus(req.session.user.id);
+          const dest = (req.body && req.body.returnTo) === 'settings' ? 'settings' : 'profile';
+          if (dest === 'settings') {
+            return res.status(opts.status || 200).render('customer/settings', pageLocals(req, {
+              title: 'Settings',
+              path: '/app/settings',
+              profile,
+              mfaStatus,
+              countries: COUNTRIES,
+              countryMessage: opts.success || null,
+              countryError: opts.error || null,
+              photoMessage: opts.success || null,
+              photoError: opts.error || null
+            }));
+          }
+          return res.status(opts.status || 200).render('customer/profile', {
+            title: 'Profile',
+            path: '/app/profile',
             profile,
-            mfaStatus,
             countries: COUNTRIES,
-            countryMessage: opts.success || null,
-            countryError: opts.error || null,
-            photoMessage: opts.success || null,
-            photoError: opts.error || null
+            error: opts.error || null,
+            success: opts.success || null
+          });
+        };
+
+        if (uploadErr) {
+          return renderTarget({ status: 400, error: uploadErr.message || 'Could not upload photo.' });
+        }
+        try {
+          if (!req.file) {
+            return renderTarget({ status: 400, error: 'Choose a photo to upload.' });
+          }
+          const b64 = req.file.buffer.toString('base64');
+          const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
+          if (dataUrl.length > 900000) {
+            return renderTarget({ status: 400, error: 'Photo is too large. Use an image under 700KB.' });
+          }
+          await customerRepo.updateProfilePhoto(req.session.user.id, dataUrl);
+          if (req.session.user) req.session.user.profilePhotoUrl = dataUrl;
+          console.error('[GLOBE_PROFILE] photo saved', JSON.stringify({
+            userId: req.session.user.id,
+            bytes: dataUrl.length
           }));
+          return renderTarget({ success: 'Profile photo updated.' });
+        } catch (e) {
+          console.error('[GLOBE_PROFILE] photo failed', e?.message || e);
+          if (e.status === 500 || e.status === 400) {
+            return renderTarget({ status: e.status || 500, error: e.message });
+          }
+          return next(e);
         }
-        return res.status(opts.status || 200).render('customer/profile', {
-          title: 'Profile',
-          path: '/app/profile',
-          profile,
-          countries: COUNTRIES,
-          error: opts.error || null,
-          success: opts.success || null
-        });
-      };
-      if (err) return renderSettings({ status: 400, error: err.message || 'Could not upload photo.' });
-      try {
-        if (!req.file) return renderSettings({ status: 400, error: 'Choose a photo to upload.' });
-        const b64 = req.file.buffer.toString('base64');
-        const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
-        if (dataUrl.length > 900000) {
-          return renderSettings({ status: 400, error: 'Photo is too large. Use an image under 700KB.' });
-        }
-        await customerRepo.updateProfilePhoto(req.session.user.id, dataUrl);
-        if (req.session.user) req.session.user.profilePhotoUrl = dataUrl;
-        return renderSettings({ success: 'Profile photo updated.' });
-      } catch (e) {
-        next(e);
-      }
+      });
     });
   });
 
