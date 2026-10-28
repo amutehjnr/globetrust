@@ -1,203 +1,364 @@
 <%- include('../partials/customer-shell-start') %>
+<%
+  var firstName = (profile && profile.firstName) ? profile.firstName : '';
+  var lastName = (profile && profile.lastName) ? profile.lastName : '';
+  var fullName = (firstName + ' ' + lastName).trim() || 'Customer';
+  var initials = ((firstName[0] || 'C') + (lastName[0] || '')).toUpperCase();
+  var photoUrl = (profile && profile.profilePhotoUrl) ? profile.profilePhotoUrl : '';
+  var countryName = 'Not set';
+  if (profile && profile.countryCode && typeof countries !== 'undefined') {
+    countries.forEach(function (c) {
+      if (c.code === profile.countryCode) countryName = c.name;
+    });
+  }
+  var mfaOn = typeof mfaStatus !== 'undefined' && mfaStatus && mfaStatus.enrolled;
+%>
 
-<div class="db-greeting">
-  <div>
-    <h1>Settings</h1>
-    <p>Profile, security, and preferences.</p>
-  </div>
-</div>
-
-<div class="settings-grid">
-
-  <!-- ========== PROFILE ========== -->
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head">
-      <h2>Profile</h2>
-      <a href="/app/profile" class="settings-link">Edit →</a>
-    </div>
-
-    <div class="settings-profile-card">
-      <div class="settings-avatar">
-        <%= profile && profile.firstName ? profile.firstName.charAt(0).toUpperCase() : '?' %><%= profile && profile.lastName ? profile.lastName.charAt(0).toUpperCase() : '' %>
+<div class="settings-page">
+  <header class="settings-hero">
+    <div class="settings-hero__main">
+      <div class="settings-hero__photo">
+        <% if (photoUrl) { %>
+          <img src="<%= photoUrl %>" alt="<%= fullName %>" width="88" height="88">
+        <% } else { %>
+          <span class="settings-hero__fallback"><%= initials %></span>
+        <% } %>
       </div>
-      <div class="settings-profile-info">
-        <strong>
-          <%= profile && profile.firstName
-              ? profile.firstName + ' ' + (profile.lastName || '')
-              : '—' %>
-        </strong>
-        <span><%= profile && profile.email ? profile.email : 'No email on file' %></span>
+      <div class="settings-hero__text">
+        <p class="settings-hero__eyebrow">Account settings</p>
+        <h1><%= fullName %></h1>
+        <p class="settings-hero__meta">
+          <span><%= profile && profile.email ? profile.email : 'No email' %></span>
+          <span class="settings-dot" aria-hidden="true">·</span>
+          <span><%= countryName %></span>
+        </p>
       </div>
     </div>
+    <div class="settings-hero__actions">
+      <a href="/app/profile" class="settings-btn settings-btn--ghost">Edit profile</a>
+      <a href="/app/support" class="settings-btn settings-btn--primary">Get support</a>
+    </div>
+  </header>
 
-    <ul class="settings-list">
-      <li class="settings-row">
-        <div class="settings-row-label">
-          <span class="settings-row-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-            </svg>
-          </span>
-          <div>
-            <strong>Customer reference</strong>
-            <span>Your unique identifier</span>
-          </div>
-        </div>
-        <span class="settings-row-value">
-          <%= profile && profile.customerReference ? profile.customerReference : '—' %>
-        </span>
-      </li>
+  <% if (typeof photoMessage !== 'undefined' && photoMessage) { %>
+    <div class="settings-alert settings-alert--ok"><%= photoMessage %></div>
+  <% } %>
+  <% if (typeof photoError !== 'undefined' && photoError) { %>
+    <div class="settings-alert settings-alert--err"><%= photoError %></div>
+  <% } %>
+  <% if (typeof countryMessage !== 'undefined' && countryMessage) { %>
+    <div class="settings-alert settings-alert--ok"><%= countryMessage %></div>
+  <% } %>
+  <% if (typeof countryError !== 'undefined' && countryError) { %>
+    <div class="settings-alert settings-alert--err"><%= countryError %></div>
+  <% } %>
 
-      <li class="settings-row">
-        <div class="settings-row-label">
-          <span class="settings-row-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-            </svg>
-          </span>
-          <div>
-            <strong>Country / locale</strong>
-            <span>Where you bank and your language</span>
+  <nav class="settings-tabs" aria-label="Settings sections">
+    <a href="#sec-photo" class="settings-tab">Photo</a>
+    <a href="#sec-country" class="settings-tab">Country</a>
+    <a href="#sec-security" class="settings-tab">Security</a>
+    <a href="#sec-notifications" class="settings-tab">Notifications</a>
+    <a href="#sec-privacy" class="settings-tab">Privacy</a>
+    <a href="#sec-support" class="settings-tab">Support</a>
+  </nav>
+
+  <div class="settings-grid">
+
+    <!-- PHOTO -->
+    <section class="settings-card" id="sec-photo">
+      <div class="settings-card__head">
+        <div>
+          <h2>Profile photo</h2>
+          <p>Shown on your dashboard greeting and settings.</p>
+        </div>
+      </div>
+      <div class="settings-photo-block">
+        <div class="settings-photo-block__preview">
+          <% if (photoUrl) { %>
+            <img src="<%= photoUrl %>" alt="" width="96" height="96">
+          <% } else { %>
+            <span class="settings-hero__fallback settings-hero__fallback--lg"><%= initials %></span>
+          <% } %>
+        </div>
+        <form method="post" action="/app/profile/photo" enctype="multipart/form-data" class="settings-photo-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="returnTo" value="settings">
+          <label for="settings-photo-input">Choose image</label>
+          <p class="settings-hint">JPEG, PNG or WebP · max 1MB</p>
+          <div class="settings-photo-form__row">
+            <input type="file" id="settings-photo-input" name="photo" accept="image/jpeg,image/png,image/webp" required>
+            <button type="submit" class="settings-btn settings-btn--primary">Upload</button>
           </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ACCOUNT SNAPSHOT -->
+    <section class="settings-card" id="sec-account">
+      <div class="settings-card__head">
+        <div>
+          <h2>Account</h2>
+          <p>Your identity on Globe Trust.</p>
         </div>
-        <span class="settings-row-value">
-          <%= profile && profile.countryCode ? profile.countryCode : '—' %>
-          ·
-          <%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %>
-        </span>
-      </li>
-      <li class="settings-row settings-row-stack">
-        <div class="settings-row-info">
-          <strong>Update country</strong>
-          <span>Change the country on your profile</span>
+        <a href="/app/profile" class="settings-link">Edit →</a>
+      </div>
+      <ul class="settings-kv">
+        <li>
+          <span>Full name</span>
+          <strong><%= fullName %></strong>
+        </li>
+        <li>
+          <span>Email</span>
+          <strong><%= profile && profile.email ? profile.email : '—' %></strong>
+        </li>
+        <li>
+          <span>Customer reference</span>
+          <strong class="settings-mono"><%= profile && profile.customerReference ? profile.customerReference : '—' %></strong>
+        </li>
+        <li>
+          <span>Phone</span>
+          <strong><%= profile && profile.phoneE164 ? profile.phoneE164 : 'Not set' %></strong>
+        </li>
+      </ul>
+    </section>
+
+    <!-- COUNTRY -->
+    <section class="settings-card" id="sec-country">
+      <div class="settings-card__head">
+        <div>
+          <h2>Country &amp; region</h2>
+          <p>Controls banks shown on transfers and deposits.</p>
         </div>
-        <form method="post" action="/app/settings/country" class="settings-country-form" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;width:100%;margin-top:10px;">
-          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-          <select name="countryCode" required style="min-width:220px;padding:10px 12px;border-radius:8px;border:1px solid rgba(125,94,49,.25);background:#fffdf9;font-size:13px;">
-            <option value="" disabled <%= !(profile && profile.countryCode) ? 'selected' : '' %>>Select country</option>
+      </div>
+      <form method="post" action="/app/settings/country" class="settings-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="settings-field">
+          <label for="settings-country">Country of residence</label>
+          <select id="settings-country" name="countryCode" required>
+            <option value="">Select country</option>
             <% (typeof countries !== 'undefined' ? countries : []).forEach(function (c) { %>
-              <option value="<%= c.code %>"
-                <%= profile && profile.countryCode === c.code ? 'selected' : '' %>>
+              <option value="<%= c.code %>" <%= profile && profile.countryCode === c.code ? 'selected' : '' %>>
                 <%= c.name %>
               </option>
             <% }) %>
           </select>
-          <button type="submit" class="db-chip">Save country</button>
-        </form>
-        <% if (typeof countryMessage !== 'undefined' && countryMessage) { %>
-          <p class="settings-hint" style="margin:8px 0 0;color:#1B6B4A;font-size:12px;"><%= countryMessage %></p>
-        <% } %>
-        <% if (typeof countryError !== 'undefined' && countryError) { %>
-          <p class="settings-hint" style="margin:8px 0 0;color:#8B2942;font-size:12px;"><%= countryError %></p>
-        <% } %>
-      </li>
-    </ul>
-  </section>
-
-  <!-- ========== SECURITY ========== -->
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head">
-      <h2>Security</h2>
-    </div>
-
-    <ul class="settings-list">
-
-      <!-- MFA -->
-      <li class="settings-row">
-        <div class="settings-row-label">
-          <span class="settings-row-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-            </svg>
-          </span>
-          <div>
-            <strong>Authenticator (MFA)</strong>
-            <span>Two-factor authentication</span>
-          </div>
         </div>
-        <div class="settings-row-action">
-          <% if (mfaStatus && mfaStatus.enrolled) { %>
-            <span class="settings-status settings-status-ok">
-              <span class="settings-status-dot"></span>
-              Enrolled
-            </span>
-          <% } else { %>
-            <span class="settings-status settings-status-warn">
-              <span class="settings-status-dot"></span>
-              Not enrolled
-            </span>
-          <% } %>
-          <a href="/mfa/enrol" class="db-chip">
-            <%= mfaStatus && mfaStatus.enrolled ? 'Manage' : 'Set up' %>
-          </a>
-        </div>
-      </li>
+        <button type="submit" class="settings-btn settings-btn--primary">Save country</button>
+      </form>
+    </section>
 
-      <!-- KYC -->
-      <li class="settings-row">
-        <div class="settings-row-label">
-          <span class="settings-row-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-            </svg>
-          </span>
-          <div>
-            <strong>Identity (KYC)</strong>
-            <span>Documents &amp; verification</span>
-          </div>
-        </div>
-        <div class="settings-row-action">
-          <a href="/app/kyc" class="db-chip">Open →</a>
-        </div>
-      </li>
-
-      <!-- Password -->
-      <li class="settings-row">
-        <div class="settings-row-label">
-          <span class="settings-row-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-          </span>
-          <div>
-            <strong>Password</strong>
-            <span>Change your sign-in password</span>
-          </div>
-        </div>
-        <div class="settings-row-action">
-          <a href="/forgot-password" class="db-chip">Reset →</a>
-        </div>
-      </li>
-
-    </ul>
-  </section>
-
-</div>
-
-<!-- ========== DANGER ZONE ========== -->
-<section class="db-panel settings-panel settings-panel-danger" style="margin-top: 1.5rem;">
-  <div class="db-panel__head">
-    <h2>Danger zone</h2>
-  </div>
-  <ul class="settings-list">
-    <li class="settings-row">
-      <div class="settings-row-label">
-        <span class="settings-row-icon settings-row-icon-danger">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-          </svg>
-        </span>
+    <!-- SECURITY -->
+    <section class="settings-card" id="sec-security">
+      <div class="settings-card__head">
         <div>
-          <strong>Sign out of all devices</strong>
-          <span>End every active session immediately</span>
+          <h2>Security</h2>
+          <p>Protect sign-in and transfers.</p>
         </div>
       </div>
-      <form method="POST" action="/sign-out" style="margin: 0;">
-        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-        <button type="submit" class="db-chip db-chip-danger">Sign out</button>
-      </form>
-    </li>
-  </ul>
-</section>
+      <ul class="settings-list">
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <span class="settings-row__icon" aria-hidden="true">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            </span>
+            <div>
+              <strong>Multi-factor authentication</strong>
+              <span><%= mfaOn ? 'Authenticator app is active' : 'Required before high-risk transfers' %></span>
+            </div>
+          </div>
+          <% if (mfaOn) { %>
+            <span class="settings-badge settings-badge--ok">Enabled</span>
+          <% } else { %>
+            <a href="/mfa/enrol" class="settings-btn settings-btn--sm">Set up</a>
+          <% } %>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <span class="settings-row__icon" aria-hidden="true">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+            </span>
+            <div>
+              <strong>Password</strong>
+              <span>Reset your sign-in password by email</span>
+            </div>
+          </div>
+          <a href="/auth/forgot-password" class="settings-link">Reset →</a>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <span class="settings-row__icon" aria-hidden="true">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0"/></svg>
+            </span>
+            <div>
+              <strong>Active session</strong>
+              <span>You are signed in on this device</span>
+            </div>
+          </div>
+          <form method="post" action="/auth/sign-out" class="settings-inline-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="settings-btn settings-btn--danger settings-btn--sm">Sign out</button>
+          </form>
+        </li>
+      </ul>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section class="settings-card" id="sec-notifications">
+      <div class="settings-card__head">
+        <div>
+          <h2>Notifications</h2>
+          <p>Choose what we highlight in the portal. Saved on this device.</p>
+        </div>
+      </div>
+      <ul class="settings-list" id="settings-notif-list">
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Transfer updates</strong>
+              <span>Status changes on wire and wallet transfers</span>
+            </div>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" data-pref="notif_transfers" checked>
+            <span class="settings-switch__ui"></span>
+          </label>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Security alerts</strong>
+              <span>Sign-in and MFA reminders</span>
+            </div>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" data-pref="notif_security" checked>
+            <span class="settings-switch__ui"></span>
+          </label>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Product tips</strong>
+              <span>Occasional guidance inside the portal</span>
+            </div>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" data-pref="notif_tips">
+            <span class="settings-switch__ui"></span>
+          </label>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Marketing emails</strong>
+              <span>Offers and news by email</span>
+            </div>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" data-pref="notif_marketing">
+            <span class="settings-switch__ui"></span>
+          </label>
+        </li>
+      </ul>
+      <p class="settings-hint settings-hint--foot" id="settings-notif-saved" hidden>Preferences saved on this device.</p>
+    </section>
+
+    <!-- PRIVACY -->
+    <section class="settings-card" id="sec-privacy">
+      <div class="settings-card__head">
+        <div>
+          <h2>Privacy &amp; data</h2>
+          <p>How your information is used in the portal.</p>
+        </div>
+      </div>
+      <ul class="settings-list">
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Language preference</strong>
+              <span>Current: <em class="notranslate"><%= profile && profile.preferredLocale ? profile.preferredLocale : 'en' %></em> — change via the top-bar language control</span>
+            </div>
+          </div>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>Statements</strong>
+              <span>Download activity from Statements</span>
+            </div>
+          </div>
+          <a href="/app/statements" class="settings-link">Open →</a>
+        </li>
+        <li class="settings-row">
+          <div class="settings-row__left">
+            <div>
+              <strong>KYC documents</strong>
+              <span>Identity verification status</span>
+            </div>
+          </div>
+          <a href="/app/kyc" class="settings-link">Manage →</a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- SUPPORT -->
+    <section class="settings-card" id="sec-support">
+      <div class="settings-card__head">
+        <div>
+          <h2>Help &amp; support</h2>
+          <p>Talk to Globe Trust when you need a person.</p>
+        </div>
+      </div>
+      <div class="settings-support-grid">
+        <a href="/app/support" class="settings-support-tile">
+          <strong>Support inbox</strong>
+          <span>Full message history</span>
+        </a>
+        <button type="button" class="settings-support-tile" id="settings-open-chat">
+          <strong>Live chat</strong>
+          <span>Open the chat bubble</span>
+        </button>
+        <a href="/app/transfers" class="settings-support-tile">
+          <strong>Transfers</strong>
+          <span>Send money securely</span>
+        </a>
+        <a href="/dashboard" class="settings-support-tile">
+          <strong>Dashboard</strong>
+          <span>Balances &amp; overview</span>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'globetrust_settings_prefs';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  document.querySelectorAll('#settings-notif-list input[data-pref]').forEach(function (el) {
+    var k = el.getAttribute('data-pref');
+    if (Object.prototype.hasOwnProperty.call(saved, k)) el.checked = !!saved[k];
+    el.addEventListener('change', function () {
+      saved[k] = !!el.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      var note = document.getElementById('settings-notif-saved');
+      if (note) {
+        note.hidden = false;
+        setTimeout(function () { note.hidden = true; }, 2000);
+      }
+    });
+  });
+  var chatBtn = document.getElementById('settings-open-chat');
+  if (chatBtn) {
+    chatBtn.addEventListener('click', function () {
+      var launcher = document.getElementById('lc-launcher');
+      if (launcher) launcher.click();
+      else window.location.href = '/app/support';
+    });
+  }
+})();
+</script>
 
 <%- include('../partials/customer-shell-end') %>
