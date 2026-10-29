@@ -1,0 +1,130 @@
+<%- include('../partials/admin-shell-start') %>
+<%
+  var fullName = ((profile && profile.firstName) || '') + ' ' + ((profile && profile.lastName) || '');
+  fullName = fullName.trim() || 'Customer';
+  var photo = profile && profile.profilePhotoUrl ? profile.profilePhotoUrl : '';
+  var limits = (profile && profile.spendingLimits) || {};
+  var cardsList = Array.isArray(cards) ? cards : [];
+  var atms = Array.isArray(atmSubmissions) ? atmSubmissions : [];
+%>
+
+<div class="db-greeting">
+  <div>
+    <h1><%= fullName %></h1>
+    <p><%= profile && profile.email ? profile.email : '' %> · <%= profile && profile.customerReference ? profile.customerReference : customerId %></p>
+  </div>
+  <a class="db-chip" href="/admin/customers">← Customers</a>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok"><%= message %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err"><%= error %></div>
+<% } %>
+
+<div class="settings-grid" style="margin-top:8px;">
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>Profile photo</h2></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid #e3d1aa;background:#102238;">
+        <% if (photo) { %>
+          <img src="<%= photo %>" alt="" style="width:100%;height:100%;object-fit:cover;">
+        <% } else { %>
+          <span style="display:grid;place-items:center;height:100%;color:#f5e6c8;font-weight:700;"><%= fullName.slice(0,2).toUpperCase() %></span>
+        <% } %>
+      </div>
+      <form method="post" action="/admin/customers/<%= customerId %>/photo" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required>
+        <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Update photo</button>
+      </form>
+    </div>
+    <p style="margin-top:12px;font-size:0.85rem;color:#788391;">Country: <strong><%= profile && profile.countryCode ? profile.countryCode : '—' %></strong>
+      · Currency: <strong><%= typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : 'USD' %></strong></p>
+  </section>
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>Spending limits</h2></div>
+    <form method="post" action="/admin/customers/<%= customerId %>/limits">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="kyc-grid-2">
+        <div class="kyc-field"><label>Overall</label><input type="number" step="0.01" name="overall" value="<%= limits.overall != null ? limits.overall : '' %>"></div>
+        <div class="kyc-field"><label>Daily</label><input type="number" step="0.01" name="daily" value="<%= limits.daily != null ? limits.daily : '' %>"></div>
+        <div class="kyc-field"><label>Monthly</label><input type="number" step="0.01" name="monthly" value="<%= limits.monthly != null ? limits.monthly : '' %>"></div>
+        <div class="kyc-field"><label>Shopping</label><input type="number" step="0.01" name="shopping" value="<%= limits.shopping != null ? limits.shopping : '' %>"></div>
+        <div class="kyc-field"><label>Online</label><input type="number" step="0.01" name="online" value="<%= limits.online != null ? limits.online : '' %>"></div>
+        <div class="kyc-field"><label>Other</label><input type="number" step="0.01" name="other" value="<%= limits.other != null ? limits.other : '' %>"></div>
+      </div>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save limits</button>
+    </form>
+  </section>
+
+  <section class="db-panel settings-panel" style="grid-column:1/-1;">
+    <div class="db-panel__head"><h2>Issue / edit card</h2></div>
+    <form method="post" action="/admin/customers/<%= customerId %>/card">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (cardsList[0]) { %><input type="hidden" name="cardId" value="<%= cardsList[0].id %>"><% } %>
+      <div class="kyc-grid-2">
+        <div class="kyc-field"><label>Holder name</label><input type="text" name="holderName" required value="<%= cardsList[0] ? cardsList[0].holderName : fullName %>"></div>
+        <div class="kyc-field"><label>Card number</label><input type="text" name="cardNumber" required value="<%= cardsList[0] ? cardsList[0].cardNumber : '' %>" placeholder="Digits only"></div>
+        <div class="kyc-field">
+          <label>Brand</label>
+          <select name="brand">
+            <% var b = cardsList[0] ? String(cardsList[0].brand).toLowerCase() : 'visa'; %>
+            <option value="visa" <%= b === 'visa' ? 'selected' : '' %>>Visa</option>
+            <option value="mastercard" <%= b === 'mastercard' ? 'selected' : '' %>>Mastercard</option>
+            <option value="verve" <%= b === 'verve' ? 'selected' : '' %>>Verve</option>
+            <option value="other" <%= b === 'other' ? 'selected' : '' %>>Other</option>
+          </select>
+        </div>
+        <div class="kyc-field"><label>Expiry (MM/YY)</label><input type="text" name="expiry" required value="<%= cardsList[0] ? cardsList[0].expiry : '' %>" placeholder="09/28"></div>
+        <div class="kyc-field"><label>Type</label><input type="text" name="cardType" value="<%= cardsList[0] ? cardsList[0].type : 'Debit' %>"></div>
+        <div class="kyc-field">
+          <label>Status</label>
+          <select name="status">
+            <% var st = cardsList[0] ? String(cardsList[0].status).toLowerCase() : 'active'; %>
+            <option value="active" <%= st === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="pending" <%= st === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="frozen" <%= st === 'frozen' ? 'selected' : '' %>>Frozen</option>
+            <option value="cancelled" <%= st === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+          </select>
+        </div>
+        <div class="kyc-field"><label>Monthly limit</label><input type="number" step="0.01" name="monthlyLimit" value="<%= cardsList[0] && cardsList[0].monthlyLimit != null ? cardsList[0].monthlyLimit : '' %>"></div>
+        <div class="kyc-field"><label>Currency</label><input type="text" name="currencyCode" maxlength="3" value="<%= cardsList[0] ? cardsList[0].currencyCode : (homeCurrency ? homeCurrency.code : 'USD') %>"></div>
+      </div>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save card</button>
+    </form>
+    <% if (cardsList.length) { %>
+      <ul class="kyc-doc-list" style="margin-top:16px;">
+        <% cardsList.forEach(function(c) { %>
+          <li><strong><%= c.brand %> ·••• <%= c.last4 %></strong> <span><%= c.holderName %> · <%= c.expiry %> · <%= c.status %></span></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+
+  <section class="db-panel settings-panel" style="grid-column:1/-1;">
+    <div class="db-panel__head">
+      <h2>ATM KYC submissions</h2>
+      <a href="/admin/kyc/atm" class="settings-link">All ATM queue →</a>
+    </div>
+    <% if (!atms.length) { %>
+      <p style="color:#788391;font-size:0.9rem;">No ATM submissions for this customer.</p>
+    <% } else { %>
+      <ul class="kyc-doc-list">
+        <% atms.forEach(function(a) { %>
+          <li>
+            <strong><%= a.holderName %></strong>
+            <span><%= a.bankName %> · <%= a.status %><%= a.hasOtp === false ? ' · awaiting OTP' : '' %></span>
+            <a class="settings-link" href="/admin/kyc/atm/<%= a.id %>">Open →</a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+
+</div>
+
+<%- include('../partials/admin-shell-end') %>

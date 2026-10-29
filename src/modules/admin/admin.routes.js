@@ -1,5 +1,8 @@
 'use strict';
 
+const multer = require('multer');
+const { currencyForCountry } = require('../../utils/currency');
+
 const express = require('express');
 const { z } = require('zod');
 const { requireAuth, requireRole } = require('../../middleware/authz');
@@ -28,6 +31,15 @@ const createUserSchema = z.object({
 
 function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
   const router = express.Router();
+  const photoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 1 * 1024 * 1024, files: 1 },
+    fileFilter(_req, file, cb) {
+      const ok = ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
+      cb(ok ? null : new Error('Photo must be JPEG, PNG, or WebP.'), ok);
+    }
+  });
+
 
   // Only protect /admin/* — do not intercept unrelated paths (avoids fallthrough 404s)
   router.use('/admin', requireAuth);
@@ -315,6 +327,210 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
       }
     }
   );
+
+
+  // —— Customer detail (admin power: photo, cards, limits, ATM) ——
+  router.get(
+    '/admin/customers/:id',
+    requireRole('admin', 'operations', 'kyc_reviewer'),
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.status(400).render('errors/404', { title: 'Invalid customer', message: 'Invalid id.' });
+        }
+        const profile = await customerRepo.getProfile(req.params.id);
+        if (!profile) {
+          return res.status(404).render('errors/404', { title: 'Not found', message: 'Customer not found.' });
+        }
+        let cards = [];
+        if (customerRepo.listBankCards) {
+          try { cards = await customerRepo.listBankCards(req.params.id); } catch (_) { cards = []; }
+        }
+        let atmSubmissions = [];
+        if (customerRepo.listAtmSubmissions) {
+          try { atmSubmissions = await customerRepo.listAtmSubmissions(req.params.id); } catch (_) { atmSubmissions = []; }
+        }
+        const home = currencyForCountry(profile.countryCode);
+        res.render('admin/customer-detail', adminLocals(req, {
+          title: 'Customer',
+          path: '/admin/customers',
+          customerId: req.params.id,
+          profile,
+          cards,
+          atmSubmissions,
+          homeCurrency: home,
+          message: req.query.msg || null,
+          error: req.query.err || null
+        }));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/photo',
+    requireRole('admin', 'operations'),
+    (req, res, next) => {
+      photoUpload.single('photo')(req, res, async (uploadErr) => {
+        requireCsrf(req, res, async (csrfErr) => {
+          if (csrfErr) return next(csrfErr);
+          try {
+            if (!isUuid(req.params.id)) {
+              return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+            }
+            if (uploadErr) {
+              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent(uploadErr.message || 'Upload failed')}`);
+            }
+            if (!req.file) {
+              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Choose a photo.')}`);
+            }
+            const b64 = req.file.buffer.toString('base64');
+            const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
+            if (dataUrl.length > 900000) {
+              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Photo too large.')}`);
+            }
+            await customerRepo.updateProfilePhoto(req.params.id, dataUrl);
+            return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Profile photo updated.')}`);
+          } catch (e) {
+            next(e);
+          }
+        });
+      });
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/card',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+        }
+        if (!customerRepo.upsertBankCard) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Cards not available.')}`);
+        }
+        await customerRepo.upsertBankCard(req.params.id, {
+          id: req.body.cardId || undefined,
+          holderName: req.body.holderName,
+          cardNumber: req.body.cardNumber,
+          brand: req.body.brand,
+          expiry: req.body.expiry,
+          type: req.body.cardType || 'Debit',
+          status: req.body.status || 'active',
+          monthlyLimit: req.body.monthlyLimit !== '' ? req.body.monthlyLimit : null,
+          dailyLimit: req.body.dailyLimit !== '' ? req.body.dailyLimit : null,
+          currencyCode: req.body.currencyCode || 'USD'
+        });
+        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Card saved.')}`);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/limits',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+        }
+        if (!customerRepo.updateSpendingLimits) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Limits not available.')}`);
+        }
+        const num = (v) => (v === '' || v == null ? null : Number(v));
+        await customerRepo.updateSpendingLimits(req.params.id, {
+          overall: num(req.body.overall),
+          daily: num(req.body.daily),
+          monthly: num(req.body.monthly),
+          shopping: num(req.body.shopping),
+          online: num(req.body.online),
+          other: num(req.body.other)
+        });
+        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Spending limits updated.')}`);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // —— ATM KYC queue (admin sees front/back, pin, bank, name, otp) ——
+  router.get(
+    '/admin/kyc/atm',
+    requireRole('admin', 'kyc_reviewer', 'operations'),
+    async (req, res, next) => {
+      try {
+        let queue = [];
+        if (customerRepo.listAllAtmSubmissions) {
+          queue = await customerRepo.listAllAtmSubmissions(100);
+        }
+        res.render('admin/kyc-atm-queue', adminLocals(req, {
+          title: 'ATM card KYC',
+          path: '/admin/kyc/atm',
+          queue,
+          message: req.query.msg || null,
+          error: req.query.err || null
+        }));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.get(
+    '/admin/kyc/atm/:id',
+    requireRole('admin', 'kyc_reviewer', 'operations'),
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.status(400).render('errors/404', { title: 'Invalid', message: 'Invalid submission id.' });
+        }
+        const sub = await customerRepo.getAtmSubmissionById(req.params.id);
+        if (!sub) {
+          return res.status(404).render('errors/404', { title: 'Not found', message: 'ATM submission not found.' });
+        }
+        let frontDoc = null;
+        let backDoc = null;
+        if (sub.frontDocumentId) frontDoc = await customerRepo.getKycDocumentById(sub.frontDocumentId);
+        if (sub.backDocumentId) backDoc = await customerRepo.getKycDocumentById(sub.backDocumentId);
+        res.render('admin/kyc-atm-detail', adminLocals(req, {
+          title: 'ATM submission',
+          path: '/admin/kyc/atm',
+          sub,
+          frontDoc,
+          backDoc,
+          message: req.query.msg || null,
+          error: req.query.err || null
+        }));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/kyc/atm/:id/status',
+    requireRole('admin', 'kyc_reviewer', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        const status = String(req.body.status || '').toLowerCase();
+        if (!['pending', 'approved', 'rejected'].includes(status)) {
+          return res.redirect(`/admin/kyc/atm/${req.params.id}?err=${encodeURIComponent('Invalid status.')}`);
+        }
+        await customerRepo.updateAtmSubmissionStatus(req.params.id, status);
+        return res.redirect(`/admin/kyc/atm/${req.params.id}?msg=${encodeURIComponent('Status updated.')}`);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
 
   return router;
 }
