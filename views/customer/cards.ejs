@@ -9,20 +9,56 @@
 </div>
 
 <%
-  /* Determine which card to show.
-     If you pass a `cards` array from the route, we use the first one.
-     Otherwise fall back to a placeholder preview. */
+  /* Dynamic card from DB (admin can edit name, expiry, brand, number).
+     Limits connect to profile spending limits when card overrides are null. */
   var cards = (typeof cards !== 'undefined' && cards) ? cards : [];
   var primary = cards[0] || null;
+  var homeCode = (typeof currencyCode !== 'undefined' && currencyCode)
+    ? currencyCode
+    : (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.code)
+      ? homeCurrency.code
+      : 'USD';
 
-  var cardNumber = primary && primary.last4 ? '•••• •••• •••• ' + primary.last4 : '•••• •••• •••• 3456';
+  function fmtCardMoney(val, code) {
+    if (val == null || val === '' || isNaN(Number(val))) return '—';
+    var c = (code || homeCode || 'USD').toUpperCase();
+    try {
+      return Number(val).toLocaleString('en-US', {
+        style: 'currency', currency: c,
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+      });
+    } catch (e) {
+      return Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + c;
+    }
+  }
+
+  function maskCardNumber(num, last4) {
+    if (last4) return '•••• •••• •••• ' + String(last4);
+    var d = String(num || '').replace(/\D/g, '');
+    if (d.length >= 4) return '•••• •••• •••• ' + d.slice(-4);
+    return '•••• •••• •••• ••••';
+  }
+
+  var cardNumber = primary
+    ? maskCardNumber(primary.cardNumber, primary.last4)
+    : '•••• •••• •••• ••••';
   var cardHolder = primary && primary.holderName
     ? primary.holderName
-    : (typeof profile !== 'undefined' && profile && profile.firstName ? (profile.firstName + ' ' + (profile.lastName || '')).trim() : 'YOUR NAME');
-  var cardExpiry = primary && primary.expiry ? primary.expiry : '09/28';
-  var cardBrand  = primary && primary.brand ? primary.brand : 'VISA';
+    : (typeof profile !== 'undefined' && profile && profile.firstName
+        ? (profile.firstName + ' ' + (profile.lastName || '')).trim()
+        : 'YOUR NAME');
+  var cardExpiry = primary && primary.expiry ? primary.expiry : '••/••';
+  var cardBrand  = primary
+    ? String(primary.brandLabel || primary.brand || 'visa').toUpperCase()
+    : 'VISA';
   var cardType   = primary && primary.type ? primary.type : 'Debit';
-  var cardStatus = primary && primary.status ? primary.status : 'Active';
+  var cardStatus = primary && primary.status ? String(primary.status) : 'pending';
+  var cardCurrency = primary && primary.currencyCode ? primary.currencyCode : homeCode;
+  var monthlyLimit = primary && primary.monthlyLimit != null ? primary.monthlyLimit : null;
+  var spentMonth = primary && primary.spentThisMonth != null ? primary.spentThisMonth : 0;
+  var availableLimit = primary && primary.available != null
+    ? primary.available
+    : (monthlyLimit != null ? Math.max(0, Number(monthlyLimit) - Number(spentMonth)) : null);
   var isPreview  = !primary;
 %>
 
@@ -72,27 +108,15 @@
     <div class="cards-spend-grid">
       <div class="cards-spend-item">
         <span class="cards-spend-label">Monthly limit</span>
-        <strong class="cards-spend-value">
-          <% if (primary && primary.monthlyLimit) { %>
-            <%= Number(primary.monthlyLimit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-          <% } else { %>—<% } %>
-        </strong>
+        <strong class="cards-spend-value"><%= fmtCardMoney(monthlyLimit, cardCurrency) %></strong>
       </div>
       <div class="cards-spend-item">
         <span class="cards-spend-label">Spent this month</span>
-        <strong class="cards-spend-value">
-          <% if (primary && primary.spentThisMonth) { %>
-            <%= Number(primary.spentThisMonth).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-          <% } else { %>—<% } %>
-        </strong>
+        <strong class="cards-spend-value"><%= primary ? fmtCardMoney(spentMonth, cardCurrency) : '—' %></strong>
       </div>
       <div class="cards-spend-item">
         <span class="cards-spend-label">Available</span>
-        <strong class="cards-spend-value cards-spend-value-ok">
-          <% if (primary && primary.monthlyLimit && primary.spentThisMonth) { %>
-            <%= (Number(primary.monthlyLimit) - Number(primary.spentThisMonth)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-          <% } else { %>—<% } %>
-        </strong>
+        <strong class="cards-spend-value cards-spend-value-ok"><%= fmtCardMoney(availableLimit, cardCurrency) %></strong>
       </div>
     </div>
 
@@ -127,7 +151,7 @@
     <section class="db-panel cards-panel">
       <div class="db-panel__head">
         <h2>Card controls</h2>
-        <span class="cards-panel-badge"><%= cardType %> · <%= cardStatus %></span>
+        <span class="cards-panel-badge"><%= cardType %> · <%= String(cardStatus).charAt(0).toUpperCase() + String(cardStatus).slice(1) %></span>
       </div>
 
       <ul class="card-controls">

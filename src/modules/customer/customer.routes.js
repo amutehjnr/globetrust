@@ -449,11 +449,54 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       try {
         profile = await customerRepo.getProfile(req.session.user.id);
       } catch (_) {}
+
+      const home = homeCurrencyFrom(profile, req.session.user);
+      let cards = [];
+      if (customerRepo.listBankCards) {
+        try {
+          cards = await customerRepo.listBankCards(req.session.user.id);
+        } catch (_) {
+          cards = [];
+        }
+      }
+
+      // Connect spending limits (profile JSON / admin-managed)
+      const limits = (profile && profile.spendingLimits) || {};
+      const monthlyFromLimits =
+        limits.monthly != null
+          ? Number(limits.monthly)
+          : limits.overall != null
+            ? Number(limits.overall)
+            : null;
+      const dailyFromLimits = limits.daily != null ? Number(limits.daily) : null;
+
+      // Enrich cards with limit fallbacks from spending limits
+      cards = (cards || []).map((c) => {
+        const monthlyLimit =
+          c.monthlyLimit != null ? c.monthlyLimit : monthlyFromLimits;
+        const dailyLimit = c.dailyLimit != null ? c.dailyLimit : dailyFromLimits;
+        const spent = c.spentThisMonth != null ? c.spentThisMonth : 0;
+        return {
+          ...c,
+          monthlyLimit,
+          dailyLimit,
+          spentThisMonth: spent,
+          available:
+            monthlyLimit != null ? Math.max(0, Number(monthlyLimit) - Number(spent)) : null,
+          currencyCode: c.currencyCode || home.code,
+          brandLabel: String(c.brand || 'visa').toUpperCase()
+        };
+      });
+
       res.render('customer/cards', pageLocals(req, {
         title: 'Cards',
         path: '/app/cards',
         profile,
-        cards: []
+        cards,
+        homeCurrency: home,
+        currencyCode: home.code,
+        currencySymbol: home.symbol,
+        spendingLimits: limits
       }));
     } catch (err) {
       next(err);

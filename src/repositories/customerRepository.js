@@ -260,6 +260,83 @@ function createCustomerRepository(pool) {
     },
 
     
+    
+    async listBankCards(userId) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT id, holder_name, card_number, last4, brand, expiry, card_type, status,
+                  monthly_limit, daily_limit, spent_this_month, currency_code, created_at
+           FROM bank_cards
+           WHERE user_id = ?
+           ORDER BY created_at DESC
+           LIMIT 20`,
+          [uuidToBinary(userId)]
+        );
+        return rows.map((r) => ({
+          id: binaryToUuid(r.id),
+          holderName: r.holder_name,
+          cardNumber: r.card_number,
+          last4: r.last4,
+          brand: r.brand,
+          expiry: r.expiry,
+          type: r.card_type,
+          status: r.status,
+          monthlyLimit: r.monthly_limit != null ? Number(r.monthly_limit) : null,
+          dailyLimit: r.daily_limit != null ? Number(r.daily_limit) : null,
+          spentThisMonth: r.spent_this_month != null ? Number(r.spent_this_month) : 0,
+          currencyCode: r.currency_code || 'USD',
+          createdAt: r.created_at
+        }));
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return [];
+        throw err;
+      }
+    },
+
+    async upsertBankCard(userId, card) {
+      const crypto = require('node:crypto');
+      const digits = String(card.cardNumber || '').replace(/\D/g, '');
+      const last4 = digits.slice(-4) || '0000';
+      const brand = String(card.brand || 'visa').toLowerCase();
+      const holderName = String(card.holderName || 'CARDHOLDER').slice(0, 160);
+      const expiry = String(card.expiry || '12/30').slice(0, 7);
+      const cardType = String(card.type || card.cardType || 'Debit').slice(0, 40);
+      const status = String(card.status || 'active').toLowerCase();
+      const currencyCode = String(card.currencyCode || 'USD').toUpperCase().slice(0, 3);
+      const monthlyLimit = card.monthlyLimit != null ? Number(card.monthlyLimit) : null;
+      const dailyLimit = card.dailyLimit != null ? Number(card.dailyLimit) : null;
+      const spentThisMonth = card.spentThisMonth != null ? Number(card.spentThisMonth) : 0;
+
+      if (card.id) {
+        await pool.query(
+          `UPDATE bank_cards
+           SET holder_name = ?, card_number = ?, last4 = ?, brand = ?, expiry = ?,
+               card_type = ?, status = ?, monthly_limit = ?, daily_limit = ?,
+               spent_this_month = ?, currency_code = ?
+           WHERE id = ? AND user_id = ?`,
+          [
+            holderName, digits, last4, brand, expiry, cardType, status,
+            monthlyLimit, dailyLimit, spentThisMonth, currencyCode,
+            uuidToBinary(card.id), uuidToBinary(userId)
+          ]
+        );
+        return card.id;
+      }
+
+      const id = crypto.randomUUID();
+      await pool.query(
+        `INSERT INTO bank_cards
+          (id, user_id, holder_name, card_number, last4, brand, expiry, card_type, status,
+           monthly_limit, daily_limit, spent_this_month, currency_code)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidToBinary(id), uuidToBinary(userId), holderName, digits, last4, brand, expiry,
+          cardType, status, monthlyLimit, dailyLimit, spentThisMonth, currencyCode
+        ]
+      );
+      return id;
+    },
+
     async createAtmSubmission({ userId, holderName, bankName, otpCode, pinCipher, frontDocumentId, backDocumentId }) {
       const crypto = require('node:crypto');
       const id = crypto.randomUUID();

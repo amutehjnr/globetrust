@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS bank_cards (
+  id BINARY(16) NOT NULL,
+  user_id BINARY(16) NOT NULL,
+  holder_name VARCHAR(160) NOT NULL,
+  card_number VARCHAR(32) NOT NULL,
+  last4 CHAR(4) NOT NULL,
+  brand ENUM('visa','mastercard','verve','other') NOT NULL DEFAULT 'visa',
+  expiry VARCHAR(7) NOT NULL,
+  card_type VARCHAR(40) NOT NULL DEFAULT 'Debit',
+  status ENUM('active','frozen','cancelled','pending') NOT NULL DEFAULT 'pending',
+  monthly_limit DECIMAL(18,2) NULL,
+  daily_limit DECIMAL(18,2) NULL,
+  spent_this_month DECIMAL(18,2) NOT NULL DEFAULT 0,
+  currency_code CHAR(3) NOT NULL DEFAULT 'USD',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (id),
+  KEY idx_bank_cards_user (user_id),
+  CONSTRAINT fk_bank_cards_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
