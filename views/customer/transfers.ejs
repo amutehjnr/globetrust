@@ -59,7 +59,11 @@
             <div class="transfer-field">
               <label for="transfer-amount">Amount</label>
               <div class="transfer-input-group" id="transfer-amount-group">
-                <span class="transfer-input-prefix" id="transfer-currency"><%= links[0] ? links[0].currencyCode : '—' %></span>
+                <span class="transfer-input-prefix" id="transfer-currency"><%
+                  var _tc = (links[0] && links[0].currencyCode)
+                    ? links[0].currencyCode
+                    : (typeof currencyCode !== 'undefined' && currencyCode ? currencyCode : (typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : '—'));
+                %><%= _tc %></span>
                 <input
                   type="text"
                   id="transfer-amount"

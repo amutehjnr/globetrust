@@ -1,4 +1,5 @@
 'use strict';
+const { currencyForCountry } = require('../../utils/currency');
 
 const express = require('express');
 const crypto = require('node:crypto');
@@ -11,7 +12,11 @@ const { COUNTRIES } = require('../../utils/countries');
 function createTransferRouter({ transferService, transferRepo, coreBanking, mfaService, customerRepo }) {
   const router = express.Router();
 
-  router.use('/app', requireAuth, requireRole('customer', 'admin', 'operations'));
+  // Only guard transfer/account routes — do not intercept /app/cards, /app/exchange, etc.
+  const appGuard = [requireAuth, requireRole('customer', 'admin', 'operations')];
+  router.use('/app/accounts', ...appGuard);
+  router.use('/app/transfers', ...appGuard);
+
 
   async function resolveCountryAndBanks(userId, overrideCountry, sessionUser) {
     console.error('[GLOBE_TRANSFER] resolveCountryAndBanks:start', JSON.stringify({
@@ -134,8 +139,17 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   router.get('/app/accounts', async (req, res, next) => {
     try {
-      await transferRepo.ensureSandboxLink(req.session.user.id, 'NGN');
-      await transferRepo.ensureSandboxLink(req.session.user.id, 'USD');
+      let _cc = 'USD';
+      try {
+        if (typeof customerRepo !== 'undefined' && customerRepo && customerRepo.getProfile) {
+          const _p = await customerRepo.getProfile(req.session.user.id);
+          _cc = currencyForCountry(_p && _p.countryCode).code;
+        } else if (req.session.user && req.session.user.countryCode) {
+          _cc = currencyForCountry(req.session.user.countryCode).code;
+        }
+      } catch (_) {}
+      await transferRepo.ensureSandboxLink(req.session.user.id, _cc);
+      if (_cc !== 'USD') await transferRepo.ensureSandboxLink(req.session.user.id, 'USD');
       const links = await transferRepo.listLinksWithExternal(req.session.user.id);
       const withBalances = await transferService.getBalancesForLinks(links);
       res.render('customer/accounts', {
@@ -196,6 +210,13 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
         bankCount: Array.isArray(locals.banks) ? locals.banks.length : null,
         linkCount: Array.isArray(locals.links) ? locals.links.length : null
       }));
+      if (!locals.homeCurrency) {
+        const { currencyForCountry: cfc } = require('../../utils/currency');
+        const hc = cfc(req.session.user && req.session.user.countryCode);
+        locals.homeCurrency = hc;
+        locals.currencyCode = hc.code;
+        locals.currencySymbol = hc.symbol;
+      }
       res.render('customer/transfers', locals);
     } catch (err) {
       console.error('[GLOBE_TRANSFER] GET /app/transfers failed', err?.message || err);
@@ -238,6 +259,13 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
             })(),
         formValues: {}
       });
+      if (!locals.homeCurrency) {
+        const { currencyForCountry: cfc } = require('../../utils/currency');
+        const hc = cfc(req.session.user && req.session.user.countryCode);
+        locals.homeCurrency = hc;
+        locals.currencyCode = hc.code;
+        locals.currencySymbol = hc.symbol;
+      }
       res.render('customer/transfers', locals);
     } catch (err) {
       if (err.status === 400) {

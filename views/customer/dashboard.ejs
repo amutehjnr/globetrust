@@ -21,6 +21,29 @@
     ? profile.profilePhotoUrl
     : (typeof user !== 'undefined' && user && user.profilePhotoUrl ? user.profilePhotoUrl : '');
   var preferredLocale = (profile && profile.preferredLocale) ? profile.preferredLocale : 'en';
+  var homeCode = (typeof currencyCode !== 'undefined' && currencyCode)
+    ? currencyCode
+    : (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.code)
+      ? homeCurrency.code
+      : (profile && profile.countryCode === 'NG' ? 'NGN' : 'USD');
+  var homeSym = (typeof currencySymbol !== 'undefined' && currencySymbol)
+    ? currencySymbol
+    : (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.symbol)
+      ? homeCurrency.symbol
+      : (homeCode === 'NGN' ? '₦' : homeCode === 'EUR' ? '€' : homeCode === 'GBP' ? '£' : '$');
+  function fmtMoney(val, code) {
+    if (val == null || val === '') return '—';
+    var s = String(val);
+    var num = Number(String(s).replace(/[^0-9.-]/g, ''));
+    if (isNaN(num)) return s;
+    var c = (code || homeCode || 'USD').toUpperCase();
+    try {
+      return Number(num).toLocaleString('en-US', { style: 'currency', currency: c, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    } catch (e) {
+      var sym = c === 'EUR' ? '€' : c === 'GBP' ? '£' : c === 'NGN' ? '₦' : (c === homeCode ? homeSym : c + ' ');
+      return sym + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
   var totalBalance = 0;
   var checking = null, savings = null, euro = null;
   if (accounts && accounts.length) {
@@ -28,21 +51,12 @@
       var n = a.balance && a.balance.available != null ? Number(String(a.balance.available).replace(/[^0-9.-]/g, '')) : 0;
       if (!isNaN(n)) totalBalance += n;
       var label = ((a.displayLabel || '') + ' ' + (a.currencyCode || '')).toLowerCase();
-      if (!checking && (label.indexOf('check') >= 0 || a.currencyCode === 'USD')) checking = a;
+      if (!checking && (label.indexOf('check') >= 0 || a.currencyCode === homeCode || a.currencyCode === 'USD')) checking = a;
       if (!savings && label.indexOf('sav') >= 0) savings = a;
       if (!euro && a.currencyCode === 'EUR') euro = a;
     });
     if (!checking && accounts[0]) checking = accounts[0];
     if (!savings && accounts[1]) savings = accounts[1];
-  }
-  function fmtMoney(val, code) {
-    if (val == null || val === '') return '—';
-    var s = String(val);
-    if (s.indexOf('$') >= 0 || s.indexOf('€') >= 0 || s.indexOf('£') >= 0) return s;
-    var num = Number(s);
-    if (isNaN(num)) return s;
-    var sym = code === 'EUR' ? '€' : code === 'GBP' ? '£' : '$';
-    return sym + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   var nowStr = new Date().toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -335,7 +349,7 @@
               </svg>
             </div>
             <div class="db-bal-card__label">Total Balance</div>
-            <div class="db-bal-card__value"><%= accounts && accounts.length ? fmtMoney(totalBalance, 'USD') : '$0.00' %></div>
+            <div class="db-bal-card__value"><%= accounts && accounts.length ? fmtMoney(totalBalance, homeCode) : '$0.00' %></div>
             <div class="db-bal-card__hint">Across linked accounts</div>
           </article>
 
@@ -477,7 +491,7 @@
                   <% if (card.value == null || isNaN(card.value)) { %>
                     <span class="db-limit-card__empty">—</span>
                   <% } else { %>
-                    <%= fmtMoney(card.value, 'USD') %>
+                    <%= fmtMoney(card.value, homeCode) %>
                   <% } %>
                 </div>
                 <div class="db-limit-card__hint"><%= card.hint %></div>

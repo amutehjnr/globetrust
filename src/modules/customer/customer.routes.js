@@ -10,6 +10,7 @@ const { getTopMarketRates } = require('../../services/fxService');
 const { banksForCountry, resolveCountryCode } = require('../../utils/banksByCountry');
 const { enrichBanks, flagUrlForCountry } = require('../../utils/bankLogos');
 const crypto = require('node:crypto');
+const { currencyForCountry } = require('../../utils/currency');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -50,6 +51,25 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   router.use('/dashboard', ...portalGuard);
   router.use('/app', ...portalGuard);
 
+  function homeCurrencyFrom(profile, sessionUser) {
+    const code =
+      (profile && profile.countryCode) ||
+      (sessionUser && sessionUser.countryCode) ||
+      '';
+    return currencyForCountry(code);
+  }
+
+  async function ensureHomeLinks(userId, profile) {
+    if (!transferRepo) return;
+    const home = homeCurrencyFrom(profile, null);
+    await transferRepo.ensureSandboxLink(userId, home.code);
+    // Keep a USD link only when home is not already USD
+    if (home.code !== 'USD') {
+      await transferRepo.ensureSandboxLink(userId, 'USD');
+    }
+  }
+
+
   // Primary customer dashboard
   router.get('/dashboard', async (req, res, next) => {
     try {
@@ -62,8 +82,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       let mfaStatus = { enrolled: false, required: true };
 
       if (transferRepo && transferService) {
-        await transferRepo.ensureSandboxLink(userId, 'NGN');
-        await transferRepo.ensureSandboxLink(userId, 'USD');
+        await ensureHomeLinks(userId, profile);
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links);
         recentTransfers = await transferRepo.listForUser(userId, 5);
@@ -81,6 +100,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         hasPhoto: Boolean(profile && profile.profilePhotoUrl),
         photoLen: profile && profile.profilePhotoUrl ? String(profile.profilePhotoUrl).length : 0
       }));
+      const homeCurrency = homeCurrencyFrom(profile, req.session.user);
       res.render('customer/dashboard', {
         title: 'Dashboard',
         path: '/dashboard',
@@ -93,7 +113,10 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         mfaStatus,
         mustEnrollMfa: Boolean(req.session.mustEnrollMfa) || (mfaStatus.required && !mfaStatus.enrolled),
         idempotencyKey: crypto.randomBytes(16).toString('hex'),
-        csrfToken: req.session.csrfToken
+        csrfToken: req.session.csrfToken,
+        homeCurrency,
+        currencyCode: homeCurrency.code,
+        currencySymbol: homeCurrency.symbol
       });
     } catch (err) {
       next(err);
@@ -377,6 +400,8 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   function pageLocals(req, extra = {}) {
     const u = req.session.user || {};
     const name = u.email ? String(u.email).split('@')[0] : 'Customer';
+    const mergedProfile = extra.profile != null ? extra.profile : null;
+    const homeCurrency = homeCurrencyFrom(mergedProfile, u);
     return {
       displayName: name,
       initials: name.slice(0, 2).toUpperCase(),
@@ -390,16 +415,23 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       mfaStatus: { enrolled: false, required: true },
       error: null,
       success: null,
-      ...extra
+      homeCurrency,
+      currencyCode: homeCurrency.code,
+      currencySymbol: homeCurrency.symbol,
+      ...extra,
+      homeCurrency: homeCurrencyFrom(extra.profile != null ? extra.profile : mergedProfile, u),
+      currencyCode: homeCurrencyFrom(extra.profile != null ? extra.profile : mergedProfile, u).code,
+      currencySymbol: homeCurrencyFrom(extra.profile != null ? extra.profile : mergedProfile, u).symbol
     };
   }
 
-  router.get('/app/accounts', async (req, res, next) => {
+  router.get('/app/accounts'
+, async (req, res, next) => {
     try {
       let accounts = [];
       if (transferRepo && transferService) {
-        await transferRepo.ensureSandboxLink(req.session.user.id, 'NGN');
-        await transferRepo.ensureSandboxLink(req.session.user.id, 'USD');
+        const prof = await customerRepo.getProfile(req.session.user.id);
+        await ensureHomeLinks(req.session.user.id, prof);
         const links = await transferRepo.listLinksWithExternal(req.session.user.id);
         accounts = await transferService.getBalancesForLinks(links);
       }

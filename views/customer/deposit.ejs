@@ -114,7 +114,7 @@
     <div class="transfer-field">
       <label for="deposit-amount">Amount</label>
       <div class="transfer-input-group">
-        <span class="transfer-currency-prefix" id="deposit-currency">—</span>
+        <span class="transfer-currency-prefix" id="deposit-currency"><%= typeof currencyCode !== 'undefined' && currencyCode ? currencyCode : (typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : '—') %></span>
         <input
           type="text"
           id="deposit-amount"

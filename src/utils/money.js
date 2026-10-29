@@ -1,9 +1,7 @@
 'use strict';
 
-/**
- * Decimal-safe helpers for display and basic validation.
- * Prefer DECIMAL in MySQL; avoid floating-point for stored money.
- */
+const { formatMoney, symbolForCurrency, currencyForCountry } = require('./currency');
+
 function isPositiveAmount(str) {
   if (typeof str !== 'string' && typeof str !== 'number') return false;
   const s = String(str).trim();
@@ -17,4 +15,10 @@ function normalizeAmount(str, minorUnits = 2) {
   return n.toFixed(minorUnits);
 }
 
-module.exports = { isPositiveAmount, normalizeAmount };
+module.exports = {
+  isPositiveAmount,
+  normalizeAmount,
+  formatMoney,
+  symbolForCurrency,
+  currencyForCountry
+};
