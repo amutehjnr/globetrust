@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 const { encrypt, decrypt } = require('../utils/cryptoBox');
 const { uuidToBinary, binaryToUuid } = require('../utils/ids');
 
-authenticator.options = { window: 1 }; // ±30s skew tolerance
+authenticator.options = { window: 2, step: 30 }; // ±60s clock skew (server/device)
 
 function createMfaService({ pool, logger }) {
   const issuer = process.env.MFA_ISSUER || 'Globe Trust Bank';
@@ -75,9 +75,32 @@ function createMfaService({ pool, logger }) {
         err.status = 400;
         throw err;
       }
-      const secret = decrypt(rows[0].secret_encrypted);
-      const valid = authenticator.verify({ token: String(code), secret });
+      let secret;
+      try {
+        secret = decrypt(rows[0].secret_encrypted);
+      } catch (decErr) {
+        logger.error({ err: decErr, userId }, 'MFA secret decrypt failed — check MFA_ENCRYPTION_KEY');
+        const err = new Error('Authenticator cannot be verified. Contact support or re-enrol MFA.');
+        err.status = 500;
+        throw err;
+      }
+      const token = String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
+      // Wider tolerance: try explicit window
+      let valid = false;
+      try {
+        valid = authenticator.verify({ token, secret, window: 2 });
+      } catch (_) {
+        valid = false;
+      }
+      if (!valid && typeof authenticator.check === 'function') {
+        try {
+          valid = authenticator.check(token, secret);
+        } catch (_) {
+          valid = false;
+        }
+      }
       if (!valid) {
+        console.error('[GLOBE_MFA] invalid code', JSON.stringify({ userId, tokenLen: token.length }));
         const err = new Error('Invalid authentication code. Check the time on your device and try again.');
         err.status = 400;
         throw err;
@@ -114,10 +137,32 @@ function createMfaService({ pool, logger }) {
         err.status = 400;
         throw err;
       }
-      const secret = decrypt(rows[0].secret_encrypted);
-      const valid = authenticator.verify({ token: String(code), secret });
+      let secret;
+      try {
+        secret = decrypt(rows[0].secret_encrypted);
+      } catch (decErr) {
+        logger.error({ err: decErr, userId }, 'MFA secret decrypt failed — check MFA_ENCRYPTION_KEY');
+        const err = new Error('Authenticator cannot be verified. Contact support or re-enrol MFA.');
+        err.status = 500;
+        throw err;
+      }
+      const token = String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
+      let valid = false;
+      try {
+        valid = authenticator.verify({ token, secret, window: 2 });
+      } catch (_) {
+        valid = false;
+      }
+      if (!valid && typeof authenticator.check === 'function') {
+        try {
+          valid = authenticator.check(token, secret);
+        } catch (_) {
+          valid = false;
+        }
+      }
       if (!valid) {
-        const err = new Error('Invalid authentication code.');
+        console.error('[GLOBE_MFA] invalid login code', JSON.stringify({ userId, tokenLen: token.length }));
+        const err = new Error('Invalid authentication code. Check your authenticator app time and try a fresh code.');
         err.status = 401;
         throw err;
       }

@@ -11,7 +11,10 @@ const codeSchema = z.object({
 });
 
 function parseCode(body) {
-  const r = codeSchema.safeParse(body);
+  // Accept spaces / non-digits noise; keep as string so leading zeros are preserved
+  const raw = body && (body.code != null ? body.code : body.token);
+  const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
+  const r = codeSchema.safeParse({ code: digits });
   if (!r.success) {
     const err = new Error(r.error.issues[0].message);
     err.status = 400;
