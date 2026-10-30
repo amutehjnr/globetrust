@@ -1,59 +1,67 @@
 'use strict';
 
-const { authenticator } = require('otplib');
 const QRCode = require('qrcode');
 const { encrypt, decrypt } = require('../utils/cryptoBox');
-const { verifyTotp } = require('../utils/totp');
+const {
+  generateSecret,
+  verifyTotp,
+  otpauthUrl
+} = require('../utils/totp');
 const { uuidToBinary } = require('../utils/ids');
-
-authenticator.options = { window: 2, step: 30 };
 
 function normalizeToken(code) {
   return String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
 }
 
-function isCodeValid(token, secret) {
-  if (verifyTotp(token, secret, { window: 2, step: 30 })) return true;
-  try {
-    if (authenticator.verify({ token, secret, window: 2 })) return true;
-  } catch (_) {}
-  try {
-    if (typeof authenticator.check === 'function' && authenticator.check(token, secret)) return true;
-  } catch (_) {}
-  return false;
-}
-
 function createMfaService({ pool, logger }) {
   const issuer = process.env.MFA_ISSUER || 'Globe Trust Bank';
 
+  async function loadSecretRow(userId) {
+    const [rows] = await pool.query(
+      `SELECT secret_encrypted, enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
+      [uuidToBinary(userId)]
+    );
+    return rows[0] || null;
+  }
+
+  function decryptSecret(blob) {
+    if (blob == null) throw new Error('missing_secret');
+    const buf = Buffer.isBuffer(blob) ? blob : Buffer.from(blob);
+    return String(decrypt(buf)).trim().replace(/\s+/g, '');
+  }
+
+  function checkCode(token, secret) {
+    return verifyTotp(token, secret, { window: 3, step: 30 });
+  }
+
   return {
     async getStatus(userId) {
-      const [rows] = await pool.query(
-        `SELECT enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
-        [uuidToBinary(userId)]
-      );
+      const row = await loadSecretRow(userId);
       const [userRows] = await pool.query(
         `SELECT mfa_required, mfa_enrolled_at FROM users WHERE id = ? LIMIT 1`,
         [uuidToBinary(userId)]
       );
       const u = userRows[0];
       return {
-        enrolled: Boolean(rows[0] && rows[0].enabled_at),
+        enrolled: Boolean(row && row.enabled_at),
         required: Boolean(u && u.mfa_required),
         enrolledAt: (u && u.mfa_enrolled_at) || null
       };
     },
 
     async beginEnrolment(userId, email, { rotate = true } = {}) {
-      const [existing] = await pool.query(
-        `SELECT secret_encrypted, enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
-        [uuidToBinary(userId)]
-      );
+      const existing = await loadSecretRow(userId);
       let secret;
-      if (existing[0] && !existing[0].enabled_at && !rotate) {
-        secret = decrypt(existing[0].secret_encrypted);
-      } else {
-        secret = authenticator.generateSecret();
+      if (existing && !existing.enabled_at && !rotate) {
+        try {
+          secret = decryptSecret(existing.secret_encrypted);
+        } catch (err) {
+          logger.warn({ err }, 'Pending MFA secret decrypt failed; rotating');
+          secret = null;
+        }
+      }
+      if (!secret) {
+        secret = generateSecret();
         const encrypted = encrypt(secret);
         await pool.query(
           `INSERT INTO mfa_totp_secrets (user_id, secret_encrypted, enabled_at)
@@ -62,7 +70,12 @@ function createMfaService({ pool, logger }) {
           [uuidToBinary(userId), encrypted]
         );
       }
-      const otpauth = authenticator.keyuri(email, issuer, secret);
+
+      const otpauth = otpauthUrl({
+        accountName: email || userId,
+        issuer,
+        secret
+      });
       let qrDataUrl = null;
       try {
         qrDataUrl = await QRCode.toDataURL(otpauth, {
@@ -76,43 +89,59 @@ function createMfaService({ pool, logger }) {
       return { secret, otpauth, qrDataUrl };
     },
 
-    async confirmEnrolment(userId, code) {
-      const [rows] = await pool.query(
-        `SELECT secret_encrypted, enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
-        [uuidToBinary(userId)]
-      );
-      if (!rows[0]) {
+    /**
+     * @param {string} userId
+     * @param {string} code
+     * @param {{ pendingSecret?: string }} [opts] session secret shown on QR (preferred)
+     */
+    async confirmEnrolment(userId, code, opts = {}) {
+      const row = await loadSecretRow(userId);
+      if (!row) {
         const err = new Error('Start MFA enrolment first.');
         err.status = 400;
         throw err;
       }
-      if (rows[0].enabled_at) {
+      if (row.enabled_at) {
         const err = new Error('MFA is already enabled on this account.');
         err.status = 400;
         throw err;
       }
-      let secret;
-      try {
-        secret = decrypt(rows[0].secret_encrypted);
-      } catch (decErr) {
-        logger.error({ err: decErr, userId }, 'MFA secret decrypt failed');
-        const err = new Error('Authenticator cannot be verified. Contact support.');
-        err.status = 500;
-        throw err;
+
+      let secret = opts.pendingSecret ? String(opts.pendingSecret).trim() : null;
+      if (!secret) {
+        try {
+          secret = decryptSecret(row.secret_encrypted);
+        } catch (decErr) {
+          logger.error({ err: decErr, userId }, 'MFA secret decrypt failed');
+          const err = new Error('Authenticator cannot be verified. Contact support.');
+          err.status = 500;
+          throw err;
+        }
       }
+
       const token = normalizeToken(code);
-      if (!isCodeValid(token, secret)) {
-        console.error('[GLOBE_MFA] invalid enrol code', JSON.stringify({ userId, tokenLen: token.length }));
-        const err = new Error('Invalid authentication code. Check the time on your device and try again.');
+      if (!checkCode(token, secret)) {
+        console.error(
+          '[GLOBE_MFA] invalid enrol code',
+          JSON.stringify({ userId, tokenLen: token.length, secretLen: secret.length })
+        );
+        const err = new Error(
+          'Invalid authentication code. Use the newest code from the app for this QR, and check phone time is automatic.'
+        );
         err.status = 400;
         throw err;
       }
+
+      // Ensure DB secret matches the verified one (session path)
+      const encrypted = encrypt(secret);
       const conn = await pool.getConnection();
       try {
         await conn.beginTransaction();
         await conn.query(
-          `UPDATE mfa_totp_secrets SET enabled_at = UTC_TIMESTAMP(6) WHERE user_id = ?`,
-          [uuidToBinary(userId)]
+          `UPDATE mfa_totp_secrets
+           SET secret_encrypted = ?, enabled_at = UTC_TIMESTAMP(6)
+           WHERE user_id = ?`,
+          [encrypted, uuidToBinary(userId)]
         );
         await conn.query(
           `UPDATE users SET mfa_enrolled_at = UTC_TIMESTAMP(6) WHERE id = ?`,
@@ -130,28 +159,32 @@ function createMfaService({ pool, logger }) {
     },
 
     async verifyLoginCode(userId, code) {
-      const [rows] = await pool.query(
-        `SELECT secret_encrypted, enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
-        [uuidToBinary(userId)]
-      );
-      if (!(rows[0] && rows[0].enabled_at)) {
+      const row = await loadSecretRow(userId);
+      if (!(row && row.enabled_at)) {
         const err = new Error('MFA is not enabled for this account.');
         err.status = 400;
         throw err;
       }
       let secret;
       try {
-        secret = decrypt(rows[0].secret_encrypted);
+        secret = decryptSecret(row.secret_encrypted);
       } catch (decErr) {
         logger.error({ err: decErr, userId }, 'MFA secret decrypt failed — check MFA_ENCRYPTION_KEY');
-        const err = new Error('Authenticator cannot be verified. Contact support or re-enrol MFA.');
+        const err = new Error(
+          'Authenticator cannot be verified. Contact support or re-enrol MFA.'
+        );
         err.status = 500;
         throw err;
       }
       const token = normalizeToken(code);
-      if (!isCodeValid(token, String(secret).trim())) {
-        console.error('[GLOBE_MFA] invalid login code', JSON.stringify({ userId, tokenLen: token.length, secretLen: String(secret).length }));
-        const err = new Error('Invalid authentication code. Check your authenticator app time and try a fresh code.');
+      if (!checkCode(token, secret)) {
+        console.error(
+          '[GLOBE_MFA] invalid login code',
+          JSON.stringify({ userId, tokenLen: token.length, secretLen: secret.length })
+        );
+        const err = new Error(
+          'Invalid authentication code. Check your authenticator app time and try a fresh code.'
+        );
         err.status = 401;
         throw err;
       }

@@ -4,16 +4,26 @@ const crypto = require('node:crypto');
 
 /**
  * Minimal TOTP (RFC 6238) — HMAC-SHA1, 30s step, 6 digits, base32 secret.
- * Avoids otplib version/API quirks on serverless.
  */
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Encode(buf) {
+  const bytes = Buffer.from(buf);
+  let bits = '';
+  for (const b of bytes) bits += b.toString(2).padStart(8, '0');
+  let out = '';
+  for (let i = 0; i + 5 <= bits.length; i += 5) {
+    out += BASE32_ALPHABET[parseInt(bits.slice(i, i + 5), 2)];
+  }
+  return out;
+}
 
 function base32Decode(input) {
   const str = String(input || '')
     .toUpperCase()
     .replace(/=+$/g, '')
-    .replace(/\s+/g, '');
+    .replace(/[\s-]+/g, '');
   let bits = '';
   for (const c of str) {
     const val = BASE32_ALPHABET.indexOf(c);
@@ -25,6 +35,11 @@ function base32Decode(input) {
     bytes.push(parseInt(bits.slice(i, i + 8), 2));
   }
   return Buffer.from(bytes);
+}
+
+/** 20-byte secret → base32 (compatible with Google/Microsoft Authenticator). */
+function generateSecret() {
+  return base32Encode(crypto.randomBytes(20));
 }
 
 function hotp(secretBuf, counter) {
@@ -46,13 +61,8 @@ function generateTotp(secretBase32, at = Date.now(), step = 30) {
   return hotp(secretBuf, counter);
 }
 
-/**
- * @param {string} token 6-digit code
- * @param {string} secretBase32
- * @param {{ window?: number, step?: number }} [opts]
- */
 function verifyTotp(token, secretBase32, opts = {}) {
-  const window = opts.window != null ? Number(opts.window) : 2;
+  const window = opts.window != null ? Number(opts.window) : 3;
   const step = opts.step != null ? Number(opts.step) : 30;
   const cleaned = String(token || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
   if (!/^\d{6}$/.test(cleaned)) return false;
@@ -65,4 +75,23 @@ function verifyTotp(token, secretBase32, opts = {}) {
   return false;
 }
 
-module.exports = { generateTotp, verifyTotp, base32Decode };
+function otpauthUrl({ accountName, issuer, secret }) {
+  const label = encodeURIComponent(`${issuer}:${accountName}`);
+  const q = new URLSearchParams({
+    secret: String(secret).replace(/\s+/g, ''),
+    issuer: String(issuer),
+    algorithm: 'SHA1',
+    digits: '6',
+    period: '30'
+  });
+  return `otpauth://totp/${label}?${q.toString()}`;
+}
+
+module.exports = {
+  generateSecret,
+  generateTotp,
+  verifyTotp,
+  base32Decode,
+  base32Encode,
+  otpauthUrl
+};

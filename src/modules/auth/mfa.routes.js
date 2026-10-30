@@ -41,8 +41,11 @@ function createMfaRouter({ mfaService, customerRepo }) {
         req.session.user.email,
         { rotate: false }
       );
-      // Keep pending secret only server-side; do not put secret in session long-term ideally
       req.session.mfaEnrolPending = true;
+      req.session.mfaEnrolSecret = enrolment.secret;
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => (err ? reject(err) : resolve()));
+      });
       res.render('auth/mfa-enrol', {
         title: 'Set up authenticator',
         path: '/mfa/enrol',
@@ -58,9 +61,12 @@ function createMfaRouter({ mfaService, customerRepo }) {
   router.post('/mfa/enrol', requireAuth, requireCsrf, loginLimiter, async (req, res, next) => {
     try {
       const code = parseCode(req.body);
-      await mfaService.confirmEnrolment(req.session.user.id, code);
+      await mfaService.confirmEnrolment(req.session.user.id, code, {
+        pendingSecret: req.session.mfaEnrolSecret || null
+      });
       delete req.session.mustEnrollMfa;
       delete req.session.mfaEnrolPending;
+      delete req.session.mfaEnrolSecret;
       return res.render('auth/mfa-done', {
         title: 'Authenticator enabled',
         path: '/mfa/enrol'
@@ -74,6 +80,7 @@ function createMfaRouter({ mfaService, customerRepo }) {
             req.session.user.email,
             { rotate: false }
           );
+          req.session.mfaEnrolSecret = enrolment.secret;
           return res.status(400).render('auth/mfa-enrol', {
             title: 'Set up authenticator',
             path: '/mfa/enrol',
