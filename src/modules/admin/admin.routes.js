@@ -29,7 +29,7 @@ const createUserSchema = z.object({
   activate: z.enum(['yes', 'no']).optional()
 });
 
-function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo }) {
+function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo, alertService }) {
   const router = express.Router();
   const photoUpload = multer({
     storage: multer.memoryStorage(),
@@ -565,6 +565,21 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           await transferRepo.ensureSandboxLink(req.params.id, currency);
         }
         const result = await transferRepo.creditManualBalance(req.params.id, currency, amount, { mode });
+        // Email credit alert to customer (non-blocking for admin UX)
+        if (alertService && alertService.notifyAdminCredit) {
+          try {
+            await alertService.notifyAdminCredit({
+              userId: req.params.id,
+              amount: mode === 'set' ? result.available : amount,
+              currency: result.currencyCode,
+              balanceAfter: result.available,
+              accountRef: result.currencyCode + ' account',
+              mode
+            });
+          } catch (alertErr) {
+            console.error('[GLOBE_ADMIN] credit alert failed', alertErr?.message || alertErr);
+          }
+        }
         const msg =
           mode === 'set'
             ? `Balance set to ${result.available} ${result.currencyCode}.`

@@ -285,9 +285,33 @@ function createTransactionAlertService({ emailService, userRepo, logger } = {}) 
     }
   }
 
+  async function notifyAdminCredit({
+    userId,
+    amount,
+    currency,
+    balanceAfter,
+    accountRef,
+    mode = 'credit'
+  }) {
+    const narrative =
+      mode === 'set'
+        ? 'ACCOUNT BALANCE ADJUSTMENT'
+        : 'ACCOUNT CREDIT';
+    return notifyTransferSuccess({
+      userId,
+      amount,
+      currency,
+      narrative,
+      accountRef: accountRef || 'Globe Trust',
+      direction: 'credit',
+      balanceAfter
+    });
+  }
+
   return {
     sendAlert,
     notifyTransferSuccess,
+    notifyAdminCredit,
     buildTransactionAlertHtml
   };
 }
