@@ -1,6 +1,3 @@
-
-
-
 <!-- Mobile hamburger -->
 <button
   type="button"
@@ -44,14 +41,26 @@
     <a href="/admin/customers" class="db-nav-item<%= path === '/admin/customers' ? ' is-active' : '' %>">
       <span class="db-nav-icon">▤</span> Customers
     </a>
-    <a href="/admin/customers/new" class="db-nav-item<%= path === '/admin/customers' && typeof title !== 'undefined' && title.indexOf('Create') === 0 ? ' is-active' : '' %>">
+    <a href="/admin/customers/new" class="db-nav-item">
       <span class="db-nav-icon">＋</span> Create account
+    </a>
+    <a href="/admin/transfers" class="db-nav-item<%= path === '/admin/transfers' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">⇄</span> Transfers
     </a>
     <a href="/admin/kyc" class="db-nav-item<%= path === '/admin/kyc' ? ' is-active' : '' %>">
       <span class="db-nav-icon">☰</span> KYC queue
     </a>
     <a href="/admin/kyc/atm" class="db-nav-item<%= path === '/admin/kyc/atm' ? ' is-active' : '' %>">
       <span class="db-nav-icon">▤</span> ATM cards
+    </a>
+    <a href="/admin/approvals" class="db-nav-item<%= path === '/admin/approvals' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">✓</span> Approvals
+    </a>
+    <a href="/admin/staff" class="db-nav-item<%= path === '/admin/staff' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">👤</span> Staff
+    </a>
+    <a href="/admin/reports" class="db-nav-item<%= path === '/admin/reports' ? ' is-active' : '' %>">
+      <span class="db-nav-icon">▣</span> Reports
     </a>
     <a href="/admin/support" class="db-nav-item<%= path === '/admin/support' ? ' is-active' : '' %>">
       <span class="db-nav-icon">◇</span> Support inbox
@@ -70,5 +79,4 @@
   </div>
 </aside>
 
-<!-- Load the sidebar controller once per page -->
 <script src="/js/admin-sidebar.js" defer></script>

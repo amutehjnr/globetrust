@@ -1,0 +1,82 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Staff</h1>
+    <p>Create and list staff accounts.</p>
+  </div>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok"><%= message %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err"><%= error %></div>
+<% } %>
+
+<section class="db-panel settings-panel">
+  <div class="db-panel__head"><h2>Create staff user</h2></div>
+  <form method="post" action="/admin/staff">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="kyc-grid-2">
+      <div class="kyc-field">
+        <label>Email</label>
+        <input type="email" name="email" required value="<%= values && values.email || '' %>">
+      </div>
+      <div class="kyc-field">
+        <label>Password (min 12)</label>
+        <input type="password" name="password" required minlength="12">
+      </div>
+      <div class="kyc-field">
+        <label>First name</label>
+        <input type="text" name="firstName" value="<%= values && values.firstName || 'Staff' %>">
+      </div>
+      <div class="kyc-field">
+        <label>Last name</label>
+        <input type="text" name="lastName" value="<%= values && values.lastName || 'User' %>">
+      </div>
+    </div>
+    <p style="margin-top:12px;font-size:0.9rem;">Roles (not customer):</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
+      <% (allRoles || []).filter(function(r){ return r.code !== 'customer'; }).forEach(function(r) { %>
+        <label>
+          <input type="checkbox" name="roles" value="<%= r.code %>">
+          <%= r.code %>
+        </label>
+      <% }) %>
+    </div>
+    <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:16px;">Create staff</button>
+  </form>
+</section>
+
+<section class="db-panel" style="margin-top:16px;">
+  <div class="db-panel__head"><h2>Staff list</h2></div>
+  <% if (!(staff || []).length) { %>
+    <p class="db-muted">No staff users yet.</p>
+  <% } else { %>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Status</th>
+            <th>Last login</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% staff.forEach(function(s) { %>
+            <tr>
+              <td><a href="/admin/customers/<%= s.id %>"><%= s.email %></a></td>
+              <td><%= (s.roles || []).join(', ') %></td>
+              <td><%= s.status %></td>
+              <td><%= s.lastLoginAt ? String(s.lastLoginAt).slice(0, 16) : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

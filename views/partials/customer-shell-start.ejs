@@ -28,7 +28,21 @@
         <input type="search" placeholder="Search transactions, payees, or services..." aria-label="Search">
       </div>
       <div class="db-topbar__right">
-        <button type="button" class="db-icon-btn" aria-label="Notifications">🔔</button>
+                <div class="db-notify" id="db-notify">
+          <button type="button" class="db-icon-btn db-notify__btn" id="db-notify-btn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+            <span aria-hidden="true">🔔</span>
+            <span class="db-notify__badge" id="db-notify-badge" hidden>0</span>
+          </button>
+          <div class="db-notify__panel" id="db-notify-panel" hidden role="dialog" aria-label="Notifications">
+            <div class="db-notify__head">
+              <strong>Notifications</strong>
+              <button type="button" class="db-notify__mark" id="db-notify-mark-all">Mark all read</button>
+            </div>
+            <div class="db-notify__list" id="db-notify-list">
+              <p class="db-notify__empty">Loading…</p>
+            </div>
+          </div>
+        </div>
           <div class="db-translator notranslate" id="db-translator" data-initial-lang="<%= (typeof profile !== 'undefined' && profile && profile.preferredLocale) ? profile.preferredLocale : (typeof preferredLocale !== 'undefined' ? preferredLocale : 'en') %>" translate="no" data-csrf="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
             <button type="button" class="lang-trigger notranslate" id="lang-trigger" translate="no" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
               <span class="lang-trigger__icon" aria-hidden="true">

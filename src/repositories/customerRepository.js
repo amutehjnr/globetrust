@@ -520,7 +520,66 @@ function createCustomerRepository(pool) {
         [id, uuidToBinary(userId), documentType, storageProvider, storageAssetId]
       );
       return binaryToUuid(id);
-    }
+    },
+    
+    async listNotifications(userId, limit = 30) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT id, notification_type, title, body, read_at, created_at
+           FROM notifications
+           WHERE user_id = ?
+           ORDER BY created_at DESC
+           LIMIT ?`,
+          [uuidToBinary(userId), Math.min(Number(limit) || 30, 50)]
+        );
+        return rows.map((r) => ({
+          id: binaryToUuid(r.id),
+          type: r.notification_type,
+          title: r.title,
+          body: r.body,
+          readAt: r.read_at,
+          createdAt: r.created_at,
+          unread: !r.read_at
+        }));
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return [];
+        throw err;
+      }
+    },
+
+    async countUnreadNotifications(userId) {
+      try {
+        const [[row]] = await pool.query(
+          `SELECT COUNT(*) AS c FROM notifications
+           WHERE user_id = ? AND read_at IS NULL`,
+          [uuidToBinary(userId)]
+        );
+        return Number(row?.c || 0);
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return 0;
+        throw err;
+      }
+    },
+
+    async markNotificationRead(userId, notificationId) {
+      await pool.query(
+        `UPDATE notifications
+         SET read_at = UTC_TIMESTAMP(6)
+         WHERE id = ? AND user_id = ? AND read_at IS NULL`,
+        [uuidToBinary(notificationId), uuidToBinary(userId)]
+      );
+      return { ok: true };
+    },
+
+    async markAllNotificationsRead(userId) {
+      await pool.query(
+        `UPDATE notifications
+         SET read_at = UTC_TIMESTAMP(6)
+         WHERE user_id = ? AND read_at IS NULL`,
+        [uuidToBinary(userId)]
+      );
+      return { ok: true };
+    },
   };
 }
 

@@ -217,7 +217,36 @@ function createMfaService({ pool, logger }) {
         throw err;
       }
       return { ok: true };
-    }
+    },
+
+    async adminResetMfa(userId, actorUserId) {
+      const conn = await pool.getConnection();
+      try {
+        await conn.beginTransaction();
+        await conn.query(`DELETE FROM mfa_totp_secrets WHERE user_id = ?`, [
+          uuidToBinary(userId)
+        ]);
+        await conn.query(
+          `UPDATE users SET mfa_enrolled_at = NULL WHERE id = ?`,
+          [uuidToBinary(userId)]
+        );
+        await conn.commit();
+      } catch (e) {
+        await conn.rollback();
+        throw e;
+      } finally {
+        conn.release();
+      }
+      try {
+        await pool.query(
+          `INSERT INTO audit_events (actor_user_id, action, target_type, target_reference, outcome, safe_metadata)
+           VALUES (?, 'mfa.admin_reset', 'user', ?, 'success', '{}')`,
+          [actorUserId ? uuidToBinary(actorUserId) : null, userId]
+        );
+      } catch (_) {}
+      logger.info({ userId, actorUserId }, 'MFA reset by admin');
+      return { ok: true };
+    },
   };
 }
 

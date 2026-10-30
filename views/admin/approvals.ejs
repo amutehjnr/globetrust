@@ -1,0 +1,84 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Approvals</h1>
+    <p>Dual-control queue for sensitive actions.</p>
+  </div>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok"><%= message %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err"><%= error %></div>
+<% } %>
+
+<section class="db-panel settings-panel">
+  <div class="db-panel__head"><h2>Request approval</h2></div>
+  <form method="post" action="/admin/approvals">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="kyc-grid-2">
+      <div class="kyc-field">
+        <label>Action type</label>
+        <input type="text" name="actionType" required placeholder="e.g. large_credit">
+      </div>
+      <div class="kyc-field">
+        <label>Target reference</label>
+        <input type="text" name="targetReference" required placeholder="user id or transfer id">
+      </div>
+      <div class="kyc-field" style="grid-column:1/-1;">
+        <label>Reason</label>
+        <input type="text" name="reason" required maxlength="500">
+      </div>
+    </div>
+    <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Submit request</button>
+  </form>
+</section>
+
+<section class="db-panel" style="margin-top:16px;">
+  <div class="db-panel__head"><h2>Pending approvals</h2></div>
+  <% if (!(approvals || []).length) { %>
+    <p class="db-muted">No pending approvals.</p>
+  <% } else { %>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Reason</th>
+            <th>Requested by</th>
+            <th>When</th>
+            <th>Decide</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% approvals.forEach(function(a) { %>
+            <tr>
+              <td><%= a.actionType %></td>
+              <td><code><%= a.targetReference %></code></td>
+              <td><%= a.reason %></td>
+              <td><%= a.requesterEmail || '—' %></td>
+              <td><%= a.requestedAt ? String(a.requestedAt).slice(0, 16) : '—' %></td>
+              <td style="white-space:nowrap;">
+                <form method="post" action="/admin/approvals/<%= a.id %>/decide" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="decision" value="approved">
+                  <button type="submit" class="settings-btn settings-btn--primary">Approve</button>
+                </form>
+                <form method="post" action="/admin/approvals/<%= a.id %>/decide" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="decision" value="rejected">
+                  <button type="submit" class="settings-btn">Reject</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/admin-shell-end') %>

@@ -51,6 +51,36 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
   router.use('/dashboard', ...portalGuard);
   router.use('/app', ...portalGuard);
 
+    // Notifications API (header bell)
+  router.get('/app/notifications', requireAuth, async (req, res, next) => {
+    try {
+      const items = await customerRepo.listNotifications(req.session.user.id, 30);
+      const unread = items.filter((n) => n.unread).length;
+      res.json({ ok: true, unread, items });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/app/notifications/read-all', requireAuth, requireCsrf, async (req, res, next) => {
+    try {
+      await customerRepo.markAllNotificationsRead(req.session.user.id);
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/app/notifications/:id/read', requireAuth, requireCsrf, async (req, res, next) => {
+    try {
+      if (!req.params.id) return res.status(400).json({ error: 'Missing id' });
+      await customerRepo.markNotificationRead(req.session.user.id, req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   function homeCurrencyFrom(profile, sessionUser) {
     const code =
       (profile && profile.countryCode) ||

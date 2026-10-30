@@ -1,0 +1,81 @@
+<%- include('../partials/admin-shell-start') %>
+
+<div class="db-greeting">
+  <div>
+    <h1>Transfers</h1>
+    <p>Filter and update transfer status.</p>
+  </div>
+</div>
+
+<% if (typeof message !== 'undefined' && message) { %>
+  <div class="db-alert db-alert--ok"><%= message %></div>
+<% } %>
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="db-alert db-alert--err"><%= error %></div>
+<% } %>
+
+<section class="cust-toolbar">
+  <form method="get" action="/admin/transfers" class="cust-search-form">
+    <input type="search" name="q" value="<%= q || '' %>" placeholder="Email or reference…">
+    <select name="status">
+      <option value="">All statuses</option>
+      <% ['created','pending_approval','submitted','processing','succeeded','failed','reversed','unknown'].forEach(function(s) { %>
+        <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+    <button type="submit" class="cust-search-btn">Filter</button>
+  </form>
+</section>
+
+<section class="db-panel">
+  <% if (!(transfers || []).length) { %>
+    <p class="db-muted">No transfers found.</p>
+  <% } else { %>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Reference</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transfers.forEach(function(t) { %>
+            <tr>
+              <td>
+                <a href="/admin/customers/<%= t.userId %>"><%= t.email %></a>
+                <% if (t.customerReference) { %>
+                  <br><code class="adm-cust-ref"><%= t.customerReference %></code>
+                <% } %>
+              </td>
+              <td><%= t.sourceAmount %> <%= t.sourceCurrency %></td>
+              <td><%= t.status %></td>
+              <td><code><%= t.externalReference || '—' %></code></td>
+              <td><%= t.createdAt ? String(t.createdAt).slice(0, 16) : '—' %></td>
+              <td>
+                <form method="post" action="/admin/transfers/<%= t.id %>/status" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <select name="status">
+                    <option value="succeeded">succeeded</option>
+                    <option value="failed">failed</option>
+                    <option value="reversed">reversed</option>
+                    <option value="processing">processing</option>
+                    <option value="pending_approval">pending_approval</option>
+                  </select>
+                  <input type="text" name="reason" placeholder="Reason" style="max-width:140px;">
+                  <button type="submit" class="settings-btn settings-btn--primary">Update</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/admin-shell-end') %>
