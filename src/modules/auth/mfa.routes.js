@@ -12,7 +12,6 @@ const codeSchema = z.object({
 });
 
 function parseCode(body) {
-  // Accept spaces / non-digits noise; keep as string so leading zeros are preserved
   const raw = body && (body.code != null ? body.code : body.token);
   const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
   const r = codeSchema.safeParse({ code: digits });
@@ -24,10 +23,22 @@ function parseCode(body) {
   return r.data.code;
 }
 
+async function saveSession(req) {
+  return new Promise((resolve, reject) => {
+    req.session.save((err) => (err ? reject(err) : resolve()));
+  });
+}
+
+async function freshCsrf(req) {
+  req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
+  await saveSession(req);
+  return req.session.csrfToken;
+}
+
 function createMfaRouter({ mfaService, customerRepo }) {
   const router = express.Router();
 
-  // --- Enrolment (authenticated, not yet fully enrolled) ---
+  // --- Enrolment ---
   router.get('/mfa/enrol', requireAuth, async (req, res, next) => {
     try {
       const status = await mfaService.getStatus(req.session.user.id);
@@ -36,7 +47,6 @@ function createMfaRouter({ mfaService, customerRepo }) {
         const staff = ['admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'];
         return res.redirect(roles.some((r) => staff.includes(r)) ? '/admin' : '/dashboard');
       }
-      // Do not rotate secret on every page load — wait until user finishes or explicitly restarts
       const enrolment = await mfaService.beginEnrolment(
         req.session.user.id,
         req.session.user.email,
@@ -44,12 +54,7 @@ function createMfaRouter({ mfaService, customerRepo }) {
       );
       req.session.mfaEnrolPending = true;
       req.session.mfaEnrolSecret = enrolment.secret;
-
-      // Fresh CSRF for this form + persist before render (critical on serverless)
-      req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => (err ? reject(err) : resolve()));
-      });
+      const csrfToken = await freshCsrf(req);
 
       res.render('auth/mfa-enrol', {
         title: 'Set up authenticator',
@@ -58,7 +63,7 @@ function createMfaRouter({ mfaService, customerRepo }) {
         secret: enrolment.secret,
         qrDataUrl: enrolment.qrDataUrl,
         enrolToken: enrolment.enrolToken,
-        csrfToken: req.session.csrfToken
+        csrfToken
       });
     } catch (err) {
       next(err);
@@ -81,7 +86,6 @@ function createMfaRouter({ mfaService, customerRepo }) {
       });
     } catch (err) {
       if (err.status === 400) {
-        // Re-show enrol form with same secret if still pending
         try {
           const enrolment = await mfaService.beginEnrolment(
             req.session.user.id,
@@ -89,10 +93,7 @@ function createMfaRouter({ mfaService, customerRepo }) {
             { rotate: false }
           );
           req.session.mfaEnrolSecret = enrolment.secret;
-          req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
-          await new Promise((resolve, reject) => {
-            req.session.save((err2) => (err2 ? reject(err2) : resolve()));
-          });
+          const csrfToken = await freshCsrf(req);
           return res.status(400).render('auth/mfa-enrol', {
             title: 'Set up authenticator',
             path: '/mfa/enrol',
@@ -100,7 +101,7 @@ function createMfaRouter({ mfaService, customerRepo }) {
             secret: enrolment.secret,
             qrDataUrl: enrolment.qrDataUrl,
             enrolToken: enrolment.enrolToken,
-            csrfToken: req.session.csrfToken
+            csrfToken
           });
         } catch (e) {
           return next(e);
@@ -115,23 +116,53 @@ function createMfaRouter({ mfaService, customerRepo }) {
     if (!req.session?.pendingMfaUser) {
       return res.redirect('/sign-in');
     }
-
-    // Always issue a fresh CSRF token for this form and persist it
-    // before rendering (prevents stale-token 403 on serverless / Redis).
-    req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => (err ? reject(err) : resolve()));
-    });
-
+    const csrfToken = await freshCsrf(req);
     res.render('auth/mfa-verify', {
       title: 'Verify authenticator',
       path: '/mfa/verify',
       error: null,
-      csrfToken: req.session.csrfToken
+      csrfToken
     });
   });
 
-  router.post('/mfa/verify', loginLimiter, requireCsrf, async (req, res, next) => {
+  router.post('/mfa/verify', loginLimiter, async (req, res, next) => {
+    // Soft CSRF: on mismatch, re-show form with a fresh token instead of hard 403 page
+    const token =
+      req.body?._csrf ||
+      req.get('x-csrf-token') ||
+      req.get('csrf-token');
+    const expected = req.session?.csrfToken;
+    const csrfOk =
+      expected &&
+      token &&
+      Buffer.from(String(token)).length === Buffer.from(String(expected)).length &&
+      require('node:crypto').timingSafeEqual(
+        Buffer.from(String(token)),
+        Buffer.from(String(expected))
+      );
+
+    if (!csrfOk) {
+      console.error('[GLOBE_CSRF] mfa/verify soft-fail', JSON.stringify({
+        hasExpected: Boolean(expected),
+        hasToken: Boolean(token),
+        tokenStart: token ? String(token).slice(0, 8) : null,
+        expectedStart: expected ? String(expected).slice(0, 8) : null,
+        sessionId: req.sessionID,
+        hasPendingMfa: Boolean(req.session?.pendingMfaUser)
+      }));
+
+      if (!req.session?.pendingMfaUser) {
+        return res.redirect('/sign-in');
+      }
+      const csrfToken = await freshCsrf(req);
+      return res.status(403).render('auth/mfa-verify', {
+        title: 'Verify authenticator',
+        path: '/mfa/verify',
+        error: 'Security token expired. Enter a fresh code from your app and try again.',
+        csrfToken
+      });
+    }
+
     try {
       const pending = req.session.pendingMfaUser;
       if (!pending?.id) {
@@ -164,32 +195,17 @@ function createMfaRouter({ mfaService, customerRepo }) {
       } catch (_) {}
       delete req.session.pendingMfaUser;
       delete req.session.pendingMfaNext;
-
-      // Fresh CSRF after regenerate
       req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
-
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => (err ? reject(err) : resolve()));
-      });
+      await saveSession(req);
       return res.redirect(303, nextUrl);
     } catch (err) {
-      if (err.status === 400 || err.status === 401 || err.status === 403) {
-        // Re-issue CSRF so the user can retry without a hard 403 page
-        try {
-          req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
-          await new Promise((resolve, reject) => {
-            req.session.save((e) => (e ? reject(e) : resolve()));
-          });
-        } catch (_) {}
-
-        return res.status(err.status === 403 ? 400 : err.status).render('auth/mfa-verify', {
+      if (err.status === 400 || err.status === 401) {
+        const csrfToken = await freshCsrf(req);
+        return res.status(err.status).render('auth/mfa-verify', {
           title: 'Verify authenticator',
           path: '/mfa/verify',
-          error:
-            err.status === 403
-              ? 'Session expired or invalid security token. Please enter a fresh code and try again.'
-              : err.message,
-          csrfToken: req.session?.csrfToken || ''
+          error: err.message,
+          csrfToken
         });
       }
       return next(err);
