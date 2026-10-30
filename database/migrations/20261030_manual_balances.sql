@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS manual_balances (
+  user_id BINARY(16) NOT NULL,
+  currency_code CHAR(3) NOT NULL,
+  available DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  ledger DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (user_id, currency_code),
+  CONSTRAINT fk_manual_balances_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

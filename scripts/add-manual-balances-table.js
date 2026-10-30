@@ -31,19 +31,17 @@ async function main() {
   try {
     const [tables] = await pool.query(
       `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'bank_cards' LIMIT 1`,
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'manual_balances' LIMIT 1`,
       [process.env.MYSQL_DATABASE]
     );
     if (tables.length) {
-      console.log('OK: bank_cards already exists');
+      console.log('OK: manual_balances already exists');
       return;
     }
-    const sql = fs.readFileSync(
-      path.join(__dirname, '../database/migrations/20261029_bank_cards.sql'),
-      'utf8'
+    await pool.query(
+      fs.readFileSync(path.join(__dirname, '../database/migrations/20261030_manual_balances.sql'), 'utf8')
     );
-    await pool.query(sql);
-    console.log('OK: bank_cards created');
+    console.log('OK: manual_balances created');
   } catch (err) {
     console.error('FAILED:', err.message || err);
     process.exitCode = 1;

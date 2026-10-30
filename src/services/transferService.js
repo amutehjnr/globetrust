@@ -4,7 +4,7 @@ const { isPositiveAmount, normalizeAmount } = require('../utils/money');
 
 function createTransferService({ transferRepo, coreBanking, logger, alertService }) {
   return {
-    async getBalancesForLinks(links) {
+    async getBalancesForLinks(links, userId) {
       const out = [];
       for (const link of links) {
         if (link.linkStatus !== 'active') {
@@ -12,10 +12,24 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
           continue;
         }
         try {
-          const bal = await coreBanking.getBalance({
+          let bal = await coreBanking.getBalance({
             externalAccountRef: link.externalAccountRef,
             currency: link.currencyCode
           });
+          // Prefer admin/manual DB balance when present
+          const uid = userId || link.userId;
+          if (transferRepo.getManualBalance && uid) {
+            const mb = await transferRepo.getManualBalance(uid, link.currencyCode);
+            if (mb) {
+              bal = {
+                ...bal,
+                available: mb.available,
+                ledger: mb.ledger,
+                currency: mb.currency || link.currencyCode,
+                source: 'manual_ledger'
+              };
+            }
+          }
           out.push({
             ...link,
             balance: bal,
@@ -23,6 +37,26 @@ function createTransferService({ transferRepo, coreBanking, logger, alertService
           });
         } catch (err) {
           logger.error({ err, linkId: link.id }, 'Balance fetch failed');
+          // Still try manual ledger
+          const uid2 = userId || link.userId;
+          if (transferRepo.getManualBalance && uid2) {
+            try {
+              const mb = await transferRepo.getManualBalance(uid2, link.currencyCode);
+              if (mb) {
+                out.push({
+                  ...link,
+                  balance: {
+                    available: mb.available,
+                    ledger: mb.ledger,
+                    currency: mb.currency || link.currencyCode,
+                    asOf: new Date().toISOString()
+                  },
+                  note: null
+                });
+                continue;
+              }
+            } catch (_) {}
+          }
           out.push({ ...link, balance: null, note: 'provider_error' });
         }
       }

@@ -266,7 +266,90 @@ function createTransferRepository(pool) {
          WHERE provider_code = ? AND event_id = ?`,
         [status, providerCode, eventId]
       );
-    }
+    },
+
+    async getManualBalance(userId, currencyCode) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT available, ledger, currency_code FROM manual_balances
+           WHERE user_id = ? AND currency_code = ? LIMIT 1`,
+          [uuidToBinary(userId), String(currencyCode || 'USD').toUpperCase()]
+        );
+        if (!rows[0]) return null;
+        return {
+          available: String(rows[0].available),
+          ledger: String(rows[0].ledger),
+          currency: rows[0].currency_code
+        };
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return null;
+        throw err;
+      }
+    },
+
+    async listManualBalances(userId) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT currency_code, available, ledger, updated_at
+           FROM manual_balances WHERE user_id = ? ORDER BY currency_code`,
+          [uuidToBinary(userId)]
+        );
+        return rows.map((r) => ({
+          currencyCode: r.currency_code,
+          available: Number(r.available),
+          ledger: Number(r.ledger),
+          updatedAt: r.updated_at
+        }));
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return [];
+        throw err;
+      }
+    },
+
+    /** Credit (positive) or debit (negative) amount. mode=set replaces balance. */
+    async creditManualBalance(userId, currencyCode, amount, { mode = 'credit' } = {}) {
+      const cur = String(currencyCode || 'USD').toUpperCase().slice(0, 3);
+      const amt = Number(amount);
+      if (Number.isNaN(amt)) {
+        const err = new Error('Invalid amount.');
+        err.status = 400;
+        throw err;
+      }
+      const uid = uuidToBinary(userId);
+      const [existing] = await pool.query(
+        `SELECT available, ledger FROM manual_balances WHERE user_id = ? AND currency_code = ? LIMIT 1`,
+        [uid, cur]
+      );
+      let nextAvail;
+      let nextLedger;
+      if (mode === 'set') {
+        nextAvail = amt;
+        nextLedger = amt;
+      } else {
+        const prev = existing[0] ? Number(existing[0].available) : 0;
+        nextAvail = prev + amt;
+        nextLedger = existing[0] ? Number(existing[0].ledger) + amt : amt;
+      }
+      if (nextAvail < 0) {
+        const err = new Error('Balance cannot go negative.');
+        err.status = 400;
+        throw err;
+      }
+      if (existing[0]) {
+        await pool.query(
+          `UPDATE manual_balances SET available = ?, ledger = ? WHERE user_id = ? AND currency_code = ?`,
+          [nextAvail.toFixed(2), nextLedger.toFixed(2), uid, cur]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO manual_balances (user_id, currency_code, available, ledger)
+           VALUES (?, ?, ?, ?)`,
+          [uid, cur, nextAvail.toFixed(2), nextLedger.toFixed(2)]
+        );
+      }
+      return { currencyCode: cur, available: nextAvail, ledger: nextLedger };
+    },
+
   };
 }
 

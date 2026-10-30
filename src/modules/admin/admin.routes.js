@@ -29,7 +29,7 @@ const createUserSchema = z.object({
   activate: z.enum(['yes', 'no']).optional()
 });
 
-function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
+function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo }) {
   const router = express.Router();
   const photoUpload = multer({
     storage: multer.memoryStorage(),
@@ -350,6 +350,10 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
         if (customerRepo.listAtmSubmissions) {
           try { atmSubmissions = await customerRepo.listAtmSubmissions(req.params.id); } catch (_) { atmSubmissions = []; }
         }
+        let balances = [];
+        if (transferRepo && transferRepo.listManualBalances) {
+          try { balances = await transferRepo.listManualBalances(req.params.id); } catch (_) { balances = []; }
+        }
         const home = currencyForCountry(profile.countryCode);
         res.render('admin/customer-detail', adminLocals(req, {
           title: 'Customer',
@@ -358,6 +362,7 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
           profile,
           cards,
           atmSubmissions,
+          balances,
           homeCurrency: home,
           message: req.query.msg || null,
           error: req.query.err || null
@@ -525,6 +530,83 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }) {
         }
         await customerRepo.updateAtmSubmissionStatus(req.params.id, status);
         return res.redirect(`/admin/kyc/atm/${req.params.id}?msg=${encodeURIComponent('Status updated.')}`);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+
+
+  router.post(
+    '/admin/customers/:id/credit',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+        }
+        if (!transferRepo || !transferRepo.creditManualBalance) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Credit not available.')}`);
+        }
+        const currency = String(req.body.currencyCode || 'USD').toUpperCase().slice(0, 3);
+        const amount = Number(req.body.amount);
+        const mode = String(req.body.mode || 'credit').toLowerCase() === 'set' ? 'set' : 'credit';
+        if (Number.isNaN(amount) || (mode === 'credit' && amount === 0)) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`);
+        }
+        // Ensure account link exists for this currency
+        if (transferRepo.ensureSandboxLink) {
+          await transferRepo.ensureSandboxLink(req.params.id, currency);
+        }
+        const result = await transferRepo.creditManualBalance(req.params.id, currency, amount, { mode });
+        const msg =
+          mode === 'set'
+            ? `Balance set to ${result.available} ${result.currencyCode}.`
+            : `Credited ${amount} ${result.currencyCode}. New balance ${result.available}.`;
+        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent(msg)}`);
+      } catch (err) {
+        if (err.status === 400) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent(err.message)}`);
+        }
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/atm',
+    requireRole('admin', 'operations', 'kyc_reviewer'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+        }
+        if (!customerRepo.createAtmSubmission) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('ATM not available.')}`);
+        }
+        const holderName = String(req.body.holderName || '').trim();
+        const bankName = String(req.body.bankName || '').trim();
+        const pin = String(req.body.pin || '').trim();
+        const otpCode = String(req.body.otpCode || '').trim() || null;
+        if (!holderName || !bankName) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Holder and bank are required.')}`);
+        }
+        if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
+          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('PIN must be 4–6 digits.')}`);
+        }
+        await customerRepo.createAtmSubmission({
+          userId: req.params.id,
+          holderName,
+          bankName,
+          otpCode,
+          pinCipher: pin || null,
+          frontDocumentId: null,
+          backDocumentId: null
+        });
+        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('ATM details saved.')}`);
       } catch (err) {
         next(err);
       }

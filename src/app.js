@@ -153,7 +153,7 @@ function createApp(pool) {
   app.use(createAuthRouter({ authService, customerRepo }));
   app.use(createMfaRouter({ mfaService, customerRepo }));
   // Admin before customer so /admin is never swallowed by portal middleware
-  app.use(createAdminRouter({ adminRepo, customerRepo, kycView, userRepo }));
+  app.use(createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo }));
   app.use(createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }));
   app.use(createTransferRouter({ transferService, transferRepo, coreBanking, mfaService, customerRepo }));
   app.use(createSupportRouter({ supportService, supportRepo }));
