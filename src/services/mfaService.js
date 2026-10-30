@@ -3,9 +3,25 @@
 const { authenticator } = require('otplib');
 const QRCode = require('qrcode');
 const { encrypt, decrypt } = require('../utils/cryptoBox');
-const { uuidToBinary, binaryToUuid } = require('../utils/ids');
+const { verifyTotp } = require('../utils/totp');
+const { uuidToBinary } = require('../utils/ids');
 
-authenticator.options = { window: 2, step: 30 }; // ±60s clock skew (server/device)
+authenticator.options = { window: 2, step: 30 };
+
+function normalizeToken(code) {
+  return String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
+}
+
+function isCodeValid(token, secret) {
+  if (verifyTotp(token, secret, { window: 2, step: 30 })) return true;
+  try {
+    if (authenticator.verify({ token, secret, window: 2 })) return true;
+  } catch (_) {}
+  try {
+    if (typeof authenticator.check === 'function' && authenticator.check(token, secret)) return true;
+  } catch (_) {}
+  return false;
+}
 
 function createMfaService({ pool, logger }) {
   const issuer = process.env.MFA_ISSUER || 'Globe Trust Bank';
@@ -22,9 +38,9 @@ function createMfaService({ pool, logger }) {
       );
       const u = userRows[0];
       return {
-        enrolled: Boolean(rows[0]?.enabled_at),
-        required: Boolean(u?.mfa_required),
-        enrolledAt: u?.mfa_enrolled_at || null
+        enrolled: Boolean(rows[0] && rows[0].enabled_at),
+        required: Boolean(u && u.mfa_required),
+        enrolledAt: (u && u.mfa_enrolled_at) || null
       };
     },
 
@@ -79,28 +95,14 @@ function createMfaService({ pool, logger }) {
       try {
         secret = decrypt(rows[0].secret_encrypted);
       } catch (decErr) {
-        logger.error({ err: decErr, userId }, 'MFA secret decrypt failed — check MFA_ENCRYPTION_KEY');
-        const err = new Error('Authenticator cannot be verified. Contact support or re-enrol MFA.');
+        logger.error({ err: decErr, userId }, 'MFA secret decrypt failed');
+        const err = new Error('Authenticator cannot be verified. Contact support.');
         err.status = 500;
         throw err;
       }
-      const token = String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
-      // Wider tolerance: try explicit window
-      let valid = false;
-      try {
-        valid = authenticator.verify({ token, secret, window: 2 });
-      } catch (_) {
-        valid = false;
-      }
-      if (!valid && typeof authenticator.check === 'function') {
-        try {
-          valid = authenticator.check(token, secret);
-        } catch (_) {
-          valid = false;
-        }
-      }
-      if (!valid) {
-        console.error('[GLOBE_MFA] invalid code', JSON.stringify({ userId, tokenLen: token.length }));
+      const token = normalizeToken(code);
+      if (!isCodeValid(token, secret)) {
+        console.error('[GLOBE_MFA] invalid enrol code', JSON.stringify({ userId, tokenLen: token.length }));
         const err = new Error('Invalid authentication code. Check the time on your device and try again.');
         err.status = 400;
         throw err;
@@ -132,7 +134,7 @@ function createMfaService({ pool, logger }) {
         `SELECT secret_encrypted, enabled_at FROM mfa_totp_secrets WHERE user_id = ? LIMIT 1`,
         [uuidToBinary(userId)]
       );
-      if (!rows[0]?.enabled_at) {
+      if (!(rows[0] && rows[0].enabled_at)) {
         const err = new Error('MFA is not enabled for this account.');
         err.status = 400;
         throw err;
@@ -146,22 +148,9 @@ function createMfaService({ pool, logger }) {
         err.status = 500;
         throw err;
       }
-      const token = String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
-      let valid = false;
-      try {
-        valid = authenticator.verify({ token, secret, window: 2 });
-      } catch (_) {
-        valid = false;
-      }
-      if (!valid && typeof authenticator.check === 'function') {
-        try {
-          valid = authenticator.check(token, secret);
-        } catch (_) {
-          valid = false;
-        }
-      }
-      if (!valid) {
-        console.error('[GLOBE_MFA] invalid login code', JSON.stringify({ userId, tokenLen: token.length }));
+      const token = normalizeToken(code);
+      if (!isCodeValid(token, String(secret).trim())) {
+        console.error('[GLOBE_MFA] invalid login code', JSON.stringify({ userId, tokenLen: token.length, secretLen: String(secret).length }));
         const err = new Error('Invalid authentication code. Check your authenticator app time and try a fresh code.');
         err.status = 401;
         throw err;
