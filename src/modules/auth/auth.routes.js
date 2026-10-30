@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const crypto = require('node:crypto');
 const {
   registerSchema,
   loginSchema,
@@ -99,6 +100,13 @@ function createAuthRouter({ authService, customerRepo }) {
         console.warn('[GLOBE_LOGIN] no roles from DB — defaulting to customer');
         roles = ['customer'];
       }
+      // Ensure normal users always have customer role so /dashboard is not 403
+      if (
+        !roles.includes('customer') &&
+        !roles.some((r) => STAFF_ROLES.includes(r))
+      ) {
+        roles.push('customer');
+      }
 
       const nextUrl = safeNextUrl(req.body.next, roles);
       console.log('[GLOBE_LOGIN] redirect', JSON.stringify({ roles, nextUrl }));
@@ -106,6 +114,13 @@ function createAuthRouter({ authService, customerRepo }) {
       if (result.needsMfa) {
         req.session.pendingMfaUser = { ...result.user, roles };
         req.session.pendingMfaNext = nextUrl;
+
+        // Ensure a CSRF token exists and is persisted before redirect
+        // (critical on Vercel / Redis — avoids stale token on /mfa/verify)
+        if (!req.session.csrfToken) {
+          req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
+        }
+
         await new Promise((resolve, reject) => {
           req.session.save((err) => (err ? reject(err) : resolve()));
         });
@@ -210,9 +225,9 @@ function createAuthRouter({ authService, customerRepo }) {
   router.post('/auth/register', registerLimiter, requireCsrf, handleRegister);
 
   router.post('/sign-out', (req, res) => {
-     const finish = () => {
+    const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
-      return res.redirect(303, '/');   // ← change this
+      return res.redirect(303, '/');
     };
     if (!req.session) return finish();
     req.session.destroy(() => finish());
@@ -221,12 +236,12 @@ function createAuthRouter({ authService, customerRepo }) {
   router.get('/sign-out', (req, res) => {
     const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
-      return res.redirect(303, '/');   // ← and this one for consistency
+      return res.redirect(303, '/');
     };
     if (!req.session) return finish();
     req.session.destroy(() => finish());
   });
-  
+
   router.get('/forgot-password', (req, res) => {
     res.render('auth/forgot-password', {
       title: 'Forgot password',
