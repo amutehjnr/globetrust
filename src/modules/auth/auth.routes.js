@@ -210,9 +210,9 @@ function createAuthRouter({ authService, customerRepo }) {
   router.post('/auth/register', registerLimiter, requireCsrf, handleRegister);
 
   router.post('/sign-out', (req, res) => {
-    const finish = () => {
+     const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
-      return res.redirect('/');
+      return res.redirect(303, '/');   // ← change this
     };
     if (!req.session) return finish();
     req.session.destroy(() => finish());
@@ -221,12 +221,12 @@ function createAuthRouter({ authService, customerRepo }) {
   router.get('/sign-out', (req, res) => {
     const finish = () => {
       res.clearCookie(process.env.SESSION_COOKIE_NAME || 'gtb.sid');
-      return res.redirect('/');
+      return res.redirect(303, '/');   // ← and this one for consistency
     };
     if (!req.session) return finish();
     req.session.destroy(() => finish());
   });
-
+  
   router.get('/forgot-password', (req, res) => {
     res.render('auth/forgot-password', {
       title: 'Forgot password',
