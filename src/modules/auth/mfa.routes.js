@@ -51,7 +51,8 @@ function createMfaRouter({ mfaService, customerRepo }) {
         path: '/mfa/enrol',
         error: null,
         secret: enrolment.secret,
-        qrDataUrl: enrolment.qrDataUrl
+        qrDataUrl: enrolment.qrDataUrl,
+        enrolToken: enrolment.enrolToken
       });
     } catch (err) {
       next(err);
@@ -62,7 +63,8 @@ function createMfaRouter({ mfaService, customerRepo }) {
     try {
       const code = parseCode(req.body);
       await mfaService.confirmEnrolment(req.session.user.id, code, {
-        pendingSecret: req.session.mfaEnrolSecret || null
+        pendingSecret: req.session.mfaEnrolSecret || null,
+        enrolToken: req.body.enrolToken || null
       });
       delete req.session.mustEnrollMfa;
       delete req.session.mfaEnrolPending;
@@ -86,7 +88,8 @@ function createMfaRouter({ mfaService, customerRepo }) {
             path: '/mfa/enrol',
             error: err.message,
             secret: enrolment.secret,
-            qrDataUrl: enrolment.qrDataUrl
+            qrDataUrl: enrolment.qrDataUrl,
+            enrolToken: enrolment.enrolToken
           });
         } catch (e) {
           return next(e);

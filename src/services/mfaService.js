@@ -2,6 +2,7 @@
 
 const QRCode = require('qrcode');
 const { encrypt, decrypt } = require('../utils/cryptoBox');
+const crypto = require('node:crypto');
 const {
   generateSecret,
   verifyTotp,
@@ -9,7 +10,27 @@ const {
 } = require('../utils/totp');
 const { uuidToBinary } = require('../utils/ids');
 
+function packEnrolToken(secret) {
+  return encrypt(String(secret)).toString('base64url');
+}
+
+function unpackEnrolToken(token) {
+  if (!token) return null;
+  try {
+    const buf = Buffer.from(String(token), 'base64url');
+    return String(decrypt(buf)).trim().replace(/\s+/g, '');
+  } catch (_) {
+    try {
+      const buf = Buffer.from(String(token), 'base64');
+      return String(decrypt(buf)).trim().replace(/\s+/g, '');
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
 function normalizeToken(code) {
+
   return String(code || '').replace(/\D/g, '').padStart(6, '0').slice(-6);
 }
 
@@ -86,7 +107,7 @@ function createMfaService({ pool, logger }) {
       } catch (err) {
         logger.warn({ err }, 'QR generation failed; manual secret only');
       }
-      return { secret, otpauth, qrDataUrl };
+      return { secret, otpauth, qrDataUrl, enrolToken: packEnrolToken(secret) };
     },
 
     /**
@@ -107,8 +128,15 @@ function createMfaService({ pool, logger }) {
         throw err;
       }
 
-      let secret = opts.pendingSecret ? String(opts.pendingSecret).trim() : null;
+      let secret = null;
+      if (opts.enrolToken) {
+        secret = unpackEnrolToken(opts.enrolToken);
+      }
+      if (!secret && opts.pendingSecret) {
+        secret = String(opts.pendingSecret).trim().replace(/\s+/g, '');
+      }
       if (!secret) {
+
         try {
           secret = decryptSecret(row.secret_encrypted);
         } catch (decErr) {
