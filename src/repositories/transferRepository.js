@@ -1,5 +1,7 @@
 'use strict';
 
+const { COUNTRY_CURRENCY, symbolForCurrency } = require('../utils/currency');
+
 const crypto = require('node:crypto');
 const { newBinaryId, uuidToBinary, binaryToUuid } = require('../utils/ids');
 
@@ -191,7 +193,50 @@ function createTransferRepository(pool) {
       };
     },
 
+    
+    async ensureCurrency(code) {
+      const cur = String(code || 'USD').toUpperCase().slice(0, 3);
+      if (!/^[A-Z]{3}$/.test(cur)) {
+        const err = new Error('Invalid currency code.');
+        err.status = 400;
+        throw err;
+      }
+      // Prefer known display name from country map
+      let name = cur;
+      try {
+        const hit = Object.values(COUNTRY_CURRENCY || {}).find((c) => c.code === cur);
+        if (hit && hit.name) name = hit.name;
+      } catch (_) {}
+      const known = {
+        NGN: 'Nigerian Naira',
+        USD: 'United States Dollar',
+        GBP: 'Pound Sterling',
+        EUR: 'Euro',
+        CAD: 'Canadian Dollar',
+        AUD: 'Australian Dollar',
+        GHS: 'Ghanaian Cedi',
+        KES: 'Kenyan Shilling',
+        ZAR: 'South African Rand',
+        INR: 'Indian Rupee',
+        JPY: 'Japanese Yen',
+        CNY: 'Chinese Yuan',
+        CHF: 'Swiss Franc',
+        AED: 'UAE Dirham',
+        SAR: 'Saudi Riyal',
+        XOF: 'West African CFA Franc',
+        XAF: 'Central African CFA Franc'
+      };
+      if (known[cur]) name = known[cur];
+      await pool.query(
+        `INSERT IGNORE INTO currencies (code, name, minor_units, is_enabled)
+         VALUES (?, ?, 2, TRUE)`,
+        [cur, name]
+      );
+      return cur;
+    },
+
     async ensureSandboxLink(userId, currency = 'NGN') {
+      currency = await this.ensureCurrency(currency);
       // Always strip sandbox wording from account labels for this user
       await pool.query(
         `UPDATE bank_account_links
