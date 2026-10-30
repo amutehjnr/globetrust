@@ -14,6 +14,12 @@
   <div class="db-alert db-alert--err"><%= error %></div>
 <% } %>
 
+<%
+  var staffList = Array.isArray(staff) ? staff : [];
+  var rolesList = Array.isArray(allRoles) ? allRoles : [];
+  var vals = typeof values !== 'undefined' && values ? values : {};
+%>
+
 <section class="db-panel settings-panel">
   <div class="db-panel__head"><h2>Create staff user</h2></div>
   <form method="post" action="/admin/staff">
@@ -21,7 +27,7 @@
     <div class="kyc-grid-2">
       <div class="kyc-field">
         <label>Email</label>
-        <input type="email" name="email" required value="<%= values && values.email || '' %>">
+        <input type="email" name="email" required value="<%= vals.email || '' %>">
       </div>
       <div class="kyc-field">
         <label>Password (min 12)</label>
@@ -29,16 +35,16 @@
       </div>
       <div class="kyc-field">
         <label>First name</label>
-        <input type="text" name="firstName" value="<%= values && values.firstName || 'Staff' %>">
+        <input type="text" name="firstName" value="<%= vals.firstName || 'Staff' %>">
       </div>
       <div class="kyc-field">
         <label>Last name</label>
-        <input type="text" name="lastName" value="<%= values && values.lastName || 'User' %>">
+        <input type="text" name="lastName" value="<%= vals.lastName || 'User' %>">
       </div>
     </div>
     <p style="margin-top:12px;font-size:0.9rem;">Roles (not customer):</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
-      <% (allRoles || []).filter(function(r){ return r.code !== 'customer'; }).forEach(function(r) { %>
+      <% rolesList.filter(function(r){ return r.code !== 'customer'; }).forEach(function(r) { %>
         <label>
           <input type="checkbox" name="roles" value="<%= r.code %>">
           <%= r.code %>
@@ -51,7 +57,7 @@
 
 <section class="db-panel" style="margin-top:16px;">
   <div class="db-panel__head"><h2>Staff list</h2></div>
-  <% if (!(staff || []).length) { %>
+  <% if (!staffList.length) { %>
     <p class="db-muted">No staff users yet.</p>
   <% } else { %>
     <div class="adm-table-wrap">
@@ -65,7 +71,7 @@
           </tr>
         </thead>
         <tbody>
-          <% staff.forEach(function(s) { %>
+          <% staffList.forEach(function(s) { %>
             <tr>
               <td><a href="/admin/customers/<%= s.id %>"><%= s.email %></a></td>
               <td><%= (s.roles || []).join(', ') %></td>

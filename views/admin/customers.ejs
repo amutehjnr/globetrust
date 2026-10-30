@@ -5,64 +5,45 @@
     <h1>Customers</h1>
     <p>Search by email, name, or reference. Filter by status, country, KYC.</p>
   </div>
-  <a class="db-promo__btn" href="/admin/customers/new">
-    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:14px;height:14px;">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    Create account
-  </a>
+  <a class="db-promo__btn" href="/admin/customers/new">Create account</a>
 </div>
 
 <%
   var customerResults = Array.isArray(results) ? results : [];
-  var searchQuery = typeof q === 'string' ? q : '';
+  var qVal = typeof q !== 'undefined' && q ? q : '';
+  var statusVal = typeof status !== 'undefined' && status ? status : '';
+  var countryVal = typeof country !== 'undefined' && country ? country : '';
+  var kycVal = typeof kyc !== 'undefined' && kyc ? kyc : '';
   var total = customerResults.length;
   var active = 0;
   var pending = 0;
-  var other = 0;
   customerResults.forEach(function(c) {
     var s = String(c.status || '').toLowerCase();
     if (s === 'active') active++;
     else if (s === 'pending') pending++;
-    else other++;
   });
 %>
 
 <section class="cust-toolbar">
   <form method="get" action="/admin/customers" class="cust-search-form" role="search" style="flex-wrap:wrap;gap:8px;">
     <div class="cust-search">
-      <input
-        type="search"
-        name="q"
-        value="<%= q || '' %>"
-        placeholder="Search by email, name, or reference…"
-        aria-label="Search customers"
-        autocomplete="off"
-      >
+      <input type="search" name="q" value="<%= qVal %>" placeholder="Search by email, name, or reference…" autocomplete="off">
     </div>
     <select name="status" aria-label="Status">
       <option value="">All statuses</option>
       <% ['pending','active','locked','suspended','closed'].forEach(function(s) { %>
-        <option value="<%= s %>" <%= (typeof status !== 'undefined' && status === s) ? 'selected' : '' %>><%= s %></option>
+        <option value="<%= s %>" <%= statusVal === s ? 'selected' : '' %>><%= s %></option>
       <% }) %>
     </select>
-    <input
-      type="text"
-      name="country"
-      maxlength="2"
-      placeholder="CC"
-      value="<%= typeof country !== 'undefined' ? country : '' %>"
-      style="width:70px;"
-      aria-label="Country code"
-    >
+    <input type="text" name="country" maxlength="2" placeholder="CC" value="<%= countryVal %>" style="width:70px;" aria-label="Country code">
     <select name="kyc" aria-label="KYC status">
       <option value="">Any KYC</option>
       <% ['pending','approved','rejected'].forEach(function(s) { %>
-        <option value="<%= s %>" <%= (typeof kyc !== 'undefined' && kyc === s) ? 'selected' : '' %>><%= s %></option>
+        <option value="<%= s %>" <%= kycVal === s ? 'selected' : '' %>><%= s %></option>
       <% }) %>
     </select>
     <button type="submit" class="cust-search-btn">Search</button>
-    <% if (q || status || country || kyc) { %>
+    <% if (qVal || statusVal || countryVal || kycVal) { %>
       <a href="/admin/customers" class="cust-search-clear">Clear</a>
     <% } %>
   </form>
@@ -70,18 +51,9 @@
 
 <% if (total > 0) { %>
   <section class="cust-summary">
-    <div class="cust-summary-item">
-      <span class="cust-summary-label">Total</span>
-      <strong class="cust-summary-value"><%= total %></strong>
-    </div>
-    <div class="cust-summary-item">
-      <span class="cust-summary-label">Active</span>
-      <strong class="cust-summary-value cust-summary-value-ok"><%= active %></strong>
-    </div>
-    <div class="cust-summary-item">
-      <span class="cust-summary-label">Pending</span>
-      <strong class="cust-summary-value cust-summary-value-warn"><%= pending %></strong>
-    </div>
+    <div class="cust-summary-item"><span class="cust-summary-label">Total</span><strong class="cust-summary-value"><%= total %></strong></div>
+    <div class="cust-summary-item"><span class="cust-summary-label">Active</span><strong class="cust-summary-value cust-summary-value-ok"><%= active %></strong></div>
+    <div class="cust-summary-item"><span class="cust-summary-label">Pending</span><strong class="cust-summary-value cust-summary-value-warn"><%= pending %></strong></div>
   </section>
 <% } %>
 
@@ -90,8 +62,7 @@
     <h2>Customer list</h2>
     <span class="cust-panel-count"><%= total %> shown</span>
   </div>
-
-  <% if (!results || !results.length) { %>
+  <% if (!customerResults.length) { %>
     <div class="cust-empty">
       <h3>No customers match</h3>
       <p>Try different filters or create a customer.</p>
@@ -112,7 +83,7 @@
           </tr>
         </thead>
         <tbody>
-          <% results.forEach(function(c) { %>
+          <% customerResults.forEach(function(c) { %>
             <%
               var fn = c.firstName || '';
               var ln = c.lastName || '';
@@ -130,11 +101,7 @@
                 </div>
               </td>
               <td><a href="mailto:<%= c.email %>" class="cust-email"><%= c.email %></a></td>
-              <td>
-                <% if (c.customerReference) { %>
-                  <code class="cust-ref"><%= c.customerReference %></code>
-                <% } else { %>—<% } %>
-              </td>
+              <td><% if (c.customerReference) { %><code class="cust-ref"><%= c.customerReference %></code><% } else { %>—<% } %></td>
               <td><%= c.countryCode || '—' %></td>
               <td>
                 <span class="cust-badge cust-badge-<%= statusClass %>">
@@ -142,12 +109,8 @@
                   <%= statusLabel %>
                 </span>
               </td>
-              <td class="cust-cell-date">
-                <%= c.createdAt ? String(c.createdAt).split('T')[0] || c.createdAt : '—' %>
-              </td>
-              <td>
-                <a href="/admin/customers/<%= c.id %>" class="cust-row-action" title="View">→</a>
-              </td>
+              <td class="cust-cell-date"><%= c.createdAt ? String(c.createdAt).split('T')[0] || c.createdAt : '—' %></td>
+              <td><a href="/admin/customers/<%= c.id %>" class="cust-row-action" title="View">→</a></td>
             </tr>
           <% }) %>
         </tbody>

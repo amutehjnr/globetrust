@@ -7,30 +7,36 @@
   </div>
 </div>
 
+<%
+  var r = typeof report !== 'undefined' && report ? report : {};
+  var tbs = r.transfersByStatus || {};
+  var days = Array.isArray(r.registrationsDaily) ? r.registrationsDaily : [];
+%>
+
 <section class="adm-kpi-grid">
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">Registrations today</span>
-    <strong class="adm-kpi-value"><%= report.registrationsToday %></strong>
+    <strong class="adm-kpi-value"><%= r.registrationsToday != null ? r.registrationsToday : 0 %></strong>
   </article>
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">Registrations (7d)</span>
-    <strong class="adm-kpi-value"><%= report.registrations7d %></strong>
+    <strong class="adm-kpi-value"><%= r.registrations7d != null ? r.registrations7d : 0 %></strong>
   </article>
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">Transfers (7d)</span>
-    <strong class="adm-kpi-value"><%= report.transfers7d %></strong>
+    <strong class="adm-kpi-value"><%= r.transfers7d != null ? r.transfers7d : 0 %></strong>
   </article>
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">Volume (7d)</span>
-    <strong class="adm-kpi-value"><%= report.transferVolume7d %></strong>
+    <strong class="adm-kpi-value"><%= r.transferVolume7d != null ? r.transferVolume7d : 0 %></strong>
   </article>
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">KYC pending</span>
-    <strong class="adm-kpi-value"><%= report.kycPending %></strong>
+    <strong class="adm-kpi-value"><%= r.kycPending != null ? r.kycPending : 0 %></strong>
   </article>
   <article class="adm-kpi-card">
     <span class="adm-kpi-label">KYC approved (7d)</span>
-    <strong class="adm-kpi-value"><%= report.kycApproved7d %></strong>
+    <strong class="adm-kpi-value"><%= r.kycApproved7d != null ? r.kycApproved7d : 0 %></strong>
   </article>
 </section>
 
@@ -40,7 +46,6 @@
       <h2>Transfers by status (7d)</h2>
     </div>
   </div>
-  <% var tbs = report.transfersByStatus || {}; %>
   <% if (!Object.keys(tbs).length) { %>
     <p class="db-muted">No transfer data.</p>
   <% } else { %>
@@ -59,13 +64,14 @@
       <p>Last ~14 days</p>
     </div>
   </div>
-  <% var days = report.registrationsDaily || []; %>
   <% if (!days.length) { %>
     <p class="db-muted">No registration data.</p>
   <% } else { %>
     <div class="adm-table-wrap">
       <table class="adm-table">
-        <thead><tr><th>Date</th><th>Count</th></tr></thead>
+        <thead>
+          <tr><th>Date</th><th>Count</th></tr>
+        </thead>
         <tbody>
           <% days.forEach(function(d) { %>
             <tr>

@@ -14,22 +14,31 @@
   <div class="db-alert db-alert--err"><%= error %></div>
 <% } %>
 
+<%
+  var statusVal = typeof status !== 'undefined' && status ? status : '';
+  var qVal = typeof q !== 'undefined' && q ? q : '';
+  var list = Array.isArray(transfers) ? transfers : [];
+%>
+
 <section class="cust-toolbar">
-  <form method="get" action="/admin/transfers" class="cust-search-form">
-    <input type="search" name="q" value="<%= q || '' %>" placeholder="Email or reference…">
+  <form method="get" action="/admin/transfers" class="cust-search-form" style="flex-wrap:wrap;gap:8px;">
+    <input type="search" name="q" value="<%= qVal %>" placeholder="Email or reference…">
     <select name="status">
       <option value="">All statuses</option>
       <% ['created','pending_approval','submitted','processing','succeeded','failed','reversed','unknown'].forEach(function(s) { %>
-        <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+        <option value="<%= s %>" <%= statusVal === s ? 'selected' : '' %>><%= s %></option>
       <% }) %>
     </select>
     <button type="submit" class="cust-search-btn">Filter</button>
+    <% if (qVal || statusVal) { %>
+      <a href="/admin/transfers" class="cust-search-clear">Clear</a>
+    <% } %>
   </form>
 </section>
 
 <section class="db-panel">
-  <% if (!(transfers || []).length) { %>
-    <p class="db-muted">No transfers found.</p>
+  <% if (!list.length) { %>
+    <p class="db-muted" style="padding:1rem 0;">No transfers found.</p>
   <% } else { %>
     <div class="adm-table-wrap">
       <table class="adm-table">
@@ -44,7 +53,7 @@
           </tr>
         </thead>
         <tbody>
-          <% transfers.forEach(function(t) { %>
+          <% list.forEach(function(t) { %>
             <tr>
               <td>
                 <a href="/admin/customers/<%= t.userId %>"><%= t.email %></a>

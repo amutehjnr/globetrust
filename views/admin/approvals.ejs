@@ -14,6 +14,8 @@
   <div class="db-alert db-alert--err"><%= error %></div>
 <% } %>
 
+<% var list = Array.isArray(approvals) ? approvals : []; %>
+
 <section class="db-panel settings-panel">
   <div class="db-panel__head"><h2>Request approval</h2></div>
   <form method="post" action="/admin/approvals">
@@ -21,11 +23,11 @@
     <div class="kyc-grid-2">
       <div class="kyc-field">
         <label>Action type</label>
-        <input type="text" name="actionType" required placeholder="e.g. large_credit">
+        <input type="text" name="actionType" required placeholder="e.g. large_credit" maxlength="80">
       </div>
       <div class="kyc-field">
         <label>Target reference</label>
-        <input type="text" name="targetReference" required placeholder="user id or transfer id">
+        <input type="text" name="targetReference" required placeholder="user id or transfer id" maxlength="128">
       </div>
       <div class="kyc-field" style="grid-column:1/-1;">
         <label>Reason</label>
@@ -38,7 +40,7 @@
 
 <section class="db-panel" style="margin-top:16px;">
   <div class="db-panel__head"><h2>Pending approvals</h2></div>
-  <% if (!(approvals || []).length) { %>
+  <% if (!list.length) { %>
     <p class="db-muted">No pending approvals.</p>
   <% } else { %>
     <div class="adm-table-wrap">
@@ -54,7 +56,7 @@
           </tr>
         </thead>
         <tbody>
-          <% approvals.forEach(function(a) { %>
+          <% list.forEach(function(a) { %>
             <tr>
               <td><%= a.actionType %></td>
               <td><code><%= a.targetReference %></code></td>

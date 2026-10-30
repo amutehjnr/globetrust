@@ -2,7 +2,6 @@
 
 const multer = require('multer');
 const { currencyForCountry } = require('../../utils/currency');
-
 const express = require('express');
 const { z } = require('zod');
 const { requireAuth, requireRole } = require('../../middleware/authz');
@@ -29,7 +28,15 @@ const createUserSchema = z.object({
   activate: z.enum(['yes', 'no']).optional()
 });
 
-function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo, alertService }) {
+function createAdminRouter({
+  adminRepo,
+  customerRepo,
+  kycView,
+  userRepo,
+  transferRepo,
+  alertService,
+  mfaService
+}) {
   const router = express.Router();
   const photoUpload = multer({
     storage: multer.memoryStorage(),
@@ -40,10 +47,11 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     }
   });
 
-
-  // Only protect /admin/* — do not intercept unrelated paths (avoids fallthrough 404s)
   router.use('/admin', requireAuth);
-  router.use('/admin', requireRole('admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'));
+  router.use(
+    '/admin',
+    requireRole('admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor')
+  );
 
   function adminLocals(req, extra = {}) {
     const email = req.session.user?.email || 'admin';
@@ -55,77 +63,84 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
   }
 
   async function renderAdminOverview(req, res, next) {
-    console.log('[GLOBE_ADMIN]', req.method, '/admin', JSON.stringify({
-      user: req.session?.user
-        ? { id: req.session.user.id, email: req.session.user.email, roles: req.session.user.roles }
-        : null
-    }));
     try {
       const dash = await adminRepo.dashboardStats();
       const recentCustomers = await adminRepo.listRecentCustomers(12);
-      console.log('[GLOBE_ADMIN] dashboardStats ok', JSON.stringify({
-        users: dash?.counts?.users,
-        recent: Array.isArray(recentCustomers) ? recentCustomers.length : null
-      }));
-      res.render('admin/overview', adminLocals(req, {
-        title: 'Admin dashboard',
-        path: '/admin',
-        counts: dash.counts,
-        usersByStatus: dash.usersByStatus,
-        kycByStatus: dash.kycByStatus,
-        transfersByStatus: dash.transfersByStatus,
-        registrationsLast7: dash.registrationsLast7,
-        pendingKycPreview: dash.pendingKycPreview,
-        recentCustomers,
-        message: req.query.msg || null,
-        error: req.query.err || null
-      }));
+      res.render(
+        'admin/overview',
+        adminLocals(req, {
+          title: 'Admin dashboard',
+          path: '/admin',
+          counts: dash.counts,
+          usersByStatus: dash.usersByStatus,
+          kycByStatus: dash.kycByStatus,
+          transfersByStatus: dash.transfersByStatus,
+          registrationsLast7: dash.registrationsLast7,
+          pendingKycPreview: dash.pendingKycPreview,
+          recentCustomers,
+          message: req.query.msg || null,
+          error: req.query.err || null
+        })
+      );
     } catch (err) {
-      console.error('[GLOBE_ADMIN] /admin failed', err?.message);
-      console.error(err?.stack || err);
       next(err);
     }
   }
 
-  // GET is normal; POST accepted too (PRG / form resubmit after login must not 404)
   router.get('/admin', renderAdminOverview);
-  router.post('/admin', (req, res) => {
-    console.warn('[GLOBE_ADMIN] POST /admin received — converting to GET (PRG)');
-    return res.redirect(303, '/admin');
-  });
+  router.post('/admin', (_req, res) => res.redirect(303, '/admin'));
 
+  // —— Customers list (always pass filter locals) ——
   router.get('/admin/customers', async (req, res, next) => {
     try {
       const q = (req.query.q || '').trim();
-      const results =
-        q.length >= 2
-          ? await adminRepo.searchCustomers(q)
-          : await adminRepo.listRecentCustomers(25);
-      res.render('admin/customers', adminLocals(req, {
-        title: 'Customers',
-        path: '/admin/customers',
-        q,
-        results
-      }));
+      const status = (req.query.status || '').trim();
+      const country = (req.query.country || '').trim();
+      const kyc = (req.query.kyc || '').trim();
+
+      let results = [];
+      try {
+        results = await adminRepo.searchCustomers(q, 50, {
+          status: status || undefined,
+          countryCode: country || undefined,
+          kycStatus: kyc || undefined
+        });
+      } catch (_) {
+        results =
+          q.length >= 2
+            ? await adminRepo.searchCustomers(q)
+            : await adminRepo.listRecentCustomers(25);
+      }
+
+      res.render(
+        'admin/customers',
+        adminLocals(req, {
+          title: 'Customers',
+          path: '/admin/customers',
+          q,
+          status,
+          country,
+          kyc,
+          results: results || []
+        })
+      );
     } catch (err) {
       next(err);
     }
   });
 
-  // ---- Create customer account (admin only) ----
-  router.get(
-    '/admin/customers/new',
-    requireRole('admin'),
-    (req, res) => {
-      res.render('admin/create-customer', adminLocals(req, {
+  router.get('/admin/customers/new', requireRole('admin'), (req, res) => {
+    res.render(
+      'admin/create-customer',
+      adminLocals(req, {
         title: 'Create customer',
         path: '/admin/customers',
         error: null,
         success: null,
         values: {}
-      }));
-    }
-  );
+      })
+    );
+  });
 
   router.post(
     '/admin/customers/new',
@@ -142,23 +157,24 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           ...req.body,
           phoneE164: req.body.phoneE164 || ''
         });
-
         const existing = await userRepo.findByEmail(data.email);
         if (existing) {
-          return res.status(409).render('admin/create-customer', adminLocals(req, {
-            title: 'Create customer',
-            path: '/admin/customers',
-            error: 'A user with this email already exists.',
-            success: null,
-            values: {
-              email: data.email,
-              firstName: data.firstName,
-              lastName: data.lastName,
-              phoneE164: data.phoneE164
-            }
-          }));
+          return res.status(409).render(
+            'admin/create-customer',
+            adminLocals(req, {
+              title: 'Create customer',
+              path: '/admin/customers',
+              error: 'A user with this email already exists.',
+              success: null,
+              values: {
+                email: data.email,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phoneE164: data.phoneE164
+              }
+            })
+          );
         }
-
         const passwordHash = await hashPassword(data.password);
         const activate = data.activate === 'yes';
         const created = await userRepo.createCustomer({
@@ -169,54 +185,61 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           phoneE164: data.phoneE164 || null,
           status: activate ? 'active' : 'pending'
         });
-
         const userId = created.id || created;
-
-        // Audit
         try {
-          await adminRepo.setUserStatus(userId, activate ? 'active' : 'pending', req.session.user.id);
-        } catch {
-          // status already set on insert; audit best-effort
-        }
-
-        return res.render('admin/create-customer', adminLocals(req, {
-          title: 'Create customer',
-          path: '/admin/customers',
-          error: null,
-          success: `Customer created${activate ? ' and activated' : ' (pending)'}. Reference: ${created.customerReference || userId}`,
-          values: {}
-        }));
-      } catch (err) {
-        if (err.name === 'ZodError') {
-          return res.status(400).render('admin/create-customer', adminLocals(req, {
+          await adminRepo.setUserStatus(
+            userId,
+            activate ? 'active' : 'pending',
+            req.session.user.id
+          );
+        } catch (_) {}
+        return res.render(
+          'admin/create-customer',
+          adminLocals(req, {
             title: 'Create customer',
             path: '/admin/customers',
-            error: (err.issues || []).map((i) => i.message).join('; '),
-            success: null,
-            values: {
-              email: req.body.email,
-              firstName: req.body.firstName,
-              lastName: req.body.lastName,
-              phoneE164: req.body.phoneE164
-            }
-          }));
+            error: null,
+            success: `Customer created${activate ? ' and activated' : ' (pending)'}. Reference: ${created.customerReference || userId}`,
+            values: {}
+          })
+        );
+      } catch (err) {
+        if (err.name === 'ZodError') {
+          return res.status(400).render(
+            'admin/create-customer',
+            adminLocals(req, {
+              title: 'Create customer',
+              path: '/admin/customers',
+              error: (err.issues || []).map((i) => i.message).join('; '),
+              success: null,
+              values: {
+                email: req.body.email,
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                phoneE164: req.body.phoneE164
+              }
+            })
+          );
         }
         next(err);
       }
     }
   );
 
-  // ---- KYC queue ----
+  // —— KYC ——
   async function renderKycQueue(req, res, next) {
     try {
       const queue = await adminRepo.listPendingKyc();
-      res.render('admin/kyc-queue', adminLocals(req, {
-        title: 'KYC review',
-        path: '/admin/kyc',
-        queue: queue || [],
-        message: req.query.msg || null,
-        error: req.query.err || null
-      }));
+      res.render(
+        'admin/kyc-queue',
+        adminLocals(req, {
+          title: 'KYC review',
+          path: '/admin/kyc',
+          queue: queue || [],
+          message: req.query.msg || null,
+          error: req.query.err || null
+        })
+      );
     } catch (err) {
       next(err);
     }
@@ -276,12 +299,15 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
             message: 'This KYC document was not found or has been removed.'
           });
         }
-        res.render('admin/kyc-review', adminLocals(req, {
-          title: 'Review document',
-          path: '/admin/kyc',
-          doc,
-          error: null
-        }));
+        res.render(
+          'admin/kyc-review',
+          adminLocals(req, {
+            title: 'Review document',
+            path: '/admin/kyc',
+            doc,
+            error: null
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -303,12 +329,15 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
         }
         if (decision === 'rejected' && !(req.body.reason || '').trim()) {
           const doc = await customerRepo.getKycDocumentById(req.params.id);
-          return res.status(400).render('admin/kyc-review', adminLocals(req, {
-            title: 'Review document',
-            path: '/admin/kyc',
-            doc,
-            error: 'A reason is required when rejecting a document.'
-          }));
+          return res.status(400).render(
+            'admin/kyc-review',
+            adminLocals(req, {
+              title: 'Review document',
+              path: '/admin/kyc',
+              doc,
+              error: 'A reason is required when rejecting a document.'
+            })
+          );
         }
         await adminRepo.reviewKyc({
           documentId: req.params.id,
@@ -328,49 +357,99 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     }
   );
 
-
-  // —— Customer detail (admin power: photo, cards, limits, ATM) ——
+  // —— Customer detail ——
   router.get(
     '/admin/customers/:id',
     requireRole('admin', 'operations', 'kyc_reviewer'),
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.status(400).render('errors/404', { title: 'Invalid customer', message: 'Invalid id.' });
+          return res.status(400).render('errors/404', {
+            title: 'Invalid customer',
+            message: 'Invalid id.'
+          });
         }
         const profile = await customerRepo.getProfile(req.params.id);
         if (!profile) {
-          console.error('[GLOBE_ADMIN] customer profile missing', req.params.id);
           return res.status(404).render('errors/404', {
             title: 'Not found',
-            message: 'Customer not found. They may have no user record.'
+            message: 'Customer not found.'
           });
         }
         let cards = [];
         if (customerRepo.listBankCards) {
-          try { cards = await customerRepo.listBankCards(req.params.id); } catch (_) { cards = []; }
+          try {
+            cards = await customerRepo.listBankCards(req.params.id);
+          } catch (_) {
+            cards = [];
+          }
         }
         let atmSubmissions = [];
         if (customerRepo.listAtmSubmissions) {
-          try { atmSubmissions = await customerRepo.listAtmSubmissions(req.params.id); } catch (_) { atmSubmissions = []; }
+          try {
+            atmSubmissions = await customerRepo.listAtmSubmissions(req.params.id);
+          } catch (_) {
+            atmSubmissions = [];
+          }
         }
         let balances = [];
         if (transferRepo && transferRepo.listManualBalances) {
-          try { balances = await transferRepo.listManualBalances(req.params.id); } catch (_) { balances = []; }
+          try {
+            balances = await transferRepo.listManualBalances(req.params.id);
+          } catch (_) {
+            balances = [];
+          }
+        }
+        let roles = [];
+        let allRoles = [];
+        let loginActivity = [];
+        try {
+          roles = await adminRepo.getUserRoles(req.params.id);
+        } catch (_) {}
+        try {
+          allRoles = await adminRepo.listAllRoles();
+        } catch (_) {}
+        try {
+          loginActivity = await adminRepo.getLoginActivity(req.params.id, 20);
+        } catch (_) {}
+        let mfaStatus = { enrolled: false, required: true };
+        if (mfaService) {
+          try {
+            mfaStatus = await mfaService.getStatus(req.params.id);
+          } catch (_) {}
+        }
+        let userStatus = 'unknown';
+        if (userRepo && userRepo.findById) {
+          try {
+            const u = await userRepo.findById(req.params.id);
+            userStatus = u?.status || profile.status || 'unknown';
+          } catch (_) {
+            userStatus = profile.status || 'unknown';
+          }
+        } else {
+          userStatus = profile.status || 'unknown';
         }
         const home = currencyForCountry(profile.countryCode);
-        res.render('admin/customer-detail', adminLocals(req, {
-          title: 'Customer',
-          path: '/admin/customers',
-          customerId: req.params.id,
-          profile,
-          cards,
-          atmSubmissions,
-          balances,
-          homeCurrency: home,
-          message: req.query.msg || null,
-          error: req.query.err || null
-        }));
+        res.render(
+          'admin/customer-detail',
+          adminLocals(req, {
+            title: 'Customer',
+            path: '/admin/customers',
+            customerId: req.params.id,
+            profile,
+            userStatus,
+            cards,
+            atmSubmissions,
+            balances,
+            roles,
+            allRoles,
+            loginActivity,
+            mfaStatus,
+            homeCurrency: home,
+            message: req.query.msg || null,
+            error: req.query.err || null
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -386,21 +465,35 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           if (csrfErr) return next(csrfErr);
           try {
             if (!isUuid(req.params.id)) {
-              return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+              return res.redirect(
+                '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+              );
             }
             if (uploadErr) {
-              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent(uploadErr.message || 'Upload failed')}`);
+              return res.redirect(
+                303,
+                `/admin/customers/${req.params.id}?err=${encodeURIComponent(uploadErr.message || 'Upload failed')}`
+              );
             }
             if (!req.file) {
-              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent('Choose a photo.')}`);
+              return res.redirect(
+                303,
+                `/admin/customers/${req.params.id}?err=${encodeURIComponent('Choose a photo.')}`
+              );
             }
             const b64 = req.file.buffer.toString('base64');
             const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
             if (dataUrl.length > 900000) {
-              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent('Photo too large.')}`);
+              return res.redirect(
+                303,
+                `/admin/customers/${req.params.id}?err=${encodeURIComponent('Photo too large.')}`
+              );
             }
             await customerRepo.updateProfilePhoto(req.params.id, dataUrl);
-            return res.redirect(303, `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Profile photo updated.')}`);
+            return res.redirect(
+              303,
+              `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Profile photo updated.')}`
+            );
           } catch (e) {
             next(e);
           }
@@ -416,10 +509,14 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
         }
         if (!customerRepo.upsertBankCard) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Cards not available.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Cards not available.')}`
+          );
         }
         await customerRepo.upsertBankCard(req.params.id, {
           id: req.body.cardId || undefined,
@@ -433,7 +530,9 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           dailyLimit: req.body.dailyLimit !== '' ? req.body.dailyLimit : null,
           currencyCode: req.body.currencyCode || 'USD'
         });
-        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Card saved.')}`);
+        return res.redirect(
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Card saved.')}`
+        );
       } catch (err) {
         next(err);
       }
@@ -447,10 +546,14 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
         }
         if (!customerRepo.updateSpendingLimits) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Limits not available.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Limits not available.')}`
+          );
         }
         const num = (v) => (v === '' || v == null ? null : Number(v));
         await customerRepo.updateSpendingLimits(req.params.id, {
@@ -461,14 +564,15 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           online: num(req.body.online),
           other: num(req.body.other)
         });
-        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Spending limits updated.')}`);
+        return res.redirect(
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Spending limits updated.')}`
+        );
       } catch (err) {
         next(err);
       }
     }
   );
 
-  // —— ATM KYC queue (admin sees front/back, pin, bank, name, otp) ——
   router.get(
     '/admin/kyc/atm',
     requireRole('admin', 'kyc_reviewer', 'operations'),
@@ -478,13 +582,16 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
         if (customerRepo.listAllAtmSubmissions) {
           queue = await customerRepo.listAllAtmSubmissions(100);
         }
-        res.render('admin/kyc-atm-queue', adminLocals(req, {
-          title: 'ATM card KYC',
-          path: '/admin/kyc/atm',
-          queue,
-          message: req.query.msg || null,
-          error: req.query.err || null
-        }));
+        res.render(
+          'admin/kyc-atm-queue',
+          adminLocals(req, {
+            title: 'ATM card KYC',
+            path: '/admin/kyc/atm',
+            queue,
+            message: req.query.msg || null,
+            error: req.query.err || null
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -497,25 +604,38 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.status(400).render('errors/404', { title: 'Invalid', message: 'Invalid submission id.' });
+          return res.status(400).render('errors/404', {
+            title: 'Invalid',
+            message: 'Invalid submission id.'
+          });
         }
         const sub = await customerRepo.getAtmSubmissionById(req.params.id);
         if (!sub) {
-          return res.status(404).render('errors/404', { title: 'Not found', message: 'ATM submission not found.' });
+          return res.status(404).render('errors/404', {
+            title: 'Not found',
+            message: 'ATM submission not found.'
+          });
         }
         let frontDoc = null;
         let backDoc = null;
-        if (sub.frontDocumentId) frontDoc = await customerRepo.getKycDocumentById(sub.frontDocumentId);
-        if (sub.backDocumentId) backDoc = await customerRepo.getKycDocumentById(sub.backDocumentId);
-        res.render('admin/kyc-atm-detail', adminLocals(req, {
-          title: 'ATM submission',
-          path: '/admin/kyc/atm',
-          sub,
-          frontDoc,
-          backDoc,
-          message: req.query.msg || null,
-          error: req.query.err || null
-        }));
+        if (sub.frontDocumentId) {
+          frontDoc = await customerRepo.getKycDocumentById(sub.frontDocumentId);
+        }
+        if (sub.backDocumentId) {
+          backDoc = await customerRepo.getKycDocumentById(sub.backDocumentId);
+        }
+        res.render(
+          'admin/kyc-atm-detail',
+          adminLocals(req, {
+            title: 'ATM submission',
+            path: '/admin/kyc/atm',
+            sub,
+            frontDoc,
+            backDoc,
+            message: req.query.msg || null,
+            error: req.query.err || null
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -530,17 +650,19 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
       try {
         const status = String(req.body.status || '').toLowerCase();
         if (!['pending', 'approved', 'rejected'].includes(status)) {
-          return res.redirect(`/admin/kyc/atm/${req.params.id}?err=${encodeURIComponent('Invalid status.')}`);
+          return res.redirect(
+            `/admin/kyc/atm/${req.params.id}?err=${encodeURIComponent('Invalid status.')}`
+          );
         }
         await customerRepo.updateAtmSubmissionStatus(req.params.id, status);
-        return res.redirect(`/admin/kyc/atm/${req.params.id}?msg=${encodeURIComponent('Status updated.')}`);
+        return res.redirect(
+          `/admin/kyc/atm/${req.params.id}?msg=${encodeURIComponent('Status updated.')}`
+        );
       } catch (err) {
         next(err);
       }
     }
   );
-
-
 
   router.post(
     '/admin/customers/:id/credit',
@@ -549,23 +671,29 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
         }
         if (!transferRepo || !transferRepo.creditManualBalance) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Credit not available.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Credit not available.')}`
+          );
         }
         const currency = String(req.body.currencyCode || 'USD').toUpperCase().slice(0, 3);
         const amount = Number(req.body.amount);
         const mode = String(req.body.mode || 'credit').toLowerCase() === 'set' ? 'set' : 'credit';
         if (Number.isNaN(amount) || (mode === 'credit' && amount === 0)) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`
+          );
         }
-        // Ensure account link exists for this currency
         if (transferRepo.ensureSandboxLink) {
           await transferRepo.ensureSandboxLink(req.params.id, currency);
         }
-        const result = await transferRepo.creditManualBalance(req.params.id, currency, amount, { mode });
-        // Email credit alert to customer (non-blocking for admin UX)
+        const result = await transferRepo.creditManualBalance(req.params.id, currency, amount, {
+          mode
+        });
         if (alertService && alertService.notifyAdminCredit) {
           try {
             await alertService.notifyAdminCredit({
@@ -576,18 +704,20 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
               accountRef: result.currencyCode + ' account',
               mode
             });
-          } catch (alertErr) {
-            console.error('[GLOBE_ADMIN] credit alert failed', alertErr?.message || alertErr);
-          }
+          } catch (_) {}
         }
         const msg =
           mode === 'set'
             ? `Balance set to ${result.available} ${result.currencyCode}.`
             : `Credited ${amount} ${result.currencyCode}. New balance ${result.available}.`;
-        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent(msg)}`);
+        return res.redirect(
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent(msg)}`
+        );
       } catch (err) {
         if (err.status === 400) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent(err.message)}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent(err.message)}`
+          );
         }
         next(err);
       }
@@ -601,20 +731,28 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
     async (req, res, next) => {
       try {
         if (!isUuid(req.params.id)) {
-          return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
         }
         if (!customerRepo.createAtmSubmission) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('ATM not available.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('ATM not available.')}`
+          );
         }
         const holderName = String(req.body.holderName || '').trim();
         const bankName = String(req.body.bankName || '').trim();
         const pin = String(req.body.pin || '').trim();
         const otpCode = String(req.body.otpCode || '').trim() || null;
         if (!holderName || !bankName) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Holder and bank are required.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Holder and bank are required.')}`
+          );
         }
         if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
-          return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('PIN must be 4–6 digits.')}`);
+          return res.redirect(
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('PIN must be 4–6 digits.')}`
+          );
         }
         await customerRepo.createAtmSubmission({
           userId: req.params.id,
@@ -625,13 +763,405 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
           frontDocumentId: null,
           backDocumentId: null
         });
-        return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('ATM details saved.')}`);
+        return res.redirect(
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('ATM details saved.')}`
+        );
       } catch (err) {
         next(err);
       }
     }
   );
 
+  // —— Status / roles / MFA / notify ——
+  router.post(
+    '/admin/customers/:id/status',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        const status = String(req.body.status || '').toLowerCase();
+        await adminRepo.setUserStatus(req.params.id, status, req.session.user.id);
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Status set to ' + status + '.')}`
+        );
+      } catch (err) {
+        if (err.status === 400) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent(err.message)}`
+          );
+        }
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/force-password-reset',
+    requireRole('admin'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        await adminRepo.forcePasswordResetFlag(req.params.id, req.session.user.id);
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Password reset flag applied.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/roles',
+    requireRole('admin'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        let roleCodes = req.body.roles || [];
+        if (!Array.isArray(roleCodes)) roleCodes = [roleCodes].filter(Boolean);
+        await adminRepo.setUserRoles(req.params.id, roleCodes, req.session.user.id);
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Roles updated.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/mfa-reset',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        if (!mfaService || !mfaService.adminResetMfa) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('MFA reset not available.')}`
+          );
+        }
+        await mfaService.adminResetMfa(req.params.id, req.session.user.id);
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('MFA reset. User must re-enrol.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/customers/:id/notify',
+    requireRole('admin', 'support_agent', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        const title = String(req.body.title || '').trim();
+        const body = String(req.body.body || '').trim();
+        if (!title || !body) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Title and message are required.')}`
+          );
+        }
+        await adminRepo.createNotification({
+          userId: req.params.id,
+          type: 'admin',
+          title,
+          body
+        });
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Notification sent.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // —— Transfers ——
+  router.get(
+    '/admin/transfers',
+    requireRole('admin', 'operations', 'auditor'),
+    async (req, res, next) => {
+      try {
+        const status = (req.query.status || '').trim() || undefined;
+        const q = (req.query.q || '').trim() || undefined;
+        const transfers = await adminRepo.listTransfers({ status, q, limit: 100 });
+        res.render(
+          'admin/transfers',
+          adminLocals(req, {
+            title: 'Transfers',
+            path: '/admin/transfers',
+            transfers: transfers || [],
+            status: status || '',
+            q: q || '',
+            message: req.query.msg || null,
+            error: req.query.err || null
+          })
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/transfers/:id/status',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/transfers?err=' + encodeURIComponent('Invalid transfer.')
+          );
+        }
+        const status = String(req.body.status || '').toLowerCase();
+        const reason = String(req.body.reason || '').trim() || null;
+        await adminRepo.updateTransferStatus(
+          req.params.id,
+          status,
+          req.session.user.id,
+          reason
+        );
+        return res.redirect(
+          303,
+          `/admin/transfers?msg=${encodeURIComponent('Transfer updated to ' + status + '.')}`
+        );
+      } catch (err) {
+        if (err.status === 400) {
+          return res.redirect(
+            303,
+            `/admin/transfers?err=${encodeURIComponent(err.message)}`
+          );
+        }
+        next(err);
+      }
+    }
+  );
+
+  // —— Staff ——
+  router.get('/admin/staff', requireRole('admin'), async (req, res, next) => {
+    try {
+      const staff = await adminRepo.listStaffUsers();
+      const allRoles = await adminRepo.listAllRoles();
+      res.render(
+        'admin/staff',
+        adminLocals(req, {
+          title: 'Staff',
+          path: '/admin/staff',
+          staff: staff || [],
+          allRoles: allRoles || [],
+          message: req.query.msg || null,
+          error: req.query.err || null,
+          values: {}
+        })
+      );
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/admin/staff', requireRole('admin'), requireCsrf, async (req, res, next) => {
+    try {
+      const email = String(req.body.email || '').trim().toLowerCase();
+      const password = String(req.body.password || '');
+      const firstName = String(req.body.firstName || 'Staff').trim();
+      const lastName = String(req.body.lastName || 'User').trim();
+      let roleCodes = req.body.roles || [];
+      if (!Array.isArray(roleCodes)) roleCodes = [roleCodes].filter(Boolean);
+      roleCodes = roleCodes.filter((r) => r !== 'customer');
+      if (!email || password.length < 12) {
+        const staff = await adminRepo.listStaffUsers();
+        const allRoles = await adminRepo.listAllRoles();
+        return res.status(400).render(
+          'admin/staff',
+          adminLocals(req, {
+            title: 'Staff',
+            path: '/admin/staff',
+            staff: staff || [],
+            allRoles: allRoles || [],
+            message: null,
+            error: 'Valid email and password (12+ chars) required.',
+            values: { email, firstName, lastName }
+          })
+        );
+      }
+      if (userRepo) {
+        const existing = await userRepo.findByEmail(email);
+        if (existing) {
+          return res.redirect(
+            303,
+            `/admin/staff?err=${encodeURIComponent('Email already in use.')}`
+          );
+        }
+      }
+      const passwordHash = await hashPassword(password);
+      await adminRepo.createStaffUser({
+        email,
+        passwordHash,
+        roleCodes,
+        firstName,
+        lastName,
+        actorUserId: req.session.user.id
+      });
+      return res.redirect(303, `/admin/staff?msg=${encodeURIComponent('Staff user created.')}`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // —— Reports ——
+  router.get(
+    '/admin/reports',
+    requireRole('admin', 'operations', 'auditor'),
+    async (req, res, next) => {
+      try {
+        const report = await adminRepo.reportSummary();
+        res.render(
+          'admin/reports',
+          adminLocals(req, {
+            title: 'Reports',
+            path: '/admin/reports',
+            report: report || {
+              registrationsToday: 0,
+              registrations7d: 0,
+              transfers7d: 0,
+              transferVolume7d: 0,
+              kycPending: 0,
+              kycApproved7d: 0,
+              transfersByStatus: {},
+              registrationsDaily: []
+            }
+          })
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // —— Approvals ——
+  router.get(
+    '/admin/approvals',
+    requireRole('admin', 'operations'),
+    async (req, res, next) => {
+      try {
+        const approvals = await adminRepo.listPendingApprovals(100);
+        res.render(
+          'admin/approvals',
+          adminLocals(req, {
+            title: 'Approvals',
+            path: '/admin/approvals',
+            approvals: approvals || [],
+            message: req.query.msg || null,
+            error: req.query.err || null
+          })
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/approvals',
+    requireRole('admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        const actionType = String(req.body.actionType || '').trim();
+        const targetReference = String(req.body.targetReference || '').trim();
+        const reason = String(req.body.reason || '').trim();
+        if (!actionType || !targetReference || !reason) {
+          return res.redirect(
+            303,
+            `/admin/approvals?err=${encodeURIComponent('All fields required.')}`
+          );
+        }
+        await adminRepo.createApproval({
+          actionType,
+          targetReference,
+          reason,
+          requestedBy: req.session.user.id
+        });
+        return res.redirect(
+          303,
+          `/admin/approvals?msg=${encodeURIComponent('Approval requested.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/approvals/:id/decide',
+    requireRole('admin'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/approvals?err=' + encodeURIComponent('Invalid approval.')
+          );
+        }
+        const decision = String(req.body.decision || '').toLowerCase();
+        const reason = String(req.body.reason || '').trim() || null;
+        await adminRepo.decideApproval({
+          approvalId: req.params.id,
+          decision,
+          approvedBy: req.session.user.id,
+          reason
+        });
+        return res.redirect(
+          303,
+          `/admin/approvals?msg=${encodeURIComponent('Approval ' + decision + '.')}`
+        );
+      } catch (err) {
+        if (err.status === 400 || err.status === 409) {
+          return res.redirect(
+            303,
+            `/admin/approvals?err=${encodeURIComponent(err.message)}`
+          );
+        }
+        next(err);
+      }
+    }
+  );
 
   return router;
 }
