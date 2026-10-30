@@ -23,7 +23,11 @@ const { createAdminRouter } = require('./modules/admin/admin.routes');
 const { createCoreBankingAdapter } = require('./integrations/coreBanking');
 const { createTransferRepository } = require('./repositories/transferRepository');
 const { createTransferService } = require('./services/transferService');
-const { createTransferRouter } = require('./modules/transfers/transfer.routes');
+const transferRoutesMod = require('./modules/transfers/transfer.routes');
+const createTransferRouter =
+  typeof transferRoutesMod === 'function'
+    ? transferRoutesMod
+    : transferRoutesMod.createTransferRouter;
 const { createSupportRepository } = require('./repositories/supportRepository');
 const { createSupportService } = require('./services/supportService');
 const { createSupportRouter } = require('./modules/support/support.routes');
