@@ -207,16 +207,7 @@
           if (this.value !== v) this.value = v;
         });
 
-        /* Auto-submit on 6 digits */
-        codeInput.addEventListener('input', function () {
-          if (this.value.length === 6) {
-            var form = document.getElementById('mfa-enrol-form');
-            if (form) {
-              /* Small delay so user sees the last digit */
-              setTimeout(function () { form.requestSubmit(); }, 250);
-            }
-          }
-        });
+        /* Wait for user to click the confirm button — do not auto-submit */
       }
     })();
   </script>

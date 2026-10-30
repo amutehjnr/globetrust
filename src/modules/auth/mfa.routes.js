@@ -35,9 +35,11 @@ function createMfaRouter({ mfaService, customerRepo }) {
         const staff = ['admin', 'kyc_reviewer', 'support_agent', 'operations', 'auditor'];
         return res.redirect(roles.some((r) => staff.includes(r)) ? '/admin' : '/dashboard');
       }
+      // Do not rotate secret on every page load — wait until user finishes or explicitly restarts
       const enrolment = await mfaService.beginEnrolment(
         req.session.user.id,
-        req.session.user.email
+        req.session.user.email,
+        { rotate: false }
       );
       // Keep pending secret only server-side; do not put secret in session long-term ideally
       req.session.mfaEnrolPending = true;
