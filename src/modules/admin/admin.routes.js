@@ -340,7 +340,11 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
         }
         const profile = await customerRepo.getProfile(req.params.id);
         if (!profile) {
-          return res.status(404).render('errors/404', { title: 'Not found', message: 'Customer not found.' });
+          console.error('[GLOBE_ADMIN] customer profile missing', req.params.id);
+          return res.status(404).render('errors/404', {
+            title: 'Not found',
+            message: 'Customer not found. They may have no user record.'
+          });
         }
         let cards = [];
         if (customerRepo.listBankCards) {
@@ -385,18 +389,18 @@ function createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transfe
               return res.redirect('/admin/customers?err=' + encodeURIComponent('Invalid customer.'));
             }
             if (uploadErr) {
-              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent(uploadErr.message || 'Upload failed')}`);
+              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent(uploadErr.message || 'Upload failed')}`);
             }
             if (!req.file) {
-              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Choose a photo.')}`);
+              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent('Choose a photo.')}`);
             }
             const b64 = req.file.buffer.toString('base64');
             const dataUrl = `data:${req.file.mimetype};base64,${b64}`;
             if (dataUrl.length > 900000) {
-              return res.redirect(`/admin/customers/${req.params.id}?err=${encodeURIComponent('Photo too large.')}`);
+              return res.redirect(303, `/admin/customers/${req.params.id}?err=${encodeURIComponent('Photo too large.')}`);
             }
             await customerRepo.updateProfilePhoto(req.params.id, dataUrl);
-            return res.redirect(`/admin/customers/${req.params.id}?msg=${encodeURIComponent('Profile photo updated.')}`);
+            return res.redirect(303, `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Profile photo updated.')}`);
           } catch (e) {
             next(e);
           }

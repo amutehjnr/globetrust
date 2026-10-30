@@ -32,35 +32,63 @@ const { uuidToBinary, binaryToUuid, newBinaryId } = require('../utils/ids');
 function createCustomerRepository(pool) {
   return {
     async getProfile(userId) {
+      const uid = uuidToBinary(userId);
       const [rows] = await pool.query(
         `SELECT cp.*, u.email, u.phone_e164, u.status, u.email_verified_at, u.mfa_enrolled_at
          FROM customer_profiles cp
          JOIN users u ON u.id = cp.user_id
          WHERE cp.user_id = ? LIMIT 1`,
-        [uuidToBinary(userId)]
+        [uid]
       );
-      if (!rows[0]) return null;
-      const r = rows[0];
+      if (rows[0]) {
+        const r = rows[0];
+        return {
+          userId: binaryToUuid(r.user_id),
+          email: r.email,
+          phoneE164: r.phone_e164,
+          status: r.status,
+          emailVerifiedAt: r.email_verified_at,
+          mfaEnrolledAt: r.mfa_enrolled_at,
+          customerReference: r.customer_reference,
+          firstName: r.first_name,
+          middleName: r.middle_name,
+          lastName: r.last_name,
+          dateOfBirth: r.date_of_birth,
+          countryCode: r.country_code,
+          preferredLocale: r.preferred_locale || 'en',
+          profilePhotoUrl: (function () {
+            const v = r.profile_photo_url;
+            if (v == null || v === '') return null;
+            if (Buffer.isBuffer(v)) return v.toString('utf8');
+            return String(v);
+          })(),
+          spendingLimits: parseSpendingLimits(r.spending_limits)
+        };
+      }
+      // Fallback: user exists but profile row missing
+      const [users] = await pool.query(
+        `SELECT id, email, phone_e164, status, email_verified_at, mfa_enrolled_at
+         FROM users WHERE id = ? LIMIT 1`,
+        [uid]
+      );
+      if (!users[0]) return null;
+      const u = users[0];
       return {
-        userId: binaryToUuid(r.user_id),
-        customerReference: r.customer_reference,
-        firstName: r.first_name,
-        middleName: r.middle_name,
-        lastName: r.last_name,
-        dateOfBirth: r.date_of_birth,
-        countryCode: r.country_code,
-        preferredLocale: r.preferred_locale,
-        profilePhotoUrl: (function () {
-          const v = r.profile_photo_url;
-          if (v == null || v === '') return null;
-          if (Buffer.isBuffer(v)) return v.toString('utf8');
-          return String(v);
-        })(),
-        email: r.email,
-        phoneE164: r.phone_e164,
-        status: r.status,
-        emailVerifiedAt: r.email_verified_at,
-        mfaEnrolledAt: r.mfa_enrolled_at
+        userId: binaryToUuid(u.id),
+        email: u.email,
+        phoneE164: u.phone_e164,
+        status: u.status,
+        emailVerifiedAt: u.email_verified_at,
+        mfaEnrolledAt: u.mfa_enrolled_at,
+        customerReference: null,
+        firstName: 'Customer',
+        middleName: null,
+        lastName: 'User',
+        dateOfBirth: null,
+        countryCode: null,
+        preferredLocale: 'en',
+        profilePhotoUrl: null,
+        spendingLimits: parseSpendingLimits(null)
       };
     },
 
