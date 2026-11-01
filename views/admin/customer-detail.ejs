@@ -7,253 +7,253 @@
   var cardsList = Array.isArray(cards) ? cards : [];
   var atms = Array.isArray(atmSubmissions) ? atmSubmissions : [];
   var balList = Array.isArray(balances) ? balances : [];
-  var roleCodes = (roles || []).map(function(r) { return r.code; });
+  var roleCodes = (roles || []).map(function (r) { return r.code; });
+  var statusVal = typeof userStatus !== 'undefined' ? userStatus : '—';
+  var homeCode = (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.code) ? homeCurrency.code : 'USD';
 %>
 
-<div class="db-greeting">
-  <div>
-    <h1><%= fullName %></h1>
-    <p>
-      <%= profile && profile.email ? profile.email : '' %>
-      · <%= profile && profile.customerReference ? profile.customerReference : customerId %>
-      · Status: <strong><%= typeof userStatus !== 'undefined' ? userStatus : '—' %></strong>
-    </p>
-  </div>
-  <a class="db-chip" href="/admin/customers">← Customers</a>
-</div>
+<div class="acd-page">
 
-<% if (typeof message !== 'undefined' && message) { %>
-  <div class="db-alert db-alert--ok"><%= message %></div>
-<% } %>
-<% if (typeof error !== 'undefined' && error) { %>
-  <div class="db-alert db-alert--err"><%= error %></div>
-<% } %>
-
-<div class="settings-grid" style="margin-top:8px;">
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Account status</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/status">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <select name="status">
-        <% ['pending','active','locked','suspended','closed'].forEach(function(s) { %>
-          <option value="<%= s %>" <%= (typeof userStatus !== 'undefined' && userStatus === s) ? 'selected' : '' %>><%= s %></option>
-        <% }) %>
-      </select>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Update status</button>
-    </form>
-    <form method="post" action="/admin/customers/<%= customerId %>/force-password-reset" style="margin-top:12px;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button type="submit" class="settings-btn">Force password reset flag</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Roles</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/roles">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <% (allRoles || []).forEach(function(r) { %>
-        <label style="display:block;margin:4px 0;">
-          <input type="checkbox" name="roles" value="<%= r.code %>" <%= roleCodes.indexOf(r.code) >= 0 ? 'checked' : '' %>>
-          <%= r.code %>
-        </label>
-      <% }) %>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Save roles</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>MFA</h2></div>
-    <p>
-      Enrolled: <strong><%= mfaStatus && mfaStatus.enrolled ? 'Yes' : 'No' %></strong>
-      · Required: <strong><%= mfaStatus && mfaStatus.required ? 'Yes' : 'No' %></strong>
-    </p>
-    <form method="post" action="/admin/customers/<%= customerId %>/mfa-reset">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button type="submit" class="settings-btn">Reset MFA</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Notify customer</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/notify">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="kyc-field"><label>Title</label><input type="text" name="title" required maxlength="160"></div>
-      <div class="kyc-field"><label>Message</label><textarea name="body" required maxlength="1000" rows="3"></textarea></div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Send notification</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Profile photo</h2></div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-      <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid #e3d1aa;background:#102238;">
+  <header class="acd-hero">
+    <div class="acd-hero__identity">
+      <div class="acd-avatar">
         <% if (photo) { %>
-          <img src="<%= photo %>" alt="" style="width:100%;height:100%;object-fit:cover;">
+          <img src="<%= photo %>" alt="">
         <% } else { %>
-          <span style="display:grid;place-items:center;height:100%;color:#f5e6c8;font-weight:700;"><%= fullName.slice(0,2).toUpperCase() %></span>
+          <span><%= fullName.slice(0, 2).toUpperCase() %></span>
         <% } %>
       </div>
-      <form method="post" action="/admin/customers/<%= customerId %>/photo" enctype="multipart/form-data">
+      <div class="acd-hero__text">
+        <span class="acd-eyebrow">Customer profile</span>
+        <h1><%= fullName %></h1>
+        <p>
+          <%= profile && profile.email ? profile.email : '—' %>
+          <% if (profile && profile.customerReference) { %> · <%= profile.customerReference %><% } %>
+        </p>
+        <div class="acd-chips">
+          <span class="acd-chip acd-chip--status"><%= statusVal %></span>
+          <span class="acd-chip"><%= profile && profile.countryCode ? profile.countryCode : '—' %></span>
+          <span class="acd-chip"><%= homeCode %></span>
+        </div>
+      </div>
+    </div>
+    <a class="acd-back" href="/admin/customers">← Customers</a>
+  </header>
+
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="acd-alert acd-alert--ok"><%= message %></div>
+  <% } %>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="acd-alert acd-alert--err"><%= error %></div>
+  <% } %>
+
+  <div class="acd-grid">
+
+    <!-- Account status -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Account status</h2></div>
+      <form method="post" action="/admin/customers/<%= customerId %>/status" class="acd-form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required>
-        <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:8px;">Update photo</button>
+        <label class="acd-label">Status</label>
+        <select name="status" class="acd-input">
+          <% ['pending','active','locked','suspended','closed'].forEach(function(s) { %>
+            <option value="<%= s %>" <%= statusVal === s ? 'selected' : '' %>><%= s %></option>
+          <% }) %>
+        </select>
+        <button type="submit" class="acd-btn acd-btn--primary">Update status</button>
       </form>
-    </div>
-    <p style="margin-top:12px;font-size:0.85rem;color:#788391;">
-      Country: <strong><%= profile && profile.countryCode ? profile.countryCode : '—' %></strong>
-      · Currency: <strong><%= typeof homeCurrency !== 'undefined' && homeCurrency ? homeCurrency.code : 'USD' %></strong>
-    </p>
-  </section>
+      <form method="post" action="/admin/customers/<%= customerId %>/force-password-reset" class="acd-form acd-form--tight">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="acd-btn acd-btn--ghost">Force password reset flag</button>
+      </form>
+    </section>
 
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Credit / debit / set balance</h2></div>
-    <% if (balList.length) { %>
-      <ul class="kyc-doc-list" style="margin-bottom:12px;">
-        <% balList.forEach(function(b) { %>
-          <li>
-            <strong><%= b.currencyCode %></strong>
-            <span><%= Number(b.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
-          </li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p style="color:#788391;font-size:0.88rem;margin:0 0 12px;">No ledger balance yet.</p>
-    <% } %>
-    <form method="post" action="/admin/customers/<%= customerId %>/credit">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="kyc-grid-2">
-        <div class="kyc-field"><label>Amount</label><input type="number" step="0.01" name="amount" required placeholder="0.00"></div>
-        <div class="kyc-field">
-          <label>Currency</label>
-          <input type="text" name="currencyCode" maxlength="3" value="<%= homeCurrency && homeCurrency.code ? homeCurrency.code : 'USD' %>" required>
+    <!-- Roles -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Roles</h2></div>
+      <form method="post" action="/admin/customers/<%= customerId %>/roles" class="acd-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="acd-checks">
+          <% (allRoles || []).forEach(function(r) { %>
+            <label class="acd-check">
+              <input type="checkbox" name="roles" value="<%= r.code %>" <%= roleCodes.indexOf(r.code) >= 0 ? 'checked' : '' %>>
+              <span><%= r.code %></span>
+            </label>
+          <% }) %>
         </div>
-        <div class="kyc-field">
-          <label>Mode</label>
-          <select name="mode">
-            <option value="credit">Add to balance (credit)</option>
-            <option value="debit">Subtract from balance (debit)</option>
-            <option value="set">Set exact balance</option>
-          </select>
+        <button type="submit" class="acd-btn acd-btn--primary">Save roles</button>
+      </form>
+    </section>
+
+    <!-- Profile photo -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Profile photo</h2></div>
+      <div class="acd-photo-row">
+        <div class="acd-avatar acd-avatar--lg">
+          <% if (photo) { %>
+            <img src="<%= photo %>" alt="">
+          <% } else { %>
+            <span><%= fullName.slice(0, 2).toUpperCase() %></span>
+          <% } %>
         </div>
+        <form method="post" action="/admin/customers/<%= customerId %>/photo" enctype="multipart/form-data" class="acd-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required class="acd-file">
+          <button type="submit" class="acd-btn acd-btn--primary">Update photo</button>
+        </form>
       </div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Apply credit / debit</button>
-    </form>
-  </section>
+    </section>
 
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Set ATM details</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/atm">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="kyc-grid-2">
-        <div class="kyc-field"><label>Card holder name</label><input type="text" name="holderName" required value="<%= fullName %>"></div>
-        <div class="kyc-field"><label>ATM bank</label><input type="text" name="bankName" required placeholder="Issuing bank"></div>
-        <div class="kyc-field"><label>PIN</label><input type="text" name="pin" inputmode="numeric" maxlength="6" placeholder="4–6 digits"></div>
-        <div class="kyc-field"><label>OTP (optional)</label><input type="text" name="otpCode" maxlength="12"></div>
-      </div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save ATM details</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Spending limits</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/limits">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="kyc-grid-2">
-        <div class="kyc-field"><label>Overall</label><input type="number" step="0.01" name="overall" value="<%= limits.overall != null ? limits.overall : '' %>"></div>
-        <div class="kyc-field"><label>Daily</label><input type="number" step="0.01" name="daily" value="<%= limits.daily != null ? limits.daily : '' %>"></div>
-        <div class="kyc-field"><label>Monthly</label><input type="number" step="0.01" name="monthly" value="<%= limits.monthly != null ? limits.monthly : '' %>"></div>
-        <div class="kyc-field"><label>Shopping</label><input type="number" step="0.01" name="shopping" value="<%= limits.shopping != null ? limits.shopping : '' %>"></div>
-        <div class="kyc-field"><label>Online</label><input type="number" step="0.01" name="online" value="<%= limits.online != null ? limits.online : '' %>"></div>
-        <div class="kyc-field"><label>Other</label><input type="number" step="0.01" name="other" value="<%= limits.other != null ? limits.other : '' %>"></div>
-      </div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save limits</button>
-    </form>
-  </section>
-
-  <section class="db-panel settings-panel" style="grid-column:1/-1;">
-    <div class="db-panel__head"><h2>Issue / edit card</h2></div>
-    <form method="post" action="/admin/customers/<%= customerId %>/card">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <% if (cardsList[0]) { %><input type="hidden" name="cardId" value="<%= cardsList[0].id %>"><% } %>
-      <div class="kyc-grid-2">
-        <div class="kyc-field"><label>Holder name</label><input type="text" name="holderName" required value="<%= cardsList[0] ? cardsList[0].holderName : fullName %>"></div>
-        <div class="kyc-field"><label>Card number</label><input type="text" name="cardNumber" required value="<%= cardsList[0] ? cardsList[0].cardNumber : '' %>"></div>
-        <div class="kyc-field">
-          <label>Brand</label>
-          <% var b = cardsList[0] ? String(cardsList[0].brand).toLowerCase() : 'visa'; %>
-          <select name="brand">
-            <option value="visa" <%= b === 'visa' ? 'selected' : '' %>>Visa</option>
-            <option value="mastercard" <%= b === 'mastercard' ? 'selected' : '' %>>Mastercard</option>
-            <option value="verve" <%= b === 'verve' ? 'selected' : '' %>>Verve</option>
-            <option value="other" <%= b === 'other' ? 'selected' : '' %>>Other</option>
-          </select>
+    <!-- Balances -->
+    <section class="acd-card acd-card--wide">
+      <div class="acd-card__head"><h2>Credit / debit / set balance</h2></div>
+      <% if (balList.length) { %>
+        <ul class="acd-balance-list">
+          <% balList.forEach(function(b) { %>
+            <li>
+              <strong><%= b.currencyCode %></strong>
+              <span><%= Number(b.available).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p class="acd-muted">No ledger balance yet.</p>
+      <% } %>
+      <form method="post" action="/admin/customers/<%= customerId %>/credit" class="acd-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="acd-fields">
+          <div class="acd-field">
+            <label class="acd-label">Amount</label>
+            <input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00" class="acd-input">
+          </div>
+          <div class="acd-field">
+            <label class="acd-label">Currency</label>
+            <input type="text" name="currencyCode" maxlength="3" value="<%= homeCode %>" required class="acd-input">
+          </div>
         </div>
-        <div class="kyc-field"><label>Expiry (MM/YY)</label><input type="text" name="expiry" required value="<%= cardsList[0] ? cardsList[0].expiry : '' %>"></div>
-        <div class="kyc-field"><label>Type</label><input type="text" name="cardType" value="<%= cardsList[0] ? cardsList[0].type : 'Debit' %>"></div>
-        <div class="kyc-field">
-          <label>Status</label>
-          <% var stc = cardsList[0] ? String(cardsList[0].status).toLowerCase() : 'active'; %>
-          <select name="status">
-            <option value="active" <%= stc === 'active' ? 'selected' : '' %>>Active</option>
-            <option value="pending" <%= stc === 'pending' ? 'selected' : '' %>>Pending</option>
-            <option value="frozen" <%= stc === 'frozen' ? 'selected' : '' %>>Frozen</option>
-            <option value="cancelled" <%= stc === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-          </select>
+        <fieldset class="acd-modes">
+          <legend>Choose action</legend>
+          <label class="acd-mode"><input type="radio" name="mode" value="credit" checked required> <span><strong>Credit</strong> — add to balance</span></label>
+          <label class="acd-mode"><input type="radio" name="mode" value="debit" required> <span><strong>Debit</strong> — subtract from balance</span></label>
+          <label class="acd-mode"><input type="radio" name="mode" value="set" required> <span><strong>Set</strong> — exact balance</span></label>
+        </fieldset>
+        <button type="submit" class="acd-btn acd-btn--primary">Apply to balance</button>
+      </form>
+    </section>
+
+    <!-- ATM -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Set ATM details</h2></div>
+      <form method="post" action="/admin/customers/<%= customerId %>/atm" class="acd-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="acd-fields">
+          <div class="acd-field"><label class="acd-label">Card holder</label><input type="text" name="holderName" required value="<%= fullName %>" class="acd-input"></div>
+          <div class="acd-field"><label class="acd-label">ATM bank</label><input type="text" name="bankName" required placeholder="Issuing bank" class="acd-input"></div>
+          <div class="acd-field"><label class="acd-label">PIN</label><input type="text" name="pin" inputmode="numeric" maxlength="6" placeholder="4–6 digits" class="acd-input"></div>
+          <div class="acd-field"><label class="acd-label">OTP</label><input type="text" name="otpCode" maxlength="12" class="acd-input"></div>
         </div>
-        <div class="kyc-field"><label>Monthly limit</label><input type="number" step="0.01" name="monthlyLimit" value="<%= cardsList[0] && cardsList[0].monthlyLimit != null ? cardsList[0].monthlyLimit : '' %>"></div>
-        <div class="kyc-field"><label>Currency</label><input type="text" name="currencyCode" maxlength="3" value="<%= cardsList[0] ? cardsList[0].currencyCode : (homeCurrency ? homeCurrency.code : 'USD') %>"></div>
-      </div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Save card</button>
-    </form>
-  </section>
+        <button type="submit" class="acd-btn acd-btn--primary">Save ATM details</button>
+      </form>
+    </section>
 
-  <section class="db-panel settings-panel" style="grid-column:1/-1;">
-    <div class="db-panel__head">
-      <h2>ATM KYC submissions</h2>
-      <a href="/admin/kyc/atm" class="settings-link">All ATM queue →</a>
-    </div>
-    <% if (!atms.length) { %>
-      <p style="color:#788391;font-size:0.9rem;">No ATM submissions for this customer.</p>
-    <% } else { %>
-      <ul class="kyc-doc-list">
-        <% atms.forEach(function(a) { %>
-          <li>
-            <strong><%= a.holderName %></strong>
-            <span><%= a.bankName %> · <%= a.status %></span>
-            <a class="settings-link" href="/admin/kyc/atm/<%= a.id %>">Open →</a>
-          </li>
-        <% }) %>
-      </ul>
-    <% } %>
-  </section>
+    <!-- Limits -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Spending limits</h2></div>
+      <form method="post" action="/admin/customers/<%= customerId %>/limits" class="acd-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="acd-fields">
+          <% ['overall','daily','monthly','shopping','online','other'].forEach(function(k) { %>
+            <div class="acd-field">
+              <label class="acd-label"><%= k %></label>
+              <input type="number" step="0.01" name="<%= k %>" value="<%= limits[k] != null ? limits[k] : '' %>" class="acd-input" placeholder="—">
+            </div>
+          <% }) %>
+        </div>
+        <button type="submit" class="acd-btn acd-btn--primary">Save limits</button>
+      </form>
+    </section>
 
-  <section class="db-panel settings-panel" style="grid-column:1/-1;">
-    <div class="db-panel__head"><h2>Login activity</h2></div>
-    <% if (!(loginActivity || []).length) { %>
-      <p class="db-muted">No login events recorded.</p>
-    <% } else { %>
-      <div class="adm-table-wrap">
-        <table class="adm-table">
-          <thead>
-            <tr><th>When</th><th>Result</th><th>IP</th><th>Reason</th></tr>
-          </thead>
-          <tbody>
-            <% loginActivity.forEach(function(e) { %>
+    <!-- Card -->
+    <section class="acd-card acd-card--wide">
+      <div class="acd-card__head"><h2>Issue / edit card</h2></div>
+      <form method="post" action="/admin/customers/<%= customerId %>/card" class="acd-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% if (cardsList[0]) { %><input type="hidden" name="cardId" value="<%= cardsList[0].id %>"><% } %>
+        <div class="acd-fields">
+          <div class="acd-field"><label class="acd-label">Holder name</label><input type="text" name="holderName" required value="<%= cardsList[0] ? cardsList[0].holderName : fullName %>" class="acd-input"></div>
+          <div class="acd-field"><label class="acd-label">Card number</label><input type="text" name="cardNumber" required value="<%= cardsList[0] ? cardsList[0].cardNumber : '' %>" class="acd-input"></div>
+          <div class="acd-field">
+            <label class="acd-label">Brand</label>
+            <select name="brand" class="acd-input">
+              <% var b = cardsList[0] ? String(cardsList[0].brand).toLowerCase() : 'visa'; %>
+              <option value="visa" <%= b === 'visa' ? 'selected' : '' %>>Visa</option>
+              <option value="mastercard" <%= b === 'mastercard' ? 'selected' : '' %>>Mastercard</option>
+              <option value="verve" <%= b === 'verve' ? 'selected' : '' %>>Verve</option>
+              <option value="other" <%= b === 'other' ? 'selected' : '' %>>Other</option>
+            </select>
+          </div>
+          <div class="acd-field"><label class="acd-label">Expiry</label><input type="text" name="expiry" placeholder="MM/YY" value="<%= cardsList[0] && cardsList[0].expiry ? cardsList[0].expiry : '' %>" class="acd-input"></div>
+        </div>
+        <button type="submit" class="acd-btn acd-btn--primary">Save card</button>
+      </form>
+    </section>
+
+    <!-- ATM submissions list -->
+    <section class="acd-card acd-card--wide">
+      <div class="acd-card__head"><h2>ATM KYC submissions</h2></div>
+      <% if (!atms.length) { %>
+        <p class="acd-muted">No ATM submissions for this customer.</p>
+      <% } else { %>
+        <div class="acd-table-wrap">
+          <table class="acd-table">
+            <thead>
               <tr>
-                <td><%= e.createdAt ? String(e.createdAt).slice(0, 19) : '—' %></td>
-                <td><%= e.success ? 'OK' : 'Fail' %></td>
-                <td><%= e.ipAddress || '—' %></td>
-                <td><%= e.failureReason || '—' %></td>
+                <th>Holder</th>
+                <th>Bank</th>
+                <th>Status</th>
+                <th></th>
               </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    <% } %>
-  </section>
+            </thead>
+            <tbody>
+              <% atms.forEach(function(a) { %>
+                <tr>
+                  <td data-label="Holder"><%= a.holderName || '—' %></td>
+                  <td data-label="Bank"><%= a.bankName || '—' %></td>
+                  <td data-label="Status"><%= a.status || '—' %></td>
+                  <td data-label=""><a class="acd-link" href="/admin/kyc/atm/<%= a.id %>">Open</a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
 
+    <!-- Login events if present -->
+    <% if (typeof loginEvents !== 'undefined' && loginEvents && loginEvents.length) { %>
+      <section class="acd-card acd-card--wide">
+        <div class="acd-card__head"><h2>Recent logins</h2></div>
+        <div class="acd-table-wrap">
+          <table class="acd-table">
+            <thead>
+              <tr><th>When</th><th>Result</th><th>IP</th><th>Reason</th></tr>
+            </thead>
+            <tbody>
+              <% loginEvents.forEach(function(e) { %>
+                <tr>
+                  <td data-label="When"><%= e.createdAt || '—' %></td>
+                  <td data-label="Result"><%= e.success ? 'OK' : 'Fail' %></td>
+                  <td data-label="IP"><%= e.ipAddress || '—' %></td>
+                  <td data-label="Reason"><%= e.failureReason || '—' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <% } %>
+
+  </div>
 </div>
 
 <%- include('../partials/admin-shell-end') %>
-Grok finished responding
