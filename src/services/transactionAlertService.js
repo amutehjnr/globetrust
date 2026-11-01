@@ -27,10 +27,24 @@ function formatDateTime(value) {
   return `${pad(d.getDate())}-${d.toLocaleString('en', { month: 'short' })}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+/**
+ * Mask account ref as XXXXXX + last 4 digits.
+ * Uses digits only so labels like "USD account" do not become "XXXXXXount".
+ */
 function maskAccount(ref) {
-  const s = String(ref || '');
-  if (s.length <= 4) return s ? `XXXX${s}` : 'XXXXXXXX';
-  return `XXXXXX${s.slice(-4)}`;
+  const digits = String(ref || '').replace(/\D/g, '');
+  if (digits.length >= 4) {
+    return `XXXXXX${digits.slice(-4)}`;
+  }
+  if (digits.length > 0) {
+    return `XXXX${digits}`;
+  }
+  // Fallback: last 4 non-space characters of the raw ref
+  const raw = String(ref || '').replace(/\s+/g, '');
+  if (raw.length >= 4) {
+    return `XXXXXX${raw.slice(-4)}`;
+  }
+  return 'XXXXXXXX';
 }
 
 function buildTransactionAlertHtml(payload) {

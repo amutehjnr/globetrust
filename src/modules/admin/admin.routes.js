@@ -720,9 +720,22 @@ function createAdminRouter({
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`
           );
         }
+
+        let accountRef = null;
         if (transferRepo.ensureSandboxLink) {
-          await transferRepo.ensureSandboxLink(req.params.id, currency);
+          const linkId = await transferRepo.ensureSandboxLink(req.params.id, currency);
+          if (transferRepo.getAccountLinkOwned && linkId) {
+            try {
+              const link = await transferRepo.getAccountLinkOwned(req.params.id, linkId);
+              accountRef = link && link.externalAccountRef ? link.externalAccountRef : null;
+            } catch (_) {}
+          }
         }
+        // Fallback: last 8 hex chars of user id → maskAccount shows XXXXXX####
+        if (!accountRef) {
+          accountRef = String(req.params.id).replace(/-/g, '').slice(-8);
+        }
+
         const result = await transferRepo.creditManualBalance(req.params.id, currency, amount, {
           mode
         });
@@ -733,7 +746,7 @@ function createAdminRouter({
               amount: mode === 'set' ? result.available : amount,
               currency: result.currencyCode,
               balanceAfter: result.available,
-              accountRef: result.currencyCode + ' account',
+              accountRef,
               mode
             });
           } catch (_) {}
