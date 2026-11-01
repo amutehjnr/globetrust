@@ -115,17 +115,58 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
   async function transferPageLocals(req, extra = {}) {
     const userId = req.session.user.id;
     let _cc = 'USD';
+    let profileHint = null;
     try {
       if (customerRepo && customerRepo.getProfile) {
-        const _p = await customerRepo.getProfile(userId);
-        _cc = currencyForCountry(_p && _p.countryCode).code;
+        profileHint = await customerRepo.getProfile(userId);
+        _cc = currencyForCountry(profileHint && profileHint.countryCode).code;
       } else if (req.session.user && req.session.user.countryCode) {
         _cc = currencyForCountry(req.session.user.countryCode).code;
       }
     } catch (_) {}
     await transferRepo.ensureSandboxLink(userId, _cc);
     if (_cc !== 'USD') await transferRepo.ensureSandboxLink(userId, 'USD');
-    const links = await transferRepo.listLinksWithExternal(userId);
+
+    let links = await transferRepo.listLinksWithExternal(userId);
+    links = (links || []).filter((l) => l.linkStatus === 'active');
+
+    // Enrich with balances and keep profile-currency first
+    if (transferService && typeof transferService.getBalancesForLinks === 'function') {
+      try {
+        const withBal = await transferService.getBalancesForLinks(links, userId);
+        links = (withBal || links).map((l) => {
+          const avail =
+            l.balance && l.balance.available != null
+              ? l.balance.available
+              : l.available != null
+                ? l.available
+                : null;
+          return {
+            ...l,
+            available: avail,
+            currencyCode: l.currencyCode || (l.balance && l.balance.currency) || _cc
+          };
+        });
+      } catch (_) {}
+    }
+
+    links = links.filter((l) => {
+      const code = String(l.currencyCode || '').toUpperCase();
+      if (code === _cc || code === 'USD') return true;
+      const avail = Number(l.available != null ? l.available : 0);
+      return Number.isFinite(avail) && avail > 0;
+    });
+
+    links.sort((a, b) => {
+      const ac = String(a.currencyCode || '').toUpperCase();
+      const bc = String(b.currencyCode || '').toUpperCase();
+      if (ac === _cc && bc !== _cc) return -1;
+      if (bc === _cc && ac !== _cc) return 1;
+      if (ac === 'USD' && bc !== 'USD') return -1;
+      if (bc === 'USD' && ac !== 'USD') return 1;
+      return ac.localeCompare(bc);
+    });
+
     const history = await transferRepo.listForUser(userId);
     const override = req.query?.country || null;
     const resolved = await resolveCountryAndBanks(userId, override, req.session.user);
@@ -133,13 +174,15 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     return {
       title: 'Transfers',
       path: '/app/transfers',
-      links: links.filter((l) => l.linkStatus === 'active'),
+      links,
       history,
       banks,
       countryCode,
       countryFlagUrl: countryFlagUrl || null,
       profileCountry,
-      profile,
+      profile: profile || profileHint,
+      currencyCode: _cc,
+      homeCurrency: { code: _cc },
       countries: COUNTRIES,
       displayName: (req.session.user.email || 'customer').split('@')[0],
       initials: (req.session.user.email || 'CU').slice(0, 2).toUpperCase(),

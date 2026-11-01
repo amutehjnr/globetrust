@@ -44,12 +44,22 @@
             <div class="transfer-field">
               <label for="transfer-source">From account</label>
               <select id="transfer-source" name="sourceAccountLinkId" required>
-                <% links.forEach(function(l) { %>
+                <% var srcLinks = Array.isArray(links) ? links : []; %>
+                <% if (!srcLinks.length) { %>
+                  <option value="" disabled selected>No account available — open Accounts first</option>
+                <% } %>
+                <% srcLinks.forEach(function(l, idx) { %>
                   <option
                     value="<%= l.id %>"
-                    data-currency="<%= l.currencyCode %>"
+                    data-currency="<%= l.currencyCode || '' %>"
+                    data-available="<%= l.available != null ? l.available : '' %>"
+                    <%= idx === 0 ? 'selected' : '' %>
                   >
-                    <%= l.displayLabel %> · <%= l.currencyCode %>
+                    <%= l.displayLabel || ('Globe Trust ' + (l.currencyCode || '')) %>
+                    · <%= l.currencyCode || '' %>
+                    <% if (l.available != null && l.available !== '') { %>
+                      · Bal <%= l.available %>
+                    <% } %>
                   </option>
                 <% }) %>
               </select>
