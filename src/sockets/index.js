@@ -26,7 +26,14 @@ function attachSocketServer(httpServer, { supportService, notificationWriter } =
   });
 
   io.use((socket, next) => {
-    const user = socket.request.session?.user;
+    // Allow full session OR MFA-pending login (password already verified)
+    const session = socket.request.session;
+    let user = session?.user;
+    if (!user?.id && session?.pendingMfaUser?.id) {
+      const u = session.pendingMfaUser;
+      const roles = Array.isArray(u.roles) && u.roles.length ? u.roles : ['customer'];
+      user = { ...u, roles };
+    }
     if (!user?.id) {
       return next(new Error('unauthorized'));
     }

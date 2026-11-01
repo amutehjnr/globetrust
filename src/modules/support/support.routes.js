@@ -18,6 +18,33 @@ function staffLocals(req, extra = {}) {
 function createSupportRouter({ supportService, supportRepo, supportUpload }) {
   const router = express.Router();
 
+  /**
+   * Logged-in customer, including MFA-pending (pendingMfaUser).
+   * Not guests — must have signed in (password ok). MFA not required for support chat.
+   */
+  function getChatUser(req) {
+    if (req.session?.user?.id) return req.session.user;
+    if (req.session?.pendingMfaUser?.id) {
+      const u = req.session.pendingMfaUser;
+      const roles = Array.isArray(u.roles) && u.roles.length ? u.roles : ['customer'];
+      return { ...u, roles };
+    }
+    return null;
+  }
+
+  function requireChatAuth(req, res, next) {
+    const user = getChatUser(req);
+    if (!user?.id) {
+      if (req.accepts('html')) {
+        return res.redirect('/sign-in?next=' + encodeURIComponent(req.originalUrl || '/'));
+      }
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    req.chatUser = user;
+    next();
+  }
+
+
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024, files: 1 },
@@ -38,7 +65,7 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
         await io.supportBroadcast({
           conversation,
           message,
-          sender: req.session.user
+          sender: req.chatUser || req.session.user
         });
         return;
       }
@@ -59,10 +86,11 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
     } catch (_) {}
   }
 
-  router.get('/app/support', requireAuth, async (req, res, next) => {
+  router.get('/app/support', requireChatAuth, async (req, res, next) => {
     try {
+      const user = req.chatUser;
       const { conversation, messages } = await supportService.getOrCreateCustomerConversation(
-        req.session.user.id,
+        user.id,
         'Online banking help'
       );
       res.render('customer/support', {
@@ -70,23 +98,24 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
         path: '/app/support',
         conversation,
         messages,
-        userId: req.session.user.id
+        userId: user.id
       });
     } catch (err) {
       next(err);
     }
   });
 
-  router.get('/app/support/api', requireAuth, async (req, res, next) => {
+  router.get('/app/support/api', requireChatAuth, async (req, res, next) => {
     try {
+      const user = req.chatUser;
       const { conversation, messages } = await supportService.getOrCreateCustomerConversation(
-        req.session.user.id,
+        user.id,
         'Online banking help'
       );
       res.json({
         ok: true,
         conversationId: conversation.id,
-        userId: req.session.user.id,
+        userId: user.id,
         messages: (messages || []).map((m) => ({
           id: m.id,
           text: m.text || '',
@@ -106,7 +135,7 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
   // Text and/or file (multipart). Multer first so CSRF can read body fields.
   router.post(
     '/app/support/messages',
-    requireAuth,
+    requireChatAuth,
     (req, res, next) => {
       upload.single('file')(req, res, (err) => {
         if (err) {
@@ -129,7 +158,7 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
           attachment = await supportUpload.upload(req.file);
         }
         const result = await supportService.postMessage(
-          req.session.user,
+          req.chatUser,
           req.body.conversationId,
           req.body.text,
           attachment
