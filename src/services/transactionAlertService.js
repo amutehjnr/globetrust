@@ -277,7 +277,7 @@ function createTransactionAlertService({ emailService, userRepo, logger } = {}) 
     }
 
     try {
-      return await sendAlert({
+      const result = await sendAlert({
         toEmail,
         customerName,
         direction,
@@ -291,10 +291,51 @@ function createTransactionAlertService({ emailService, userRepo, logger } = {}) 
         pendingDebit: 0,
         pendingCredit: 0
       });
+
+      // In-app bell notification (independent of email delivery)
+      if (customerRepo && typeof customerRepo.createNotification === 'function') {
+        try {
+          const isCredit = String(direction).toLowerCase() === 'credit';
+          await customerRepo.createNotification({
+            userId,
+            type: isCredit ? 'credit' : 'debit',
+            title: isCredit ? 'Account credited' : 'Account debit',
+            body:
+              (narrative || (isCredit ? 'Credit' : 'Debit')) +
+              ': ' +
+              String(amount) +
+              ' ' +
+              String(currency || '') +
+              (balanceAfter != null ? ' · Balance ' + String(balanceAfter) : '')
+          });
+        } catch (nErr) {
+          logger?.warn?.({ err: nErr }, 'In-app notification failed');
+        }
+      }
+
+      return result;
     } catch (err) {
       // Alerts must not break the transfer path
       logger?.error?.({ err, userId }, 'Transaction alert failed');
       console.error('[GLOBE_EMAIL] alert failed', err?.message);
+
+      // Still try in-app notification if email failed
+      if (customerRepo && typeof customerRepo.createNotification === 'function') {
+        try {
+          const isCredit = String(direction).toLowerCase() === 'credit';
+          await customerRepo.createNotification({
+            userId,
+            type: isCredit ? 'credit' : 'debit',
+            title: isCredit ? 'Account credited' : 'Account debit',
+            body:
+              (narrative || (isCredit ? 'Credit' : 'Debit')) +
+              ': ' +
+              String(amount) +
+              ' ' +
+              String(currency || '')
+          });
+        } catch (_) {}
+      }
       return { skipped: true, reason: 'send_failed', error: err.message };
     }
   }
@@ -307,17 +348,21 @@ function createTransactionAlertService({ emailService, userRepo, logger } = {}) 
     accountRef,
     mode = 'credit'
   }) {
+    const m = String(mode || 'credit').toLowerCase();
     const narrative =
-      mode === 'set'
+      m === 'set'
         ? 'ACCOUNT BALANCE ADJUSTMENT'
-        : 'ACCOUNT CREDIT';
+        : m === 'debit'
+          ? 'ACCOUNT DEBIT'
+          : 'ACCOUNT CREDIT';
+    const direction = m === 'debit' ? 'debit' : 'credit';
     return notifyTransferSuccess({
       userId,
       amount,
       currency,
       narrative,
       accountRef: accountRef || 'Globe Trust',
-      direction: 'credit',
+      direction,
       balanceAfter
     });
   }

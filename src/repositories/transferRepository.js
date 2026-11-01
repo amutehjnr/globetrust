@@ -367,10 +367,22 @@ function createTransferRepository(pool) {
       );
       let nextAvail;
       let nextLedger;
-      if (mode === 'set') {
+      const m = String(mode || 'credit').toLowerCase();
+      if (m === 'set') {
         nextAvail = amt;
         nextLedger = amt;
+      } else if (m === 'debit') {
+        const prev = existing[0] ? Number(existing[0].available) : 0;
+        const debitAmt = Math.abs(amt);
+        if (!(debitAmt > 0)) {
+          const err = new Error('Enter a debit amount greater than zero.');
+          err.status = 400;
+          throw err;
+        }
+        nextAvail = prev - debitAmt;
+        nextLedger = existing[0] ? Number(existing[0].ledger) - debitAmt : -debitAmt;
       } else {
+        // credit (default) — positive add; negative values also subtract
         const prev = existing[0] ? Number(existing[0].available) : 0;
         nextAvail = prev + amt;
         nextLedger = existing[0] ? Number(existing[0].ledger) + amt : amt;

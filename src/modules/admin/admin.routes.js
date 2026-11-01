@@ -714,11 +714,18 @@ function createAdminRouter({
         }
         const currency = String(req.body.currencyCode || 'USD').toUpperCase().slice(0, 3);
         const amount = Number(req.body.amount);
-        const mode = String(req.body.mode || 'credit').toLowerCase() === 'set' ? 'set' : 'credit';
-        if (Number.isNaN(amount) || (mode === 'credit' && amount === 0)) {
+        const modeRaw = String(req.body.mode || 'credit').toLowerCase();
+        const mode = modeRaw === 'set' ? 'set' : modeRaw === 'debit' ? 'debit' : 'credit';
+        if (Number.isNaN(amount) || amount === 0) {
           return res.redirect(
             303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`
+          );
+        }
+        if ((mode === 'credit' || mode === 'debit') && amount < 0) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Amount must be positive.')}`
           );
         }
 
@@ -744,7 +751,7 @@ function createAdminRouter({
           try {
             await alertService.notifyAdminCredit({
               userId: req.params.id,
-              amount: mode === 'set' ? result.available : amount,
+              amount: mode === 'set' ? result.available : Math.abs(amount),
               currency: result.currencyCode,
               balanceAfter: result.available,
               accountRef,
@@ -755,7 +762,9 @@ function createAdminRouter({
         const msg =
           mode === 'set'
             ? `Balance set to ${result.available} ${result.currencyCode}.`
-            : `Credited ${amount} ${result.currencyCode}. New balance ${result.available}.`;
+            : mode === 'debit'
+              ? `Debited ${Math.abs(amount)} ${result.currencyCode}. New balance ${result.available}.`
+              : `Credited ${amount} ${result.currencyCode}. New balance ${result.available}.`;
         return res.redirect(
           303,
           `/admin/customers/${req.params.id}?msg=${encodeURIComponent(msg)}`

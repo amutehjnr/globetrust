@@ -107,7 +107,7 @@
   </section>
 
   <section class="db-panel settings-panel">
-    <div class="db-panel__head"><h2>Credit / set balance</h2></div>
+    <div class="db-panel__head"><h2>Credit / debit / set balance</h2></div>
     <% if (balList.length) { %>
       <ul class="kyc-doc-list" style="margin-bottom:12px;">
         <% balList.forEach(function(b) { %>
@@ -132,11 +132,12 @@
           <label>Mode</label>
           <select name="mode">
             <option value="credit">Add to balance (credit)</option>
+            <option value="debit">Subtract from balance (debit)</option>
             <option value="set">Set exact balance</option>
           </select>
         </div>
       </div>
-      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Apply</button>
+      <button type="submit" class="settings-btn settings-btn--primary" style="margin-top:12px;">Apply credit / debit</button>
     </form>
   </section>
 
@@ -255,3 +256,4 @@
 </div>
 
 <%- include('../partials/admin-shell-end') %>
+Grok finished responding
