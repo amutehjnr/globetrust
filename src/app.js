@@ -85,7 +85,8 @@ function createApp(pool) {
           "https://fonts.gstatic.com",
           "https://www.google.com",
           "https://*.googleusercontent.com",
-          "https://res.cloudinary.com"
+          "https://res.cloudinary.com",
+          "https://*.cloudinary.com"
         ],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "https://www.gstatic.com", "https://translate.googleapis.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://www.gstatic.com", "data:"],

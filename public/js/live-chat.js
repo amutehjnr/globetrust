@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Floating Live chat — realtime messages, image attachments, unread badge.
+ * Bottom-right Live chat widget only (#lc-widget).
+ * Renders image attachments as <img> (admin already works; this matches that).
  */
 (function () {
   var widget = document.getElementById('lc-widget');
@@ -35,7 +36,12 @@
     if (!b) {
       b = document.createElement('span');
       b.className = 'lc-badge';
+      b.setAttribute(
+        'style',
+        'position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#b91c1c;color:#fff;font-size:10px;font-weight:700;line-height:18px;text-align:center;'
+      );
       b.hidden = true;
+      launcher.style.position = launcher.style.position || 'relative';
       launcher.appendChild(b);
     }
     return b;
@@ -48,36 +54,14 @@
     if (unread > 0) {
       b.hidden = false;
       b.textContent = unread > 9 ? '9+' : String(unread);
-      launcher.classList.add('has-unread');
     } else {
       b.hidden = true;
       b.textContent = '';
-      launcher.classList.remove('has-unread');
     }
   }
 
   function panelOpen() {
     return panel && !panel.hidden;
-  }
-
-  function desktopNotify(title, bodyText) {
-    try {
-      if (!('Notification' in window)) return;
-      if (Notification.permission === 'granted') {
-        new Notification(title || 'Globe Trust', {
-          body: bodyText || '',
-          icon: '/favicon.ico'
-        });
-      }
-    } catch (_) {}
-  }
-
-  function requestNotifyPermission() {
-    try {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-    } catch (_) {}
   }
 
   function resetFile() {
@@ -88,27 +72,26 @@
     }
   }
 
-  function isImageMessage(msg, url) {
-    if (!msg) return false;
-    if (msg.type === 'image') return true;
-    var mime = msg.attachmentMime || msg.attachment_mime || '';
-    if (mime && String(mime).indexOf('image/') === 0) return true;
-    var name = msg.attachmentName || msg.attachment_name || msg.text || '';
-    if (/\.(jpe?g|png|gif|webp|heic|bmp)(\?|$)/i.test(name)) return true;
-    if (url && /\.(jpe?g|png|gif|webp|heic|bmp)(\?|$)/i.test(url)) return true;
-    // Cloudinary image delivery URLs often have /image/upload/
-    if (url && /\/image\/upload\//i.test(url)) return true;
-    if (url && /res\.cloudinary\.com\//i.test(url) && !/\.pdf(\?|$)/i.test(url)) return true;
+  function isClearlyDocument(url, mime, name) {
+    var m = String(mime || '').toLowerCase();
+    var u = String(url || '');
+    var n = String(name || '');
+    if (m.indexOf('image/') === 0) return false;
+    if (m === 'application/pdf' || m.indexOf('pdf') >= 0) return true;
+    if (m.indexOf('word') >= 0 || m === 'text/plain') return true;
+    if (/\.pdf(\?|$)/i.test(u) || /\.pdf$/i.test(n)) return true;
+    if (/\.(docx?|txt)(\?|$)/i.test(u) || /\.(docx?|txt)$/i.test(n)) return true;
     return false;
   }
 
-  function extractAttachment(msg) {
+  function normalize(msg) {
     var url = msg.attachmentUrl || msg.attachment_url || null;
     var name = msg.attachmentName || msg.attachment_name || null;
     var mime = msg.attachmentMime || msg.attachment_mime || null;
     var text = msg.text || '';
+    var type = msg.type || 'text';
 
-    if ((!url || !name) && text.indexOf('[[GLOBE_ATTACH]]') !== -1) {
+    if (text.indexOf('[[GLOBE_ATTACH]]') !== -1) {
       var chunks = text.split('[[GLOBE_ATTACH]]');
       text = (chunks[0] || '').trim();
       try {
@@ -117,33 +100,35 @@
           url = url || meta.url || null;
           name = name || meta.name || null;
           mime = mime || meta.mime || null;
-          if (meta.type && !msg.type) msg.type = meta.type;
+          if (meta.type) type = meta.type;
         }
       } catch (e) {}
-      msg.text = text;
     }
 
     if (!url && text) {
-      var parts = String(text).split(/\n/);
-      for (var i = 0; i < parts.length; i++) {
-        var line = parts[i].trim();
-        if (/^https?:\/\//i.test(line)) {
-          url = line;
-          if (!name && parts[0] && i > 0) name = parts[0].trim();
-          break;
-        }
-      }
-      if (!url) {
-        var m2 = String(text).match(/(https?:\/\/\S+)/i);
-        if (m2) url = m2[1];
+      var found = String(text).match(/(https?:\/\/[^\s]+)/i);
+      if (found) {
+        url = found[1];
+        text = text.replace(found[1], '').trim();
       }
     }
-    return { url: url, name: name, mime: mime };
+
+    return {
+      id: msg.id,
+      senderUserId: msg.senderUserId,
+      text: text,
+      type: type,
+      attachmentUrl: url,
+      attachmentName: name,
+      attachmentMime: mime
+    };
   }
 
-  function appendMsg(msg, opts) {
-    if (!body || !msg) return;
+  function appendMsg(raw, opts) {
+    if (!body || !raw) return;
     opts = opts || {};
+    var msg = normalize(raw);
+
     if (msg.id != null) {
       var key = String(msg.id);
       if (seenIds[key]) return;
@@ -155,44 +140,76 @@
 
     var row = document.createElement('div');
     row.className = 'lc-msg' + (msg.senderUserId === userId ? ' lc-msg--me' : '');
+    row.setAttribute(
+      'style',
+      'display:flex;margin:8px 0;' +
+        (msg.senderUserId === userId ? 'justify-content:flex-end;' : 'justify-content:flex-start;')
+    );
+
     var bubble = document.createElement('div');
     bubble.className = 'lc-msg__bubble';
+    bubble.setAttribute(
+      'style',
+      'max-width:85%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.45;word-break:break-word;' +
+        (msg.senderUserId === userId
+          ? 'background:#102238;color:#f8f4ea;'
+          : 'background:#fff;border:1px solid #e8dfd0;color:#102238;')
+    );
 
-    var att = extractAttachment(msg);
-    var showImage = att.url && isImageMessage(msg, att.url);
+    var url = msg.attachmentUrl;
+    var asImage = !!url && !isClearlyDocument(url, msg.attachmentMime, msg.attachmentName);
 
-    if (showImage) {
+    if (asImage) {
       var a = document.createElement('a');
-      a.href = att.url;
+      a.href = url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       var img = document.createElement('img');
-      img.src = att.url;
-      img.alt = att.name || 'Image';
+      img.src = url;
+      img.alt = msg.attachmentName || 'Image';
       img.className = 'lc-msg__img';
-      img.loading = 'lazy';
+      // Inline styles so image shows even if CSS file is outdated/cached
+      img.setAttribute(
+        'style',
+        'display:block!important;max-width:min(220px,70vw)!important;max-height:240px!important;width:auto!important;height:auto!important;border-radius:10px;margin:0;background:#f3f4f6;object-fit:contain;'
+      );
+      img.referrerPolicy = 'no-referrer';
+      img.onerror = function () {
+        // Keep a visible fallback link if the browser blocks the img (e.g. CSP)
+        if (bubble.querySelector('.lc-img-fallback')) return;
+        var link = document.createElement('a');
+        link.className = 'lc-img-fallback';
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'View image';
+        link.style.cssText = 'display:block;margin-top:6px;color:inherit;text-decoration:underline;font-size:12px;';
+        bubble.appendChild(link);
+      };
       a.appendChild(img);
       bubble.appendChild(a);
+
       var caption = (msg.text || '').trim();
       if (
         caption &&
-        caption !== att.name &&
+        caption !== msg.attachmentName &&
         caption.toLowerCase() !== 'image' &&
-        !/\.(jpe?g|png|gif|webp)$/i.test(caption) &&
-        (!att.url || caption.indexOf(att.url) === -1)
+        !/\.(jpe?g|png|gif|webp)$/i.test(caption)
       ) {
         var cap = document.createElement('div');
-        cap.className = 'lc-msg__caption';
         cap.textContent = caption;
+        cap.style.marginTop = '6px';
+        cap.style.fontSize = '12px';
         bubble.appendChild(cap);
       }
-    } else if (att.url) {
+    } else if (url) {
       var link = document.createElement('a');
-      link.href = att.url;
+      link.href = url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.className = 'lc-msg__file';
-      link.textContent = att.name || 'Download file';
+      link.textContent = msg.attachmentName || 'Download file';
+      link.style.color = 'inherit';
+      link.style.textDecoration = 'underline';
       bubble.appendChild(link);
     } else {
       bubble.textContent = msg.text || '';
@@ -209,7 +226,6 @@
       !panelOpen()
     ) {
       setUnread(unread + 1);
-      desktopNotify('New support message', msg.text || msg.attachmentName || 'New message');
     }
   }
 
@@ -219,7 +235,7 @@
     seenIds = {};
     if (!list || !list.length) {
       body.innerHTML =
-        '<p class="lc-empty">Start a conversation with support. We typically reply within a few minutes.</p>';
+        '<p class="lc-empty" style="text-align:center;color:#7a8491;padding:24px 12px;">Start a conversation with support.</p>';
       return;
     }
     list.forEach(function (m) {
@@ -230,9 +246,7 @@
   function connectSocket() {
     if (typeof io === 'undefined') return;
     try {
-      if (!socket) {
-        socket = io({ path: '/socket.io', withCredentials: true });
-      }
+      if (!socket) socket = io({ path: '/socket.io', withCredentials: true });
       socket.on('connect', function () {
         setStatus('Live · connected');
         if (conversationId) {
@@ -244,15 +258,7 @@
       });
       socket.on('support:message', function (payload) {
         if (!payload || payload.conversationId !== conversationId) return;
-        var m = payload.message || payload;
-        appendMsg(m);
-      });
-      socket.on('support:notify', function (payload) {
-        if (!payload) return;
-        if (!panelOpen()) {
-          setUnread(unread + 1);
-          desktopNotify('Support replied', payload.preview || '');
-        }
+        appendMsg(payload.message || payload);
       });
     } catch (e) {
       setStatus('Online');
@@ -278,7 +284,7 @@
         connectSocket();
       })
       .catch(function () {
-        setStatus('Unable to load chat — try Support page');
+        setStatus('Unable to load chat');
         if (body) {
           body.innerHTML =
             '<p class="lc-empty">Could not load live chat. <a href="/app/support">Open Support</a></p>';
@@ -296,7 +302,6 @@
       socket.emit('support:join', { conversationId: conversationId }, function () {});
     }
     if (input) setTimeout(function () { input.focus(); }, 50);
-    requestNotifyPermission();
   }
 
   function closePanel() {
@@ -320,9 +325,7 @@
         if (f) {
           fileNameEl.textContent = f.name;
           fileNameEl.hidden = false;
-        } else {
-          resetFile();
-        }
+        } else resetFile();
       }
     });
   }
@@ -348,14 +351,11 @@
             if (res && res.ok) {
               if (input) input.value = '';
               setStatus('Sent');
-            } else {
-              sendHttp(text, false);
-            }
+            } else sendHttp(text, false);
           }
         );
         return;
       }
-
       sendHttp(text, hasFile);
     });
   }
@@ -363,7 +363,7 @@
   function sendHttp(text, hasFile) {
     var fd = new FormData();
     fd.append('_csrf', csrf);
-    fd.append('conversationId', conversationId);
+    fd.append('conversationId', conversationId || '');
     fd.append('text', text || '');
     fd.append('ajax', '1');
     if (hasFile && fileInput.files[0]) fd.append('file', fileInput.files[0]);
