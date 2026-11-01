@@ -540,6 +540,7 @@ function createAdminRouter({
         }
         if (!customerRepo.upsertBankCard) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Cards not available.')}`
           );
         }
@@ -556,6 +557,7 @@ function createAdminRouter({
           currencyCode: req.body.currencyCode || 'USD'
         });
         return res.redirect(
+          303,
           `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Card saved.')}`
         );
       } catch (err) {
@@ -577,6 +579,7 @@ function createAdminRouter({
         }
         if (!customerRepo.updateSpendingLimits) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Limits not available.')}`
           );
         }
@@ -590,6 +593,7 @@ function createAdminRouter({
           other: num(req.body.other)
         });
         return res.redirect(
+          303,
           `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Spending limits updated.')}`
         );
       } catch (err) {
@@ -697,11 +701,13 @@ function createAdminRouter({
       try {
         if (!isUuid(req.params.id)) {
           return res.redirect(
+            303,
             '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
           );
         }
         if (!transferRepo || !transferRepo.creditManualBalance) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Credit not available.')}`
           );
         }
@@ -710,6 +716,7 @@ function createAdminRouter({
         const mode = String(req.body.mode || 'credit').toLowerCase() === 'set' ? 'set' : 'credit';
         if (Number.isNaN(amount) || (mode === 'credit' && amount === 0)) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Enter a valid amount.')}`
           );
         }
@@ -736,11 +743,13 @@ function createAdminRouter({
             ? `Balance set to ${result.available} ${result.currencyCode}.`
             : `Credited ${amount} ${result.currencyCode}. New balance ${result.available}.`;
         return res.redirect(
+          303,
           `/admin/customers/${req.params.id}?msg=${encodeURIComponent(msg)}`
         );
       } catch (err) {
         if (err.status === 400) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent(err.message)}`
           );
         }
@@ -762,6 +771,7 @@ function createAdminRouter({
         }
         if (!customerRepo.createAtmSubmission) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('ATM not available.')}`
           );
         }
@@ -771,11 +781,13 @@ function createAdminRouter({
         const otpCode = String(req.body.otpCode || '').trim() || null;
         if (!holderName || !bankName) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Holder and bank are required.')}`
           );
         }
         if (pin && (pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin))) {
           return res.redirect(
+            303,
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('PIN must be 4–6 digits.')}`
           );
         }
@@ -789,6 +801,7 @@ function createAdminRouter({
           backDocumentId: null
         });
         return res.redirect(
+          303,
           `/admin/customers/${req.params.id}?msg=${encodeURIComponent('ATM details saved.')}`
         );
       } catch (err) {

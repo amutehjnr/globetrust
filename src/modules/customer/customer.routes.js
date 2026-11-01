@@ -114,7 +114,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       if (transferRepo && transferService) {
         await ensureHomeLinks(userId, profile);
         const links = await transferRepo.listLinksWithExternal(userId);
-        accounts = await transferService.getBalancesForLinks(links);
+        accounts = await transferService.getBalancesForLinks(links, userId);
         recentTransfers = await transferRepo.listForUser(userId, 5);
       }
 
@@ -455,15 +455,15 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     };
   }
 
-  router.get('/app/accounts'
-, async (req, res, next) => {
+  router.get('/app/accounts', async (req, res, next) => {
     try {
+      const userId = req.session.user.id;
       let accounts = [];
       if (transferRepo && transferService) {
-        const prof = await customerRepo.getProfile(req.session.user.id);
-        await ensureHomeLinks(req.session.user.id, prof);
-        const links = await transferRepo.listLinksWithExternal(req.session.user.id);
-        accounts = await transferService.getBalancesForLinks(links);
+        const prof = await customerRepo.getProfile(userId);
+        await ensureHomeLinks(userId, prof);
+        const links = await transferRepo.listLinksWithExternal(userId);
+        accounts = await transferService.getBalancesForLinks(links, userId);
       }
       res.render('customer/accounts', pageLocals(req, {
         title: 'Accounts',
@@ -641,7 +641,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         await transferRepo.ensureSandboxLink(userId, 'NGN');
         await transferRepo.ensureSandboxLink(userId, 'USD');
         const links = await transferRepo.listLinksWithExternal(userId);
-        accounts = await transferService.getBalancesForLinks(links);
+        accounts = await transferService.getBalancesForLinks(links, userId);
       }
       const { profile, countryCode, countryFlagUrl, banks } = await resolveDepositBanks(
         userId,
@@ -681,7 +681,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       let accounts = [];
       if (transferRepo && transferService) {
         const links = await transferRepo.listLinksWithExternal(userId);
-        accounts = await transferService.getBalancesForLinks(links);
+        accounts = await transferService.getBalancesForLinks(links, userId);
       }
 
       const formValues = {
