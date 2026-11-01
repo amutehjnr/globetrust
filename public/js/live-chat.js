@@ -1,8 +1,7 @@
 'use strict';
 
 /**
- * Floating Live chat widget (bottom-right) — text + file upload.
- * Posts to /app/support/messages (multipart when a file is selected).
+ * Floating Live chat — realtime messages + unread badge + optional desktop notify.
  */
 (function () {
   var widget = document.getElementById('lc-widget');
@@ -23,9 +22,62 @@
   var userId = null;
   var loaded = false;
   var socket = null;
+  var seenIds = {};
+  var unread = 0;
 
   function setStatus(t) {
     if (statusEl) statusEl.textContent = t || '';
+  }
+
+  function ensureBadge() {
+    if (!launcher) return null;
+    var b = launcher.querySelector('.lc-badge');
+    if (!b) {
+      b = document.createElement('span');
+      b.className = 'lc-badge';
+      b.hidden = true;
+      launcher.appendChild(b);
+    }
+    return b;
+  }
+
+  function setUnread(n) {
+    unread = Math.max(0, n);
+    var b = ensureBadge();
+    if (!b) return;
+    if (unread > 0) {
+      b.hidden = false;
+      b.textContent = unread > 9 ? '9+' : String(unread);
+      launcher.classList.add('has-unread');
+    } else {
+      b.hidden = true;
+      b.textContent = '';
+      launcher.classList.remove('has-unread');
+    }
+  }
+
+  function panelOpen() {
+    return panel && !panel.hidden;
+  }
+
+  function desktopNotify(title, bodyText) {
+    try {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        new Notification(title || 'Globe Trust', {
+          body: bodyText || '',
+          icon: '/favicon.ico'
+        });
+      }
+    } catch (_) {}
+  }
+
+  function requestNotifyPermission() {
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (_) {}
   }
 
   function resetFile() {
@@ -36,8 +88,15 @@
     }
   }
 
-  function appendMsg(msg) {
+  function appendMsg(msg, opts) {
     if (!body || !msg) return;
+    opts = opts || {};
+    if (msg.id != null) {
+      var key = String(msg.id);
+      if (seenIds[key]) return;
+      seenIds[key] = true;
+    }
+
     var empty = body.querySelector('.lc-empty');
     if (empty) empty.remove();
 
@@ -75,12 +134,6 @@
       link.className = 'lc-msg__file';
       link.textContent = msg.attachmentName || 'Download file';
       bubble.appendChild(link);
-      if (msg.text && msg.text !== msg.attachmentName) {
-        var c2 = document.createElement('div');
-        c2.className = 'lc-msg__caption';
-        c2.textContent = msg.text;
-        bubble.appendChild(c2);
-      }
     } else {
       bubble.textContent = msg.text || '';
     }
@@ -88,26 +141,44 @@
     row.appendChild(bubble);
     body.appendChild(row);
     body.scrollTop = body.scrollHeight;
+
+    // Unread + notify when message from other party and panel closed
+    if (
+      !opts.silent &&
+      msg.senderUserId &&
+      msg.senderUserId !== userId &&
+      !panelOpen()
+    ) {
+      setUnread(unread + 1);
+      desktopNotify('New support message', msg.text || msg.attachmentName || 'New message');
+    }
   }
 
   function renderMessages(list) {
     if (!body) return;
     body.innerHTML = '';
+    seenIds = {};
     if (!list || !list.length) {
       body.innerHTML =
         '<p class="lc-empty">Start a conversation with support. We typically reply within a few minutes.</p>';
       return;
     }
-    list.forEach(appendMsg);
+    list.forEach(function (m) {
+      appendMsg(m, { silent: true });
+    });
   }
 
   function connectSocket() {
-    if (typeof io === 'undefined' || !conversationId) return;
+    if (typeof io === 'undefined') return;
     try {
-      socket = io({ path: '/socket.io', withCredentials: true });
+      if (!socket) {
+        socket = io({ path: '/socket.io', withCredentials: true });
+      }
       socket.on('connect', function () {
         setStatus('Live · connected');
-        socket.emit('support:join', { conversationId: conversationId }, function () {});
+        if (conversationId) {
+          socket.emit('support:join', { conversationId: conversationId }, function () {});
+        }
       });
       socket.on('connect_error', function () {
         setStatus('Online · messages still send');
@@ -115,14 +186,15 @@
       socket.on('support:message', function (payload) {
         if (!payload || payload.conversationId !== conversationId) return;
         var m = payload.message || payload;
-        appendMsg({
-          text: m.text || '',
-          type: m.type,
-          senderUserId: m.senderUserId,
-          attachmentUrl: m.attachmentUrl || null,
-          attachmentName: m.attachmentName || null,
-          attachmentMime: m.attachmentMime || null
-        });
+        appendMsg(m);
+      });
+      // Panel closed: still get ping when support replies
+      socket.on('support:notify', function (payload) {
+        if (!payload) return;
+        if (!panelOpen()) {
+          setUnread(unread + 1);
+          desktopNotify('Support replied', payload.preview || '');
+        }
       });
     } catch (e) {
       setStatus('Online');
@@ -160,8 +232,13 @@
     if (!panel) return;
     panel.hidden = false;
     if (launcher) launcher.setAttribute('aria-expanded', 'true');
+    setUnread(0);
     if (!loaded) loadChat();
+    else if (socket && conversationId) {
+      socket.emit('support:join', { conversationId: conversationId }, function () {});
+    }
     if (input) setTimeout(function () { input.focus(); }, 50);
+    requestNotifyPermission();
   }
 
   function closePanel() {
@@ -192,6 +269,9 @@
     });
   }
 
+  // Connect early so support:notify works while panel closed
+  connectSocket();
+
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -203,40 +283,53 @@
 
       setStatus('Sending…');
 
-      var fd = new FormData();
-      fd.append('_csrf', csrf);
-      fd.append('conversationId', conversationId);
-      fd.append('text', text);
-      fd.append('ajax', '1');
-      if (hasFile) fd.append('file', fileInput.files[0]);
-
-      // Optimistic text bubble (files wait for server URL)
-      if (text && !hasFile) {
-        appendMsg({ text: text, senderUserId: userId });
-        if (input) input.value = '';
+      // Text-only via socket when possible
+      if (!hasFile && socket && socket.connected && text) {
+        socket.emit(
+          'support:message',
+          { conversationId: conversationId, text: text },
+          function (res) {
+            if (res && res.ok) {
+              if (input) input.value = '';
+              setStatus('Sent');
+            } else {
+              sendHttp(text, false);
+            }
+          }
+        );
+        return;
       }
 
-      fetch('/app/support/messages', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json' },
-        body: fd
-      })
-        .then(function (r) {
-          if (!r.ok) throw new Error('send failed');
-          return r.json();
-        })
-        .then(function (data) {
-          if (hasFile && data && data.message) {
-            appendMsg(data.message);
-          }
-          if (input) input.value = '';
-          resetFile();
-          setStatus('Sent');
-        })
-        .catch(function () {
-          setStatus('Message may not have sent — try again');
-        });
+      sendHttp(text, hasFile);
     });
+  }
+
+  function sendHttp(text, hasFile) {
+    var fd = new FormData();
+    fd.append('_csrf', csrf);
+    fd.append('conversationId', conversationId);
+    fd.append('text', text || '');
+    fd.append('ajax', '1');
+    if (hasFile && fileInput.files[0]) fd.append('file', fileInput.files[0]);
+
+    fetch('/app/support/messages', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      body: fd
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('send failed');
+        return r.json();
+      })
+      .then(function (data) {
+        if (data && data.message) appendMsg(data.message, { silent: true });
+        if (input) input.value = '';
+        resetFile();
+        setStatus('Sent');
+      })
+      .catch(function () {
+        setStatus('Message may not have sent — try again');
+      });
   }
 })();

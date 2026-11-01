@@ -30,12 +30,21 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
     }
   });
 
-  function broadcastMessage(req, conversationId, message) {
+  async function broadcastMessage(req, conversation, message) {
     try {
       const io = req.app.get('io');
-      if (!io || !message) return;
-      io.to(`support:${conversationId}`).emit('support:message', {
-        conversationId,
+      if (!io || !message || !conversation) return;
+      if (typeof io.supportBroadcast === 'function') {
+        await io.supportBroadcast({
+          conversation,
+          message,
+          sender: req.session.user
+        });
+        return;
+      }
+      // Fallback: room-only emit
+      io.to(`support:${conversation.id}`).emit('support:message', {
+        conversationId: conversation.id,
         message: {
           id: message.id,
           senderUserId: message.senderUserId,
@@ -125,7 +134,7 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
           req.body.text,
           attachment
         );
-        broadcastMessage(req, result.conversation.id, result.message);
+        await broadcastMessage(req, result.conversation, result.message);
 
         const wantsJson =
           (req.headers.accept && String(req.headers.accept).includes('application/json')) ||
@@ -221,7 +230,7 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
           req.body.text,
           null
         );
-        broadcastMessage(req, result.conversation.id, result.message);
+        await broadcastMessage(req, result.conversation, result.message);
 
         const wantsJson =
           (req.headers.accept && String(req.headers.accept).includes('application/json')) ||

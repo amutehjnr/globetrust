@@ -7,14 +7,24 @@ const logger = require('./config/logger');
 const { createDatabasePool } = require('./config/database');
 const { createApp } = require('./app');
 const { attachSocketServer } = require('./sockets');
+const { createAdminRepository } = require('./repositories/adminRepository');
 
 async function start() {
   const pool = createDatabasePool();
   await pool.query('SELECT 1');
 
   const app = createApp(pool);
+  const adminRepo = createAdminRepository(pool);
   const server = http.createServer(app);
-  const io = attachSocketServer(server, { supportService: app.get('supportService') });
+
+  const io = attachSocketServer(server, {
+    supportService: app.get('supportService'),
+    notificationWriter: async (payload) => {
+      if (adminRepo && typeof adminRepo.createNotification === 'function') {
+        return adminRepo.createNotification(payload);
+      }
+    }
+  });
   app.set('io', io);
 
   const port = Number(process.env.PORT || 3000);
@@ -23,18 +33,23 @@ async function start() {
   const heartbeatMs = Number(process.env.HEARTBEAT_MS || 0);
   if (heartbeatMs >= 15000) {
     setInterval(() => {
-      logger.info({
-        event: 'heartbeat',
-        uptimeSec: Math.floor(process.uptime()),
-        memoryRss: process.memoryUsage().rss
-      }, 'heartbeat');
+      logger.info(
+        {
+          event: 'heartbeat',
+          uptimeSec: Math.floor(process.uptime()),
+          memoryRss: process.memoryUsage().rss
+        },
+        'heartbeat'
+      );
     }, heartbeatMs).unref();
   }
 
   const shutdown = (signal) => {
     logger.info({ signal }, 'Shutdown requested');
     server.close(async () => {
-      try { await pool.end(); } catch (error) {
+      try {
+        await pool.end();
+      } catch (error) {
         logger.error({ err: error }, 'Error closing database pool');
       }
       process.exit(0);
