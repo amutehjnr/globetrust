@@ -1,108 +1,127 @@
 <%- include('../partials/customer-shell-start') %>
 
-<div class="db-greeting">
-  <div>
-    <h1>Support</h1>
-    <p>Chat with the bank. Never share passwords or full card numbers.</p>
-  </div>
-</div>
+<div class="support-page">
 
-<section class="db-panel support-panel">
+  <header class="support-hero">
+    <div class="support-hero__text">
+      <span class="support-hero__eyebrow">Customer care</span>
+      <h1>Support chat</h1>
+      <p>Message our team securely. Never share passwords, PINs, or full card numbers.</p>
+    </div>
+    <div class="support-hero__meta">
+      <span class="support-badge">
+        <span class="support-badge__dot" aria-hidden="true"></span>
+        Live desk
+      </span>
+      <span class="support-hero__hint">Typical reply: a few minutes</span>
+    </div>
+  </header>
 
-  <!-- Chat log -->
-  <div
-    id="chat-log"
-    class="chat-log"
-    data-conversation="<%= conversation.id %>"
-    data-user="<%= userId %>"
-  >
-    <% if (!messages || !messages.length) { %>
-      <div class="chat-empty">
-        <div class="chat-empty-icon">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-          </svg>
-        </div>
-        <h3>No messages yet</h3>
-        <p>Send us a message and a member of our support team will reply shortly.</p>
+  <section class="support-shell db-panel" aria-label="Support conversation">
+
+    <div class="support-shell__head">
+      <div>
+        <strong>Conversation</strong>
+        <span class="support-shell__sub">Globe Trust support</span>
       </div>
-    <% } %>
+      <p id="socket-status" class="chat-status">
+        <span class="chat-status-dot"></span>
+        <span class="chat-status-text">Connecting…</span>
+      </p>
+    </div>
 
-    <% (messages || []).forEach(function(m) { %>
-      <div class="msg <%= m.senderUserId === userId ? 'me' : '' %>">
-        <div class="bubble">
-          <% var isImg = m.type === 'image' || (m.attachmentMime && String(m.attachmentMime).indexOf('image/') === 0); %>
-          <% if (m.attachmentUrl && isImg) { %>
-            <a href="<%= m.attachmentUrl %>" target="_blank" rel="noopener noreferrer">
-              <img class="chat-attach-img" src="<%= m.attachmentUrl %>" alt="<%= m.attachmentName || 'Image' %>">
-            </a>
-            <% if (m.text && m.text !== m.attachmentName) { %>
-              <div class="chat-attach-caption"><%= m.text %></div>
-            <% } %>
-          <% } else if (m.attachmentUrl) { %>
-            <a class="chat-attach-file" href="<%= m.attachmentUrl %>" target="_blank" rel="noopener noreferrer">
-              <%= m.attachmentName || 'Download file' %>
-            </a>
-            <% if (m.text && m.text !== m.attachmentName) { %>
-              <div class="chat-attach-caption"><%= m.text %></div>
-            <% } %>
-          <% } else { %>
-            <%= m.text %>
-          <% } %>
+    <div
+      id="chat-log"
+      class="chat-log"
+      data-conversation="<%= conversation && conversation.id ? conversation.id : '' %>"
+      data-user="<%= typeof userId !== 'undefined' ? userId : '' %>"
+    >
+      <% if (!messages || !messages.length) { %>
+        <div class="chat-empty">
+          <div class="chat-empty-icon" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+          </div>
+          <h3>No messages yet</h3>
+          <p>Send a message and a support agent will reply here. You can also attach images or documents.</p>
         </div>
-        <% if (m.createdAt) { %><time><%= m.createdAt %></time><% } %>
-      </div>
-    <% }) %>
-  </div>
+      <% } %>
 
-  <!-- Composer with file attach -->
-  <form
-    id="chat-form"
-    method="post"
-    action="/app/support/messages"
-    class="chat-composer"
-    enctype="multipart/form-data"
-    autocomplete="off"
-  >
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <input type="hidden" name="conversationId" value="<%= conversation.id %>">
+      <% (messages || []).forEach(function (m) { %>
+        <div class="msg <%= m.senderUserId === userId ? 'me' : '' %>">
+          <div class="bubble">
+            <% var isImg = m.type === 'image' || (m.attachmentMime && String(m.attachmentMime).indexOf('image/') === 0); %>
+            <% if (m.attachmentUrl && isImg) { %>
+              <a href="<%= m.attachmentUrl %>" target="_blank" rel="noopener noreferrer">
+                <img class="chat-attach-img" src="<%= m.attachmentUrl %>" alt="<%= m.attachmentName || 'Image' %>">
+              </a>
+              <% if (m.text && m.text !== m.attachmentName) { %>
+                <div class="chat-attach-caption"><%= m.text %></div>
+              <% } %>
+            <% } else if (m.attachmentUrl) { %>
+              <a class="chat-attach-file" href="<%= m.attachmentUrl %>" target="_blank" rel="noopener noreferrer">
+                <%= m.attachmentName || 'Download file' %>
+              </a>
+              <% if (m.text && m.text !== m.attachmentName) { %>
+                <div class="chat-attach-caption"><%= m.text %></div>
+              <% } %>
+            <% } else { %>
+              <%= m.text %>
+            <% } %>
+          </div>
+          <% if (m.createdAt) { %><time><%= m.createdAt %></time><% } %>
+        </div>
+      <% }) %>
+    </div>
 
-    <label class="chat-attach-btn" title="Attach file">
-      <input
-        type="file"
-        name="file"
-        id="chat-file"
-        class="chat-file-input"
-        accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.txt"
-      >
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-      </svg>
-    </label>
-    <span id="chat-file-name" class="chat-file-name" hidden></span>
-
-    <input
-      name="text"
-      id="chat-input"
-      maxlength="2000"
-      placeholder="Type your message…"
+    <form
+      id="chat-form"
+      method="post"
+      action="/app/support/messages"
+      class="chat-composer"
+      enctype="multipart/form-data"
       autocomplete="off"
     >
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <input type="hidden" name="conversationId" value="<%= conversation && conversation.id ? conversation.id : '' %>">
 
-    <button class="chat-send" type="submit" aria-label="Send message">
-      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-      </svg>
-      <span>Send</span>
-    </button>
-  </form>
+      <div class="chat-composer__row">
+        <label class="chat-attach-btn" title="Attach file">
+          <input
+            type="file"
+            name="file"
+            id="chat-file"
+            class="chat-file-input"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx,.txt"
+          >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+          </svg>
+          <span class="sr-only">Attach file</span>
+        </label>
 
-  <p id="socket-status" class="chat-status">
-    <span class="chat-status-dot"></span>
-    <span class="chat-status-text">Connecting…</span>
-  </p>
+        <input
+          name="text"
+          id="chat-input"
+          maxlength="2000"
+          placeholder="Type your message…"
+          autocomplete="off"
+          enterkeyhint="send"
+        >
 
-</section>
+        <button class="chat-send" type="submit" aria-label="Send message">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+          </svg>
+          <span class="chat-send__label">Send</span>
+        </button>
+      </div>
+      <span id="chat-file-name" class="chat-file-name" hidden></span>
+    </form>
+
+  </section>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/support-chat.js" defer></script>
