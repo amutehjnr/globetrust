@@ -13,18 +13,20 @@ const createUserSchema = z.object({
   email: z.string().email().max(254),
   password: z
     .string()
-    .min(12)
+    .min(12, 'Password must be at least 12 characters')
     .max(128)
-    .regex(/[A-Z]/)
-    .regex(/[a-z]/)
-    .regex(/[0-9]/),
+    .regex(/[A-Z]/, 'Password needs an uppercase letter')
+    .regex(/[a-z]/, 'Password needs a lowercase letter')
+    .regex(/[0-9]/, 'Password needs a number'),
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),
-  phoneE164: z
-    .string()
-    .regex(/^\+[1-9]\d{7,14}$/)
-    .optional()
-    .or(z.literal('')),
+  phoneE164: z.preprocess(
+    (v) => (v == null || String(v).trim() === '' ? '' : String(v).trim()),
+    z.union([
+      z.literal(''),
+      z.string().regex(/^\+[1-9]\d{7,14}$/, 'Phone must be E.164, e.g. +15551234567')
+    ])
+  ),
   activate: z.enum(['yes', 'no']).optional()
 });
 
@@ -146,37 +148,48 @@ function createAdminRouter({
     '/admin/customers/new',
     requireRole('admin'),
     requireCsrf,
-    async (req, res, next) => {
+    async (req, res) => {
+      const values = {
+        email: req.body.email || '',
+        firstName: req.body.firstName || '',
+        lastName: req.body.lastName || '',
+        phoneE164: req.body.phoneE164 || ''
+      };
+
+      const renderForm = (status, { error = null, success = null } = {}) =>
+        res.status(status).render(
+          'admin/create-customer',
+          adminLocals(req, {
+            title: 'Create customer',
+            path: '/admin/customers',
+            error,
+            success,
+            values
+          })
+        );
+
       try {
-        if (!userRepo) {
-          const err = new Error('User repository not configured.');
-          err.status = 500;
-          throw err;
+        if (!userRepo || typeof userRepo.createCustomer !== 'function') {
+          return renderForm(500, { error: 'User repository not configured.' });
         }
+
         const data = createUserSchema.parse({
-          ...req.body,
-          phoneE164: req.body.phoneE164 || ''
+          email: req.body.email,
+          password: req.body.password,
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          phoneE164: req.body.phoneE164,
+          activate: req.body.activate
         });
+
         const existing = await userRepo.findByEmail(data.email);
         if (existing) {
-          return res.status(409).render(
-            'admin/create-customer',
-            adminLocals(req, {
-              title: 'Create customer',
-              path: '/admin/customers',
-              error: 'A user with this email already exists.',
-              success: null,
-              values: {
-                email: data.email,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                phoneE164: data.phoneE164
-              }
-            })
-          );
+          return renderForm(409, { error: 'A user with this email already exists.' });
         }
+
         const passwordHash = await hashPassword(data.password);
         const activate = data.activate === 'yes';
+
         const created = await userRepo.createCustomer({
           email: data.email,
           passwordHash,
@@ -185,43 +198,55 @@ function createAdminRouter({
           phoneE164: data.phoneE164 || null,
           status: activate ? 'active' : 'pending'
         });
+
         const userId = created.id || created;
+
         try {
-          await adminRepo.setUserStatus(
-            userId,
-            activate ? 'active' : 'pending',
-            req.session.user.id
-          );
-        } catch (_) {}
-        return res.render(
-          'admin/create-customer',
-          adminLocals(req, {
-            title: 'Create customer',
-            path: '/admin/customers',
-            error: null,
-            success: `Customer created${activate ? ' and activated' : ' (pending)'}. Reference: ${created.customerReference || userId}`,
-            values: {}
-          })
-        );
+          if (adminRepo && typeof adminRepo.setUserStatus === 'function') {
+            await adminRepo.setUserStatus(
+              userId,
+              activate ? 'active' : 'pending',
+              req.session.user.id
+            );
+          }
+        } catch (e) {
+          console.error('[GLOBE_ADMIN] setUserStatus after create ignored', e.message || e);
+        }
+
+        values.email = '';
+        values.firstName = '';
+        values.lastName = '';
+        values.phoneE164 = '';
+
+        return renderForm(200, {
+          success: `Customer created${activate ? ' and activated' : ' (pending)'}. Reference: ${
+            created.customerReference || userId
+          }`
+        });
       } catch (err) {
         if (err.name === 'ZodError') {
-          return res.status(400).render(
-            'admin/create-customer',
-            adminLocals(req, {
-              title: 'Create customer',
-              path: '/admin/customers',
-              error: (err.issues || []).map((i) => i.message).join('; '),
-              success: null,
-              values: {
-                email: req.body.email,
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                phoneE164: req.body.phoneE164
-              }
-            })
-          );
+          const msg = (err.issues || []).map((i) => i.message).join('; ') || 'Invalid input.';
+          return renderForm(400, { error: msg });
         }
-        next(err);
+        if (err.code === 'ER_DUP_ENTRY') {
+          return renderForm(409, {
+            error: 'Email or phone number is already registered.'
+          });
+        }
+        if (err.code === 'ER_NO_SUCH_TABLE' || err.code === 'ER_BAD_FIELD_ERROR') {
+          return renderForm(500, {
+            error:
+              'Database schema is missing a required table or column. Run database/schema.sql (and migrations).'
+          });
+        }
+        console.error('[GLOBE_ADMIN] create customer failed', {
+          message: err.message,
+          code: err.code,
+          stack: err.stack
+        });
+        return renderForm(500, {
+          error: err.message || 'Could not create customer. Check server logs.'
+        });
       }
     }
   );

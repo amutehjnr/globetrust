@@ -6,7 +6,7 @@ function createSupportRepository(pool) {
   return {
     async findOpenByCustomer(userId) {
       const [rows] = await pool.query(
-        `SELECT id, status, subject, last_message_at, created_at, assigned_agent_user_id
+        `SELECT id, customer_user_id, status, subject, last_message_at, created_at, assigned_agent_user_id
          FROM support_conversations
          WHERE customer_user_id = ? AND status IN ('open','waiting')
          ORDER BY created_at DESC
@@ -20,31 +20,35 @@ function createSupportRepository(pool) {
     async createConversation(customerUserId, subject) {
       const id = newBinaryId();
       await pool.query(
-        `INSERT INTO support_conversations (id, customer_user_id, status, subject, last_message_at)
+        `INSERT INTO support_conversations
+           (id, customer_user_id, status, subject, last_message_at)
          VALUES (?, ?, 'open', ?, UTC_TIMESTAMP(6))`,
-        [id, uuidToBinary(customerUserId), subject || 'Support request']
+        [id, uuidToBinary(customerUserId), subject || null]
       );
       return binaryToUuid(id);
     },
 
-    async getConversation(id) {
+    async getConversation(conversationId) {
       const [rows] = await pool.query(
-        `SELECT id, customer_user_id, assigned_agent_user_id, status, subject, last_message_at, created_at
-         FROM support_conversations WHERE id = ? LIMIT 1`,
-        [uuidToBinary(id)]
+        `SELECT id, customer_user_id, assigned_agent_user_id, status, subject,
+                last_message_at, created_at
+         FROM support_conversations
+         WHERE id = ?
+         LIMIT 1`,
+        [uuidToBinary(conversationId)]
       );
       if (!rows[0]) return null;
       return mapConversation(rows[0]);
     },
 
-    async listMessages(conversationId, limit = 100) {
+    async listMessages(conversationId, limit = 200) {
       const [rows] = await pool.query(
         `SELECT id, sender_user_id, message_text, message_type, created_at
          FROM support_messages
          WHERE conversation_id = ?
          ORDER BY id ASC
          LIMIT ?`,
-        [uuidToBinary(conversationId), limit]
+        [uuidToBinary(conversationId), Number(limit) || 200]
       );
       return rows.map((r) => ({
         id: r.id,
@@ -69,7 +73,8 @@ function createSupportRepository(pool) {
       );
       await pool.query(
         `UPDATE support_conversations
-         SET last_message_at = UTC_TIMESTAMP(6), status = IF(status = 'resolved', 'open', status)
+         SET last_message_at = UTC_TIMESTAMP(6),
+             status = IF(status IN ('resolved','closed'), 'open', status)
          WHERE id = ?`,
         [uuidToBinary(conversationId)]
       );
@@ -83,23 +88,28 @@ function createSupportRepository(pool) {
     },
 
     async listOpenForAgents(limit = 50) {
-      const [rows] = await pool.query(
-        `SELECT c.id, c.status, c.subject, c.last_message_at, c.created_at,
-                c.customer_user_id, c.assigned_agent_user_id,
-                u.email AS customer_email, cp.first_name, cp.last_name
-         FROM support_conversations c
-         JOIN users u ON u.id = c.customer_user_id
-         LEFT JOIN customer_profiles cp ON cp.user_id = c.customer_user_id
-         WHERE c.status IN ('open','waiting')
-         ORDER BY c.last_message_at DESC
-         LIMIT ?`,
-        [limit]
-      );
-      return rows.map((r) => ({
-        ...mapConversation(r),
-        customerEmail: r.customer_email,
-        customerName: [r.first_name, r.last_name].filter(Boolean).join(' ')
-      }));
+      try {
+        const [rows] = await pool.query(
+          `SELECT c.id, c.status, c.subject, c.last_message_at, c.created_at,
+                  c.customer_user_id, c.assigned_agent_user_id,
+                  u.email AS customer_email, cp.first_name, cp.last_name
+           FROM support_conversations c
+           JOIN users u ON u.id = c.customer_user_id
+           LEFT JOIN customer_profiles cp ON cp.user_id = c.customer_user_id
+           WHERE c.status IN ('open','waiting')
+           ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+           LIMIT ?`,
+          [Number(limit) || 50]
+        );
+        return rows.map((r) => ({
+          ...mapConversation(r),
+          customerEmail: r.customer_email,
+          customerName: [r.first_name, r.last_name].filter(Boolean).join(' ')
+        }));
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') return [];
+        throw err;
+      }
     },
 
     async assignAgent(conversationId, agentUserId) {
@@ -123,7 +133,7 @@ function createSupportRepository(pool) {
 function mapConversation(r) {
   return {
     id: binaryToUuid(r.id),
-    customerUserId: binaryToUuid(r.customer_user_id),
+    customerUserId: r.customer_user_id ? binaryToUuid(r.customer_user_id) : null,
     assignedAgentUserId: r.assigned_agent_user_id
       ? binaryToUuid(r.assigned_agent_user_id)
       : null,

@@ -4,6 +4,16 @@ const express = require('express');
 const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 
+function staffLocals(req, extra = {}) {
+  const email = req.session.user?.email || 'admin';
+  return {
+    displayName: email.split('@')[0],
+    initials: email.slice(0, 2).toUpperCase(),
+    path: extra.path || '/admin/support',
+    ...extra
+  };
+}
+
 function createSupportRouter({ supportService, supportRepo }) {
   const router = express.Router();
 
@@ -79,11 +89,14 @@ function createSupportRouter({ supportService, supportRepo }) {
     async (req, res, next) => {
       try {
         const queue = await supportRepo.listOpenForAgents();
-        res.render('admin/support-inbox', {
-          title: 'Support inbox',
-          path: '/admin/support',
-          queue
-        });
+        res.render(
+          'admin/support-inbox',
+          staffLocals(req, {
+            title: 'Support inbox',
+            path: '/admin/support',
+            queue: queue || []
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -102,15 +115,19 @@ function createSupportRouter({ supportService, supportRepo }) {
         );
         if (!conversation.assignedAgentUserId) {
           await supportRepo.assignAgent(conversation.id, req.session.user.id);
+          conversation.assignedAgentUserId = req.session.user.id;
         }
         const messages = await supportRepo.listMessages(conversation.id);
-        res.render('admin/support-thread', {
-          title: 'Conversation',
-          path: '/admin/support',
-          conversation,
-          messages,
-          userId: req.session.user.id
-        });
+        res.render(
+          'admin/support-thread',
+          staffLocals(req, {
+            title: 'Conversation',
+            path: '/admin/support',
+            conversation,
+            messages: messages || [],
+            userId: req.session.user.id
+          })
+        );
       } catch (err) {
         next(err);
       }
@@ -125,7 +142,23 @@ function createSupportRouter({ supportService, supportRepo }) {
     async (req, res, next) => {
       try {
         await supportService.postMessage(req.session.user, req.params.id, req.body.text);
-        res.redirect(`/admin/support/${req.params.id}`);
+        res.redirect(303, `/admin/support/${req.params.id}`);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  router.post(
+    '/admin/support/:id/close',
+    requireAuth,
+    requireRole('support_agent', 'admin', 'operations'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        await supportService.assertCanAccess(req.session.user, req.params.id);
+        await supportRepo.setStatus(req.params.id, 'closed');
+        res.redirect(303, '/admin/support');
       } catch (err) {
         next(err);
       }

@@ -46,39 +46,61 @@ function createUserRepository(pool) {
       return { ...mapUser(rows[0]), passwordHash: rows[0].password_hash };
     },
 
-      async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, countryCode, status }) {
+    async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, countryCode, status }) {
       const userId = newBinaryId();
       const profileRef = `CUS${Date.now().toString(36).toUpperCase()}`;
       const userStatus = status === 'active' ? 'active' : 'pending';
+      const phone = phoneE164 && String(phoneE164).trim() ? String(phoneE164).trim() : null;
+
       const conn = await pool.getConnection();
       try {
         await conn.beginTransaction();
+
         await conn.query(
           `INSERT INTO users (id, email, phone_e164, password_hash, status, mfa_required, email_verified_at)
            VALUES (?, ?, ?, ?, ?, TRUE, ?)`,
           [
             userId,
-            email.toLowerCase(),
-            phoneE164 || null,
+            String(email).toLowerCase().trim(),
+            phone,
             passwordHash,
             userStatus,
             userStatus === 'active' ? new Date() : null
           ]
         );
+
+        let roleId = null;
         const [roleRows] = await conn.query(
           `SELECT id FROM roles WHERE code = 'customer' LIMIT 1`
         );
         if (roleRows[0]) {
+          roleId = roleRows[0].id;
+        } else {
+          const [ins] = await conn.query(
+            `INSERT INTO roles (code, description) VALUES ('customer', 'Retail or business banking customer')`
+          );
+          roleId = ins.insertId;
+        }
+        if (roleId != null) {
           await conn.query(
             `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)`,
-            [userId, roleRows[0].id]
+            [userId, roleId]
           );
         }
+
         await conn.query(
-          `INSERT INTO customer_profiles (user_id, customer_reference, first_name, last_name, country_code)
-           VALUES (?, ?, ?, ?, ?)`,
-          [userId, profileRef, firstName, lastName, countryCode || null]
+          `INSERT INTO customer_profiles
+             (user_id, customer_reference, first_name, last_name, country_code, preferred_locale)
+           VALUES (?, ?, ?, ?, ?, 'en')`,
+          [
+            userId,
+            profileRef,
+            firstName || 'Customer',
+            lastName || 'User',
+            countryCode || null
+          ]
         );
+
         await conn.commit();
         return { id: binaryToUuid(userId), customerReference: profileRef };
       } catch (err) {
