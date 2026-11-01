@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Floating Live chat — realtime messages + unread badge + optional desktop notify.
+ * Floating Live chat — realtime messages, image attachments, unread badge.
  */
 (function () {
   var widget = document.getElementById('lc-widget');
@@ -88,6 +88,42 @@
     }
   }
 
+  function isImageMessage(msg, url) {
+    if (!msg) return false;
+    if (msg.type === 'image') return true;
+    var mime = msg.attachmentMime || msg.attachment_mime || '';
+    if (mime && String(mime).indexOf('image/') === 0) return true;
+    var name = msg.attachmentName || msg.attachment_name || msg.text || '';
+    if (/\.(jpe?g|png|gif|webp|heic|bmp)(\?|$)/i.test(name)) return true;
+    if (url && /\.(jpe?g|png|gif|webp|heic|bmp)(\?|$)/i.test(url)) return true;
+    // Cloudinary image delivery URLs often have /image/upload/
+    if (url && /\/image\/upload\//i.test(url)) return true;
+    if (url && /res\.cloudinary\.com\//i.test(url) && !/\.pdf(\?|$)/i.test(url)) return true;
+    return false;
+  }
+
+  function extractAttachment(msg) {
+    var url = msg.attachmentUrl || msg.attachment_url || null;
+    var name = msg.attachmentName || msg.attachment_name || null;
+    var mime = msg.attachmentMime || msg.attachment_mime || null;
+    if (!url && msg.text) {
+      var parts = String(msg.text).split(/\n/);
+      for (var i = 0; i < parts.length; i++) {
+        var line = parts[i].trim();
+        if (/^https?:\/\//i.test(line)) {
+          url = line;
+          if (!name && parts[0] && i > 0) name = parts[0].trim();
+          break;
+        }
+      }
+      if (!url) {
+        var m = String(msg.text).match(/(https?:\/\/\S+)/i);
+        if (m) url = m[1];
+      }
+    }
+    return { url: url, name: name, mime: mime };
+  }
+
   function appendMsg(msg, opts) {
     if (!body || !msg) return;
     opts = opts || {};
@@ -105,34 +141,41 @@
     var bubble = document.createElement('div');
     bubble.className = 'lc-msg__bubble';
 
-    var isImage =
-      msg.type === 'image' ||
-      (msg.attachmentMime && String(msg.attachmentMime).indexOf('image/') === 0);
+    var att = extractAttachment(msg);
+    var showImage = att.url && isImageMessage(msg, att.url);
 
-    if (msg.attachmentUrl && isImage) {
+    if (showImage) {
       var a = document.createElement('a');
-      a.href = msg.attachmentUrl;
+      a.href = att.url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       var img = document.createElement('img');
-      img.src = msg.attachmentUrl;
-      img.alt = msg.attachmentName || 'Image';
+      img.src = att.url;
+      img.alt = att.name || 'Image';
       img.className = 'lc-msg__img';
+      img.loading = 'lazy';
       a.appendChild(img);
       bubble.appendChild(a);
-      if (msg.text && msg.text !== msg.attachmentName) {
+      var caption = (msg.text || '').trim();
+      if (
+        caption &&
+        caption !== att.name &&
+        caption.toLowerCase() !== 'image' &&
+        !/\.(jpe?g|png|gif|webp)$/i.test(caption) &&
+        (!att.url || caption.indexOf(att.url) === -1)
+      ) {
         var cap = document.createElement('div');
         cap.className = 'lc-msg__caption';
-        cap.textContent = msg.text;
+        cap.textContent = caption;
         bubble.appendChild(cap);
       }
-    } else if (msg.attachmentUrl) {
+    } else if (att.url) {
       var link = document.createElement('a');
-      link.href = msg.attachmentUrl;
+      link.href = att.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.className = 'lc-msg__file';
-      link.textContent = msg.attachmentName || 'Download file';
+      link.textContent = att.name || 'Download file';
       bubble.appendChild(link);
     } else {
       bubble.textContent = msg.text || '';
@@ -142,7 +185,6 @@
     body.appendChild(row);
     body.scrollTop = body.scrollHeight;
 
-    // Unread + notify when message from other party and panel closed
     if (
       !opts.silent &&
       msg.senderUserId &&
@@ -188,7 +230,6 @@
         var m = payload.message || payload;
         appendMsg(m);
       });
-      // Panel closed: still get ping when support replies
       socket.on('support:notify', function (payload) {
         if (!payload) return;
         if (!panelOpen()) {
@@ -269,7 +310,6 @@
     });
   }
 
-  // Connect early so support:notify works while panel closed
   connectSocket();
 
   if (form) {
@@ -283,7 +323,6 @@
 
       setStatus('Sending…');
 
-      // Text-only via socket when possible
       if (!hasFile && socket && socket.connected && text) {
         socket.emit(
           'support:message',

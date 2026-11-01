@@ -88,7 +88,13 @@ function createSupportRepository(pool) {
         throw err;
       }
 
-      const body = clean || (attachmentName ? String(attachmentName).slice(0, 200) : 'Attachment');
+      // Prefer a short caption so UI shows the image, not a long WhatsApp filename
+      let body = clean;
+      if (!body) {
+        if (type === 'image') body = 'Image';
+        else if (attachmentName) body = String(attachmentName).slice(0, 200);
+        else body = 'Attachment';
+      }
 
       let result;
       try {
