@@ -21,6 +21,17 @@ function mapUser(row) {
 }
 
 function createUserRepository(pool) {
+  async function resolveRoleId(conn, code) {
+    const db = conn || pool;
+    const [rows] = await db.query(`SELECT id FROM roles WHERE code = ? LIMIT 1`, [code]);
+    if (rows[0]) return rows[0].id;
+    const [ins] = await db.query(
+      `INSERT INTO roles (code, description) VALUES (?, ?)`,
+      [code, code === 'customer' ? 'Retail or business banking customer' : code]
+    );
+    return ins.insertId;
+  }
+
   return {
     async findByEmail(email) {
       const [rows] = await pool.query(
@@ -28,7 +39,7 @@ function createUserRepository(pool) {
                 mfa_required, mfa_enrolled_at, failed_login_count, locked_until,
                 password_changed_at, last_login_at, created_at
          FROM users WHERE email = ? LIMIT 1`,
-        [email.toLowerCase()]
+        [String(email).toLowerCase().trim()]
       );
       if (!rows[0]) return null;
       return { ...mapUser(rows[0]), passwordHash: rows[0].password_hash };
@@ -46,11 +57,26 @@ function createUserRepository(pool) {
       return { ...mapUser(rows[0]), passwordHash: rows[0].password_hash };
     },
 
-    async createCustomer({ email, passwordHash, firstName, lastName, phoneE164, countryCode, status }) {
+    /**
+     * Create portal customer. Always assigns role `customer`.
+     * mfaRequired defaults to false so admin-provisioned logins are not blocked.
+     */
+    async createCustomer({
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      phoneE164,
+      countryCode,
+      status,
+      mfaRequired
+    }) {
       const userId = newBinaryId();
       const profileRef = `CUS${Date.now().toString(36).toUpperCase()}`;
       const userStatus = status === 'active' ? 'active' : 'pending';
       const phone = phoneE164 && String(phoneE164).trim() ? String(phoneE164).trim() : null;
+      // Default OFF for admin-created accounts (explicit true to require MFA)
+      const mfa = mfaRequired === true ? 1 : 0;
 
       const conn = await pool.getConnection();
       try {
@@ -58,35 +84,24 @@ function createUserRepository(pool) {
 
         await conn.query(
           `INSERT INTO users (id, email, phone_e164, password_hash, status, mfa_required, email_verified_at)
-           VALUES (?, ?, ?, ?, ?, TRUE, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             String(email).toLowerCase().trim(),
             phone,
             passwordHash,
             userStatus,
+            mfa,
             userStatus === 'active' ? new Date() : null
           ]
         );
 
-        let roleId = null;
-        const [roleRows] = await conn.query(
-          `SELECT id FROM roles WHERE code = 'customer' LIMIT 1`
+        const roleId = await resolveRoleId(conn, 'customer');
+        await conn.query(
+          `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)
+           ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)`,
+          [userId, roleId]
         );
-        if (roleRows[0]) {
-          roleId = roleRows[0].id;
-        } else {
-          const [ins] = await conn.query(
-            `INSERT INTO roles (code, description) VALUES ('customer', 'Retail or business banking customer')`
-          );
-          roleId = ins.insertId;
-        }
-        if (roleId != null) {
-          await conn.query(
-            `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)`,
-            [userId, roleId]
-          );
-        }
 
         await conn.query(
           `INSERT INTO customer_profiles
@@ -109,6 +124,16 @@ function createUserRepository(pool) {
       } finally {
         conn.release();
       }
+    },
+
+    /** Persist customer role if missing (fixes 403 for older admin-created users). */
+    async ensureCustomerRole(userId) {
+      const roleId = await resolveRoleId(null, 'customer');
+      await pool.query(
+        `INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)`,
+        [uuidToBinary(userId), roleId]
+      );
+      return this.getRoleCodes(userId);
     },
 
     async recordLoginSuccess(userId) {

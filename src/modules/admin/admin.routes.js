@@ -196,7 +196,8 @@ function createAdminRouter({
           firstName: data.firstName,
           lastName: data.lastName,
           phoneE164: data.phoneE164 || null,
-          status: activate ? 'active' : 'pending'
+          status: activate ? 'active' : 'pending',
+          mfaRequired: false
         });
 
         const userId = created.id || created;

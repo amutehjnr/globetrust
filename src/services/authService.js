@@ -121,6 +121,13 @@ function createAuthService({ userRepo, tokenRepo, logger, emailService }) {
       };
     },
 
+    async ensureCustomerRole(userId) {
+      if (userRepo.ensureCustomerRole) {
+        return userRepo.ensureCustomerRole(userId);
+      }
+      return userRepo.getRoleCodes(userId);
+    },
+
     async requestPasswordReset(email, ip) {
       const user = await userRepo.findByEmail(email);
       // Always return success message to avoid enumeration

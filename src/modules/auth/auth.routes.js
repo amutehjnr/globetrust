@@ -96,11 +96,24 @@ function createAuthRouter({ authService, customerRepo }) {
       });
 
       let roles = Array.isArray(result.user.roles) ? [...result.user.roles] : [];
+      // Persist customer role in DB when missing (admin-created users / legacy rows)
+      if (
+        authService &&
+        typeof authService.ensureCustomerRole === 'function' &&
+        !roles.includes('customer') &&
+        !roles.some((r) => STAFF_ROLES.includes(r))
+      ) {
+        try {
+          roles = await authService.ensureCustomerRole(result.user.id);
+          console.warn('[GLOBE_LOGIN] ensured customer role in DB', JSON.stringify({ userId: result.user.id, roles }));
+        } catch (e) {
+          console.warn('[GLOBE_LOGIN] ensureCustomerRole failed', e.message || e);
+        }
+      }
       if (roles.length === 0) {
         console.warn('[GLOBE_LOGIN] no roles from DB — defaulting to customer');
         roles = ['customer'];
       }
-      // Ensure normal users always have customer role so /dashboard is not 403
       if (
         !roles.includes('customer') &&
         !roles.some((r) => STAFF_ROLES.includes(r))
