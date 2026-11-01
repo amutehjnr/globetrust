@@ -1,6 +1,6 @@
 'use strict';
 
-function createSupportService({ supportRepo }) {
+function createSupportService({ supportRepo, customerRepo, logger }) {
   return {
     async getOrCreateCustomerConversation(userId, subject) {
       let conv = await supportRepo.findOpenByCustomer(userId);
@@ -60,6 +60,31 @@ function createSupportService({ supportRepo }) {
         attachmentName,
         attachmentMime
       });
+
+      // Bell: staff → customer, or customer → staff (staff uses admin inbox; customer gets staff replies)
+      try {
+        const roles = user.roles || [];
+        const isStaff = roles.some((r) =>
+          ['support_agent', 'admin', 'operations'].includes(r)
+        );
+        if (
+          isStaff &&
+          conv.customerUserId &&
+          customerRepo &&
+          typeof customerRepo.createNotification === 'function'
+        ) {
+          const preview = String(text || attachmentName || 'New message').slice(0, 180);
+          await customerRepo.createNotification({
+            userId: conv.customerUserId,
+            type: 'support',
+            title: 'Support replied',
+            body: preview
+          });
+        }
+      } catch (nErr) {
+        if (logger && logger.warn) logger.warn({ err: nErr }, 'Support notification failed');
+      }
+
       return { conversation: conv, message };
     }
   };

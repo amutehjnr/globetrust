@@ -522,6 +522,32 @@ function createCustomerRepository(pool) {
       return binaryToUuid(id);
     },
     
+    
+    async createNotification({ userId, type, title, body }) {
+      const id = newBinaryId();
+      try {
+        await pool.query(
+          `INSERT INTO notifications (id, user_id, notification_type, title, body)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            id,
+            uuidToBinary(userId),
+            String(type || 'general').slice(0, 60),
+            String(title || 'Notice').slice(0, 160),
+            String(body || '').slice(0, 1000)
+          ]
+        );
+        return { id: binaryToUuid(id) };
+      } catch (err) {
+        if (err && err.code === 'ER_NO_SUCH_TABLE') {
+          const e = new Error('Notifications table is missing. Run schema migrations.');
+          e.status = 503;
+          throw e;
+        }
+        throw err;
+      }
+    },
+
     async listNotifications(userId, limit = 30) {
       try {
         const [rows] = await pool.query(

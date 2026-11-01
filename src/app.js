@@ -55,10 +55,10 @@ function createApp(pool) {
   const kycView = createKycViewService({ logger });
   const coreBanking = createCoreBankingAdapter();
   const transferRepo = createTransferRepository(pool);
-  const alertService = createTransactionAlertService({ emailService, userRepo, logger });
+  const alertService = createTransactionAlertService({ emailService, userRepo, customerRepo, logger });
   const transferService = createTransferService({ transferRepo, coreBanking, logger, alertService });
   const supportRepo = createSupportRepository(pool);
-  const supportService = createSupportService({ supportRepo });
+  const supportService = createSupportService({ supportRepo, customerRepo, logger });
   const supportUpload = createSupportUploadService({ logger });
 
   app.set('view engine', 'ejs');
