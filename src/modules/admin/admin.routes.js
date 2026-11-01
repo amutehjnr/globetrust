@@ -712,7 +712,17 @@ function createAdminRouter({
             `/admin/customers/${req.params.id}?err=${encodeURIComponent('Credit not available.')}`
           );
         }
-        const currency = String(req.body.currencyCode || 'USD').toUpperCase().slice(0, 3);
+        let currency = String(req.body.currencyCode || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+        if (!currency || currency.length !== 3) {
+          try {
+            const prof = customerRepo && customerRepo.getProfile
+              ? await customerRepo.getProfile(req.params.id)
+              : null;
+            currency = currencyForCountry(prof && prof.countryCode).code || 'USD';
+          } catch (_) {
+            currency = 'USD';
+          }
+        }
         const amount = Number(req.body.amount);
         const modeRaw = String(req.body.mode || 'credit').toLowerCase();
         const mode = modeRaw === 'set' ? 'set' : modeRaw === 'debit' ? 'debit' : 'credit';
