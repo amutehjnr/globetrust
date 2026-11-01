@@ -31,6 +31,7 @@ const createTransferRouter =
 const { createSupportRepository } = require('./repositories/supportRepository');
 const { createSupportService } = require('./services/supportService');
 const { createSupportRouter } = require('./modules/support/support.routes');
+const { createSupportUploadService } = require('./services/supportUploadService');
 const { createHealthRouter } = require('./modules/ops/health.routes');
 const { createMetricsRouter } = require('./modules/ops/metrics.routes');
 const { createAuditRepository } = require('./repositories/auditRepository');
@@ -58,6 +59,7 @@ function createApp(pool) {
   const transferService = createTransferService({ transferRepo, coreBanking, logger, alertService });
   const supportRepo = createSupportRepository(pool);
   const supportService = createSupportService({ supportRepo });
+  const supportUpload = createSupportUploadService({ logger });
 
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '..', 'views'));
@@ -82,7 +84,8 @@ function createApp(pool) {
           "https://translate.google.com",
           "https://fonts.gstatic.com",
           "https://www.google.com",
-          "https://*.googleusercontent.com"
+          "https://*.googleusercontent.com",
+          "https://res.cloudinary.com"
         ],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "https://www.gstatic.com", "https://translate.googleapis.com", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://www.gstatic.com", "data:"],
@@ -160,7 +163,7 @@ function createApp(pool) {
   app.use(createAdminRouter({ adminRepo, customerRepo, kycView, userRepo, transferRepo, alertService, mfaService }));
   app.use(createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }));
   app.use(createTransferRouter({ transferService, transferRepo, coreBanking, mfaService, customerRepo }));
-  app.use(createSupportRouter({ supportService, supportRepo }));
+  app.use(createSupportRouter({ supportService, supportRepo, supportUpload }));
   const auditRepo = createAuditRepository(pool);
   app.use(createAuditRouter({ auditRepo }));
   app.set('supportService', supportService);
