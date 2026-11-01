@@ -479,20 +479,26 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     try {
       const userId = req.session.user.id;
       let accounts = [];
+      let prof = null;
+      try {
+        prof = await customerRepo.getProfile(userId);
+      } catch (_) {}
       if (transferRepo && transferService) {
-        const prof = await customerRepo.getProfile(userId);
         await ensureHomeLinks(userId, prof);
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links, userId);
+        accounts = filterAccountsForProfile(accounts, prof, req.session.user);
       }
       res.render('customer/accounts', pageLocals(req, {
         title: 'Accounts',
         path: '/app/accounts',
         profile: prof,
-        accounts: filterAccountsForProfile(accounts, prof, req.session.user),
+        accounts,
         homeCurrency: homeCurrencyFrom(prof, req.session.user)
       }));
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.get('/app/cards', async (req, res, next) => {
