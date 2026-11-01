@@ -1367,3 +1367,89 @@ body {
   font-size: 0.88rem;
   margin: 0;
 }
+
+/* Live chat file attach */
+.lc-panel__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lc-attach {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #ded8ce;
+  border-radius: 999px;
+  background: #faf6ef;
+  color: #102238;
+  cursor: pointer;
+}
+
+.lc-attach:hover {
+  border-color: #c5a15b;
+  background: #efe6d4;
+}
+
+.lc-attach__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.lc-file-name {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8f6122;
+}
+
+.lc-file-name[hidden] {
+  display: none !important;
+}
+
+.lc-panel__form input[type="text"],
+.lc-panel__form #lc-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #ded8ce;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.lc-msg__img {
+  display: block;
+  max-width: 180px;
+  max-height: 180px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
+.lc-msg__file {
+  color: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+}
+
+.lc-msg__caption {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
