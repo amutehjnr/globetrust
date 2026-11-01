@@ -2,6 +2,8 @@
 
 const { newBinaryId, uuidToBinary, binaryToUuid } = require('../utils/ids');
 
+const ATTACH_MARKER = '\n[[GLOBE_ATTACH]]';
+
 function createSupportRepository(pool) {
   return {
     async findOpenByCustomer(userId) {
@@ -42,18 +44,21 @@ function createSupportRepository(pool) {
     },
 
     async listMessages(conversationId, limit = 200) {
-      const [rows] = await pool.query(
-        `SELECT id, sender_user_id, message_text, message_type, created_at,
-                attachment_url, attachment_name, attachment_mime
-         FROM support_messages
-         WHERE conversation_id = ?
-         ORDER BY id ASC
-         LIMIT ?`,
-        [uuidToBinary(conversationId), Number(limit) || 200]
-      ).catch(async (err) => {
-        // Fallback if migration not applied yet
+      let rows;
+      try {
+        const [r] = await pool.query(
+          `SELECT id, sender_user_id, message_text, message_type, created_at,
+                  attachment_url, attachment_name, attachment_mime
+           FROM support_messages
+           WHERE conversation_id = ?
+           ORDER BY id ASC
+           LIMIT ?`,
+          [uuidToBinary(conversationId), Number(limit) || 200]
+        );
+        rows = r;
+      } catch (err) {
         if (err && err.code === 'ER_BAD_FIELD_ERROR') {
-          const [rows2] = await pool.query(
+          const [r2] = await pool.query(
             `SELECT id, sender_user_id, message_text, message_type, created_at
              FROM support_messages
              WHERE conversation_id = ?
@@ -61,10 +66,11 @@ function createSupportRepository(pool) {
              LIMIT ?`,
             [uuidToBinary(conversationId), Number(limit) || 200]
           );
-          return [rows2];
+          rows = r2;
+        } else {
+          throw err;
         }
-        throw err;
-      });
+      }
       return rows.map(mapMessage);
     },
 
@@ -78,7 +84,7 @@ function createSupportRepository(pool) {
       attachmentMime = null
     }) {
       const clean = String(text || '').trim().slice(0, 2000);
-      const type = ['text', 'system', 'image', 'file'].includes(messageType)
+      let type = ['text', 'system', 'image', 'file'].includes(messageType)
         ? messageType
         : 'text';
 
@@ -88,15 +94,34 @@ function createSupportRepository(pool) {
         throw err;
       }
 
-      // Prefer a short caption so UI shows the image, not a long WhatsApp filename
+      // Prefer short text so the UI shows the image, not a WhatsApp filename
       let body = clean;
       if (!body) {
-        if (type === 'image') body = 'Image';
-        else if (attachmentName) body = String(attachmentName).slice(0, 200);
-        else body = 'Attachment';
+        if (type === 'image' || (attachmentMime && String(attachmentMime).startsWith('image/'))) {
+          body = 'Image';
+          type = 'image';
+        } else if (attachmentName) {
+          body = String(attachmentName).slice(0, 200);
+        } else {
+          body = 'Attachment';
+        }
       }
 
-      let result;
+      // Always embed attachment meta in text so UI works even if columns/enum missing
+      let bodyForDb = body;
+      if (attachmentUrl) {
+        const meta = {
+          url: attachmentUrl,
+          name: attachmentName || null,
+          mime: attachmentMime || null,
+          type: type === 'image' || type === 'file' ? type : 'file'
+        };
+        bodyForDb = `${body}${ATTACH_MARKER}${JSON.stringify(meta)}`;
+      }
+
+      let insertId = null;
+
+      // Attempt 1: full attachment columns + image/file type
       try {
         const [res] = await pool.query(
           `INSERT INTO support_messages
@@ -106,30 +131,46 @@ function createSupportRepository(pool) {
           [
             uuidToBinary(conversationId),
             uuidToBinary(senderUserId),
-            body,
+            bodyForDb,
             type,
             attachmentUrl,
             attachmentName,
             attachmentMime
           ]
         );
-        result = res;
-      } catch (err) {
-        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
-          // Migration not applied — store as text only
-          const [res] = await pool.query(
+        insertId = res.insertId;
+      } catch (err1) {
+        // Attempt 2: attachment columns but message_type forced to 'text' (enum not migrated)
+        try {
+          const [res2] = await pool.query(
+            `INSERT INTO support_messages
+               (conversation_id, sender_user_id, message_text, message_type,
+                attachment_url, attachment_name, attachment_mime)
+             VALUES (?, ?, ?, 'text', ?, ?, ?)`,
+            [
+              uuidToBinary(conversationId),
+              uuidToBinary(senderUserId),
+              bodyForDb,
+              attachmentUrl,
+              attachmentName,
+              attachmentMime
+            ]
+          );
+          insertId = res2.insertId;
+          type = type === 'system' ? 'system' : type;
+        } catch (err2) {
+          // Attempt 3: original schema only (no attachment columns)
+          const [res3] = await pool.query(
             `INSERT INTO support_messages
                (conversation_id, sender_user_id, message_text, message_type)
              VALUES (?, ?, ?, 'text')`,
             [
               uuidToBinary(conversationId),
               uuidToBinary(senderUserId),
-              attachmentUrl ? `${body}\n${attachmentUrl}` : body
+              bodyForDb
             ]
           );
-          result = res;
-        } else {
-          throw err;
+          insertId = res3.insertId;
         }
       }
 
@@ -142,7 +183,7 @@ function createSupportRepository(pool) {
       );
 
       return {
-        id: result.insertId,
+        id: insertId,
         senderUserId,
         text: body,
         type,
@@ -210,15 +251,63 @@ function mapConversation(r) {
   };
 }
 
+function parseEmbeddedAttachment(text) {
+  if (!text || text.indexOf('[[GLOBE_ATTACH]]') === -1) {
+    return { text: text || '', attachment: null };
+  }
+  const parts = String(text).split('[[GLOBE_ATTACH]]');
+  const visible = (parts[0] || '').trim();
+  let attachment = null;
+  try {
+    const meta = JSON.parse((parts[1] || '').trim());
+    if (meta && meta.url) {
+      attachment = {
+        url: meta.url,
+        name: meta.name || null,
+        mime: meta.mime || null,
+        type: meta.type || null
+      };
+    }
+  } catch (_) {}
+  return { text: visible, attachment };
+}
+
 function mapMessage(r) {
+  const rawText = r.message_text || '';
+  const parsed = parseEmbeddedAttachment(rawText);
+
+  let attachmentUrl = r.attachment_url || null;
+  let attachmentName = r.attachment_name || null;
+  let attachmentMime = r.attachment_mime || null;
+  let type = r.message_type || 'text';
+
+  if (parsed.attachment) {
+    attachmentUrl = attachmentUrl || parsed.attachment.url;
+    attachmentName = attachmentName || parsed.attachment.name;
+    attachmentMime = attachmentMime || parsed.attachment.mime;
+    if (parsed.attachment.type && (type === 'text' || !type)) {
+      type = parsed.attachment.type;
+    }
+  }
+
+  if (
+    attachmentUrl &&
+    (type === 'text' || !type) &&
+    (String(attachmentMime || '').startsWith('image/') ||
+      /\.(jpe?g|png|gif|webp)(\?|$)/i.test(attachmentUrl) ||
+      /\/image\/upload\//i.test(attachmentUrl))
+  ) {
+    type = 'image';
+  }
+
   return {
     id: r.id,
     senderUserId: binaryToUuid(r.sender_user_id),
-    text: r.message_text,
-    type: r.message_type || 'text',
-    attachmentUrl: r.attachment_url || null,
-    attachmentName: r.attachment_name || null,
-    attachmentMime: r.attachment_mime || null,
+    text: parsed.text || rawText,
+    type,
+    attachmentUrl,
+    attachmentName,
+    attachmentMime,
     createdAt: r.created_at
   };
 }

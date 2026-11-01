@@ -106,8 +106,25 @@
     var url = msg.attachmentUrl || msg.attachment_url || null;
     var name = msg.attachmentName || msg.attachment_name || null;
     var mime = msg.attachmentMime || msg.attachment_mime || null;
-    if (!url && msg.text) {
-      var parts = String(msg.text).split(/\n/);
+    var text = msg.text || '';
+
+    if ((!url || !name) && text.indexOf('[[GLOBE_ATTACH]]') !== -1) {
+      var chunks = text.split('[[GLOBE_ATTACH]]');
+      text = (chunks[0] || '').trim();
+      try {
+        var meta = JSON.parse((chunks[1] || '').trim());
+        if (meta) {
+          url = url || meta.url || null;
+          name = name || meta.name || null;
+          mime = mime || meta.mime || null;
+          if (meta.type && !msg.type) msg.type = meta.type;
+        }
+      } catch (e) {}
+      msg.text = text;
+    }
+
+    if (!url && text) {
+      var parts = String(text).split(/\n/);
       for (var i = 0; i < parts.length; i++) {
         var line = parts[i].trim();
         if (/^https?:\/\//i.test(line)) {
@@ -117,8 +134,8 @@
         }
       }
       if (!url) {
-        var m = String(msg.text).match(/(https?:\/\/\S+)/i);
-        if (m) url = m[1];
+        var m2 = String(text).match(/(https?:\/\/\S+)/i);
+        if (m2) url = m2[1];
       }
     }
     return { url: url, name: name, mime: mime };

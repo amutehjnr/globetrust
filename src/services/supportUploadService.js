@@ -3,21 +3,23 @@
 /**
  * Upload support-chat attachments to Cloudinary (same env as KYC).
  * Env: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
- * Optional: SUPPORT_STORAGE=cloudinary (default when cloud credentials present)
  */
 
 const ALLOWED = new Set([
   'image/jpeg',
+  'image/jpg',
   'image/png',
   'image/webp',
   'image/gif',
+  'image/heic',
+  'image/heif',
   'application/pdf',
   'text/plain',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ]);
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_BYTES = 5 * 1024 * 1024;
 
 function createSupportUploadService({ logger } = {}) {
   const cloudConfigured = Boolean(
@@ -40,16 +42,21 @@ function createSupportUploadService({ logger } = {}) {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: process.env.SUPPORT_CLOUDINARY_FOLDER || 'globetrust/support',
-          resource_type: isImage ? 'image' : 'auto',
-          access_mode: 'public'
+          resource_type: isImage ? 'image' : 'auto'
+          // do not set access_mode — can break on some Cloudinary plans
         },
         (err, res) => (err ? reject(err) : resolve(res))
       );
       stream.end(file.buffer);
     });
 
+    const url = result.secure_url || result.url;
+    if (!url) {
+      throw new Error('Cloudinary did not return a URL.');
+    }
+
     return {
-      url: result.secure_url || result.url,
+      url,
       publicId: result.public_id,
       mime: file.mimetype,
       originalName: file.originalname || 'attachment',
@@ -72,7 +79,17 @@ function createSupportUploadService({ logger } = {}) {
         err.status = 400;
         throw err;
       }
-      const mime = String(file.mimetype || '').toLowerCase();
+      let mime = String(file.mimetype || '').toLowerCase();
+      // Some browsers send empty mime for WhatsApp forwards — infer from name
+      if (!mime || mime === 'application/octet-stream') {
+        const n = String(file.originalname || '').toLowerCase();
+        if (/\.jpe?g$/.test(n)) mime = 'image/jpeg';
+        else if (/\.png$/.test(n)) mime = 'image/png';
+        else if (/\.webp$/.test(n)) mime = 'image/webp';
+        else if (/\.gif$/.test(n)) mime = 'image/gif';
+        else if (/\.pdf$/.test(n)) mime = 'application/pdf';
+        file.mimetype = mime;
+      }
       if (!ALLOWED.has(mime)) {
         const err = new Error(
           'File type not allowed. Use JPEG, PNG, WebP, GIF, PDF, TXT, or Word documents.'
