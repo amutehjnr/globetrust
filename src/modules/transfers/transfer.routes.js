@@ -114,7 +114,17 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
 
   async function transferPageLocals(req, extra = {}) {
     const userId = req.session.user.id;
-    await transferRepo.ensureSandboxLink(userId, 'NGN');
+    let _cc = 'USD';
+    try {
+      if (customerRepo && customerRepo.getProfile) {
+        const _p = await customerRepo.getProfile(userId);
+        _cc = currencyForCountry(_p && _p.countryCode).code;
+      } else if (req.session.user && req.session.user.countryCode) {
+        _cc = currencyForCountry(req.session.user.countryCode).code;
+      }
+    } catch (_) {}
+    await transferRepo.ensureSandboxLink(userId, _cc);
+    if (_cc !== 'USD') await transferRepo.ensureSandboxLink(userId, 'USD');
     const links = await transferRepo.listLinksWithExternal(userId);
     const history = await transferRepo.listForUser(userId);
     const override = req.query?.country || null;
@@ -151,11 +161,19 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
       await transferRepo.ensureSandboxLink(req.session.user.id, _cc);
       if (_cc !== 'USD') await transferRepo.ensureSandboxLink(req.session.user.id, 'USD');
       const links = await transferRepo.listLinksWithExternal(req.session.user.id);
-      const withBalances = await transferService.getBalancesForLinks(links, req.session.user.id);
+      let withBalances = await transferService.getBalancesForLinks(links, req.session.user.id);
+      withBalances = (withBalances || []).filter((a) => {
+        const code = String(a.currencyCode || '').toUpperCase();
+        if (code === _cc || code === 'USD') return true;
+        const avail = Number(a.balance && a.balance.available != null ? a.balance.available : 0);
+        return Number.isFinite(avail) && avail > 0;
+      });
       res.render('customer/accounts', {
         title: 'Accounts',
         path: '/app/accounts',
-        accounts: withBalances
+        accounts: withBalances,
+        currencyCode: _cc,
+        homeCurrency: { code: _cc }
       });
     } catch (err) {
       next(err);

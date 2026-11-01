@@ -99,6 +99,25 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   }
 
+  /** Prefer profile currency (+ USD). Hide zero-balance legacy NGN/etc. */
+  function filterAccountsForProfile(accounts, profile, sessionUser) {
+    const home = homeCurrencyFrom(profile, sessionUser);
+    const list = Array.isArray(accounts) ? accounts : [];
+    return list.filter((a) => {
+      const code = String(a.currencyCode || a.currency || '').toUpperCase();
+      if (!code) return false;
+      if (code === home.code || code === 'USD') return true;
+      const avail = Number(
+        a.balance && a.balance.available != null
+          ? a.balance.available
+          : a.available != null
+            ? a.available
+            : 0
+      );
+      return Number.isFinite(avail) && avail > 0;
+    });
+  }
+
 
   // Primary customer dashboard
   router.get('/dashboard', async (req, res, next) => {
@@ -115,6 +134,7 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         await ensureHomeLinks(userId, profile);
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links, userId);
+        accounts = filterAccountsForProfile(accounts, profile, req.session.user);
         recentTransfers = await transferRepo.listForUser(userId, 5);
       }
 
@@ -468,7 +488,9 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       res.render('customer/accounts', pageLocals(req, {
         title: 'Accounts',
         path: '/app/accounts',
-        accounts
+        profile: prof,
+        accounts: filterAccountsForProfile(accounts, prof, req.session.user),
+        homeCurrency: homeCurrencyFrom(prof, req.session.user)
       }));
     } catch (err) { next(err); }
   });
@@ -637,9 +659,10 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     try {
       const userId = req.session.user.id;
       let accounts = [];
+      let profileForLinks = null;
+      try { profileForLinks = await customerRepo.getProfile(userId); } catch (_) {}
       if (transferRepo && transferService) {
-        await transferRepo.ensureSandboxLink(userId, 'NGN');
-        await transferRepo.ensureSandboxLink(userId, 'USD');
+        await ensureHomeLinks(userId, profileForLinks);
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links, userId);
       }
