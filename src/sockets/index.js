@@ -1,18 +1,14 @@
 'use strict';
 
 const { Server } = require('socket.io');
-const logger = require('../config/logger');
 const { getSessionMiddleware } = require('../middleware/session');
+const logger = require('../config/logger');
 
-/**
- * Attach Socket.IO with the same Express session cookie.
- * Authorize conversation rooms against the database — never trust client role claims alone.
- */
 function attachSocketServer(httpServer, { supportService } = {}) {
   const io = new Server(httpServer, {
     path: '/socket.io',
     serveClient: false,
-    maxHttpBufferSize: 20_000,
+    maxHttpBufferSize: 1e6,
     cors: { origin: false }
   });
 
@@ -58,6 +54,7 @@ function attachSocketServer(httpServer, { supportService } = {}) {
         if (!supportService) throw new Error('unavailable');
         const conversationId = payload?.conversationId;
         const text = payload?.text;
+        // Files must go through HTTP multipart — sockets are text-only
         const { message, conversation } = await supportService.postMessage(
           user,
           conversationId,
@@ -70,6 +67,10 @@ function attachSocketServer(httpServer, { supportService } = {}) {
             id: message.id,
             senderUserId: message.senderUserId,
             text: message.text,
+            type: message.type || 'text',
+            attachmentUrl: message.attachmentUrl || null,
+            attachmentName: message.attachmentName || null,
+            attachmentMime: message.attachmentMime || null,
             createdAt: message.createdAt
           }
         });

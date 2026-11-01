@@ -1,0 +1,66 @@
+/* Append to public/css/support.css and public/css/admin-support-chat.css */
+
+.chat-composer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d4c4a8;
+  background: #faf6ef;
+  color: #102238;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chat-attach-btn:hover {
+  background: #efe6d4;
+}
+
+.chat-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.chat-file-name {
+  font-size: 12px;
+  color: #69717a;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-attach-img {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+.chat-attach-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.chat-attach-caption {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}

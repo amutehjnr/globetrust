@@ -31,17 +31,34 @@ function createSupportService({ supportRepo }) {
       throw err;
     },
 
-    async postMessage(user, conversationId, text) {
+    async postMessage(user, conversationId, text, attachment = null) {
       const conv = await this.assertCanAccess(user, conversationId);
       if (['closed'].includes(conv.status)) {
         const err = new Error('This conversation is closed.');
         err.status = 400;
         throw err;
       }
+
+      let messageType = 'text';
+      let attachmentUrl = null;
+      let attachmentName = null;
+      let attachmentMime = null;
+
+      if (attachment && attachment.url) {
+        attachmentUrl = attachment.url;
+        attachmentName = attachment.originalName || attachment.name || 'attachment';
+        attachmentMime = attachment.mime || null;
+        messageType = String(attachmentMime || '').startsWith('image/') ? 'image' : 'file';
+      }
+
       const message = await supportRepo.addMessage({
         conversationId,
         senderUserId: user.id,
-        text
+        text,
+        messageType,
+        attachmentUrl,
+        attachmentName,
+        attachmentMime
       });
       return { conversation: conv, message };
     }

@@ -43,34 +43,90 @@ function createSupportRepository(pool) {
 
     async listMessages(conversationId, limit = 200) {
       const [rows] = await pool.query(
-        `SELECT id, sender_user_id, message_text, message_type, created_at
+        `SELECT id, sender_user_id, message_text, message_type, created_at,
+                attachment_url, attachment_name, attachment_mime
          FROM support_messages
          WHERE conversation_id = ?
          ORDER BY id ASC
          LIMIT ?`,
         [uuidToBinary(conversationId), Number(limit) || 200]
-      );
-      return rows.map((r) => ({
-        id: r.id,
-        senderUserId: binaryToUuid(r.sender_user_id),
-        text: r.message_text,
-        type: r.message_type,
-        createdAt: r.created_at
-      }));
+      ).catch(async (err) => {
+        // Fallback if migration not applied yet
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+          const [rows2] = await pool.query(
+            `SELECT id, sender_user_id, message_text, message_type, created_at
+             FROM support_messages
+             WHERE conversation_id = ?
+             ORDER BY id ASC
+             LIMIT ?`,
+            [uuidToBinary(conversationId), Number(limit) || 200]
+          );
+          return [rows2];
+        }
+        throw err;
+      });
+      return rows.map(mapMessage);
     },
 
-    async addMessage({ conversationId, senderUserId, text }) {
+    async addMessage({
+      conversationId,
+      senderUserId,
+      text,
+      messageType = 'text',
+      attachmentUrl = null,
+      attachmentName = null,
+      attachmentMime = null
+    }) {
       const clean = String(text || '').trim().slice(0, 2000);
-      if (!clean) {
+      const type = ['text', 'system', 'image', 'file'].includes(messageType)
+        ? messageType
+        : 'text';
+
+      if (!clean && !attachmentUrl) {
         const err = new Error('Message cannot be empty.');
         err.status = 400;
         throw err;
       }
-      const [result] = await pool.query(
-        `INSERT INTO support_messages (conversation_id, sender_user_id, message_text, message_type)
-         VALUES (?, ?, ?, 'text')`,
-        [uuidToBinary(conversationId), uuidToBinary(senderUserId), clean]
-      );
+
+      const body = clean || (attachmentName ? String(attachmentName).slice(0, 200) : 'Attachment');
+
+      let result;
+      try {
+        const [res] = await pool.query(
+          `INSERT INTO support_messages
+             (conversation_id, sender_user_id, message_text, message_type,
+              attachment_url, attachment_name, attachment_mime)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidToBinary(conversationId),
+            uuidToBinary(senderUserId),
+            body,
+            type,
+            attachmentUrl,
+            attachmentName,
+            attachmentMime
+          ]
+        );
+        result = res;
+      } catch (err) {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+          // Migration not applied — store as text only
+          const [res] = await pool.query(
+            `INSERT INTO support_messages
+               (conversation_id, sender_user_id, message_text, message_type)
+             VALUES (?, ?, ?, 'text')`,
+            [
+              uuidToBinary(conversationId),
+              uuidToBinary(senderUserId),
+              attachmentUrl ? `${body}\n${attachmentUrl}` : body
+            ]
+          );
+          result = res;
+        } else {
+          throw err;
+        }
+      }
+
       await pool.query(
         `UPDATE support_conversations
          SET last_message_at = UTC_TIMESTAMP(6),
@@ -78,11 +134,15 @@ function createSupportRepository(pool) {
          WHERE id = ?`,
         [uuidToBinary(conversationId)]
       );
+
       return {
         id: result.insertId,
         senderUserId,
-        text: clean,
-        type: 'text',
+        text: body,
+        type,
+        attachmentUrl,
+        attachmentName,
+        attachmentMime,
         createdAt: new Date()
       };
     },
@@ -140,6 +200,19 @@ function mapConversation(r) {
     status: r.status,
     subject: r.subject,
     lastMessageAt: r.last_message_at,
+    createdAt: r.created_at
+  };
+}
+
+function mapMessage(r) {
+  return {
+    id: r.id,
+    senderUserId: binaryToUuid(r.sender_user_id),
+    text: r.message_text,
+    type: r.message_type || 'text',
+    attachmentUrl: r.attachment_url || null,
+    attachmentName: r.attachment_name || null,
+    attachmentMime: r.attachment_mime || null,
     createdAt: r.created_at
   };
 }

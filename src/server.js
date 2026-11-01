@@ -14,7 +14,8 @@ async function start() {
 
   const app = createApp(pool);
   const server = http.createServer(app);
-  attachSocketServer(server, { supportService: app.get('supportService') });
+  const io = attachSocketServer(server, { supportService: app.get('supportService') });
+  app.set('io', io);
 
   const port = Number(process.env.PORT || 3000);
   server.listen(port, () => logger.info({ port }, 'Globe Trust Bank app started'));

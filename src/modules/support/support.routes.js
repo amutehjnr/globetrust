@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const multer = require('multer');
 const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 
@@ -14,8 +15,40 @@ function staffLocals(req, extra = {}) {
   };
 }
 
-function createSupportRouter({ supportService, supportRepo }) {
+function createSupportRouter({ supportService, supportRepo, supportUpload }) {
   const router = express.Router();
+
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    fileFilter(_req, file, cb) {
+      const ok = supportUpload
+        ? supportUpload.allowedMime.has(String(file.mimetype || '').toLowerCase())
+        : String(file.mimetype || '').startsWith('image/') ||
+          file.mimetype === 'application/pdf';
+      cb(ok ? null : new Error('File type not allowed.'), ok);
+    }
+  });
+
+  function broadcastMessage(req, conversationId, message) {
+    try {
+      const io = req.app.get('io');
+      if (!io || !message) return;
+      io.to(`support:${conversationId}`).emit('support:message', {
+        conversationId,
+        message: {
+          id: message.id,
+          senderUserId: message.senderUserId,
+          text: message.text,
+          type: message.type || 'text',
+          attachmentUrl: message.attachmentUrl || null,
+          attachmentName: message.attachmentName || null,
+          attachmentMime: message.attachmentMime || null,
+          createdAt: message.createdAt
+        }
+      });
+    } catch (_) {}
+  }
 
   router.get('/app/support', requireAuth, async (req, res, next) => {
     try {
@@ -48,7 +81,11 @@ function createSupportRouter({ supportService, supportRepo }) {
         messages: (messages || []).map((m) => ({
           id: m.id,
           text: m.text || '',
+          type: m.type || 'text',
           senderUserId: m.senderUserId,
+          attachmentUrl: m.attachmentUrl || null,
+          attachmentName: m.attachmentName || null,
+          attachmentMime: m.attachmentMime || null,
           createdAt: m.createdAt
         }))
       });
@@ -57,30 +94,66 @@ function createSupportRouter({ supportService, supportRepo }) {
     }
   });
 
-  router.post('/app/support/messages', requireAuth, requireCsrf, async (req, res, next) => {
-    try {
-      const result = await supportService.postMessage(
-        req.session.user,
-        req.body.conversationId,
-        req.body.text
-      );
-      if (req.headers.accept && String(req.headers.accept).includes('application/json')) {
-        const m = result && result.message ? result.message : null;
-        return res.json({
-          ok: true,
-          message: {
-            id: m && m.id,
-            text: (m && m.text) || req.body.text,
-            senderUserId: (m && m.senderUserId) || req.session.user.id,
-            createdAt: (m && m.createdAt) || new Date().toISOString()
+  // Text and/or file (multipart). Multer first so CSRF can read body fields.
+  router.post(
+    '/app/support/messages',
+    requireAuth,
+    (req, res, next) => {
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+          err.status = 400;
+          return next(err);
+        }
+        next();
+      });
+    },
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        let attachment = null;
+        if (req.file) {
+          if (!supportUpload) {
+            const e = new Error('File uploads are not configured.');
+            e.status = 503;
+            throw e;
           }
-        });
+          attachment = await supportUpload.upload(req.file);
+        }
+        const result = await supportService.postMessage(
+          req.session.user,
+          req.body.conversationId,
+          req.body.text,
+          attachment
+        );
+        broadcastMessage(req, result.conversation.id, result.message);
+
+        const wantsJson =
+          (req.headers.accept && String(req.headers.accept).includes('application/json')) ||
+          req.xhr ||
+          req.body.ajax === '1';
+
+        if (wantsJson) {
+          const m = result.message;
+          return res.json({
+            ok: true,
+            message: {
+              id: m.id,
+              text: m.text,
+              type: m.type,
+              senderUserId: m.senderUserId,
+              attachmentUrl: m.attachmentUrl,
+              attachmentName: m.attachmentName,
+              attachmentMime: m.attachmentMime,
+              createdAt: m.createdAt
+            }
+          });
+        }
+        res.redirect(303, '/app/support');
+      } catch (err) {
+        next(err);
       }
-      res.redirect('/app/support');
-    } catch (err) {
-      next(err);
     }
-  });
+  );
 
   router.get(
     '/admin/support',
@@ -138,10 +211,55 @@ function createSupportRouter({ supportService, supportRepo }) {
     '/admin/support/:id/messages',
     requireAuth,
     requireRole('support_agent', 'admin', 'operations'),
+    (req, res, next) => {
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+          err.status = 400;
+          return next(err);
+        }
+        next();
+      });
+    },
     requireCsrf,
     async (req, res, next) => {
       try {
-        await supportService.postMessage(req.session.user, req.params.id, req.body.text);
+        let attachment = null;
+        if (req.file) {
+          if (!supportUpload) {
+            const e = new Error('File uploads are not configured.');
+            e.status = 503;
+            throw e;
+          }
+          attachment = await supportUpload.upload(req.file);
+        }
+        const result = await supportService.postMessage(
+          req.session.user,
+          req.params.id,
+          req.body.text,
+          attachment
+        );
+        broadcastMessage(req, result.conversation.id, result.message);
+
+        const wantsJson =
+          (req.headers.accept && String(req.headers.accept).includes('application/json')) ||
+          req.xhr ||
+          req.body.ajax === '1';
+        if (wantsJson) {
+          const m = result.message;
+          return res.json({
+            ok: true,
+            message: {
+              id: m.id,
+              text: m.text,
+              type: m.type,
+              senderUserId: m.senderUserId,
+              attachmentUrl: m.attachmentUrl,
+              attachmentName: m.attachmentName,
+              attachmentMime: m.attachmentMime,
+              createdAt: m.createdAt
+            }
+          });
+        }
         res.redirect(303, `/admin/support/${req.params.id}`);
       } catch (err) {
         next(err);
