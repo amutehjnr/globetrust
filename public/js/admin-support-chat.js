@@ -1,4 +1,4 @@
-/* public/js/admin-support-chat.js */
+/* public/js/admin-support-chat.js — text replies only; view customer attachments in thread */
 'use strict';
 
 (function () {
@@ -6,8 +6,6 @@
   var quickButtons = document.querySelectorAll('[data-quick]');
   var form = document.getElementById('chat-form');
   var log = document.getElementById('chat-log');
-  var fileInput = document.getElementById('chat-file');
-  var fileNameEl = document.getElementById('chat-file-name');
 
   if (input && quickButtons.length) {
     quickButtons.forEach(function (button) {
@@ -92,40 +90,14 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  function resetFile() {
-    if (fileInput) fileInput.value = '';
-    if (fileNameEl) {
-      fileNameEl.textContent = '';
-      fileNameEl.hidden = true;
-    }
-  }
-
-  if (fileInput) {
-    fileInput.addEventListener('change', function () {
-      var f = fileInput.files && fileInput.files[0];
-      if (fileNameEl) {
-        if (f) {
-          fileNameEl.textContent = f.name;
-          fileNameEl.hidden = false;
-        } else {
-          resetFile();
-        }
-      }
-      if (input && f) input.removeAttribute('required');
-      else if (input && !(input.value || '').trim()) input.setAttribute('required', 'required');
-    });
-  }
-
   async function sendViaHttp() {
     var text = (input && input.value) || '';
-    var hasFile = fileInput && fileInput.files && fileInput.files[0];
-    if (!text.trim() && !hasFile) return;
+    if (!text.trim()) return;
 
     var fd = new FormData();
     fd.append('_csrf', csrfToken());
     fd.append('text', text);
     fd.append('ajax', '1');
-    if (hasFile) fd.append('file', fileInput.files[0]);
 
     var res = await fetch(form.action, {
       method: 'POST',
@@ -141,8 +113,6 @@
     }
     appendMessage(data.message);
     if (input) input.value = '';
-    resetFile();
-    if (input) input.setAttribute('required', 'required');
   }
 
   if (typeof io !== 'undefined' && conversationId) {
@@ -152,7 +122,6 @@
     });
     socket.on('support:message', function (payload) {
       if (!payload || payload.conversationId !== conversationId) return;
-      // Avoid double-append for own HTTP sends when possible by id check is hard; accept possible duplicate rare
       appendMessage(payload.message);
     });
   }
@@ -160,16 +129,9 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var text = (input && input.value) || '';
-    var hasFile = fileInput && fileInput.files && fileInput.files[0];
+    if (!text.trim()) return;
 
-    if (hasFile) {
-      sendViaHttp().catch(function () {
-        form.submit();
-      });
-      return;
-    }
-
-    if (socket && socket.connected && text.trim()) {
+    if (socket && socket.connected) {
       socket.emit(
         'support:message',
         { conversationId: conversationId, text: text.trim() },

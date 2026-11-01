@@ -211,32 +211,15 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
     '/admin/support/:id/messages',
     requireAuth,
     requireRole('support_agent', 'admin', 'operations'),
-    (req, res, next) => {
-      upload.single('file')(req, res, (err) => {
-        if (err) {
-          err.status = 400;
-          return next(err);
-        }
-        next();
-      });
-    },
     requireCsrf,
     async (req, res, next) => {
       try {
-        let attachment = null;
-        if (req.file) {
-          if (!supportUpload) {
-            const e = new Error('File uploads are not configured.');
-            e.status = 503;
-            throw e;
-          }
-          attachment = await supportUpload.upload(req.file);
-        }
+        // Staff reply text only — customers upload; agents view attachments in the thread
         const result = await supportService.postMessage(
           req.session.user,
           req.params.id,
           req.body.text,
-          attachment
+          null
         );
         broadcastMessage(req, result.conversation.id, result.message);
 
