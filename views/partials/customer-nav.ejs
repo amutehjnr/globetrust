@@ -1,57 +1,65 @@
-<aside class="db-sidebar" aria-label="Customer navigation">
-  <a class="db-sidebar__brand" href="/dashboard">
-    <span class="db-sidebar__logo" aria-hidden="true">
-      <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
-        <circle cx="16" cy="16" r="14" stroke="#c5a15b" stroke-width="1.5"/>
-        <ellipse cx="16" cy="16" rx="6" ry="14" stroke="#c5a15b" stroke-width="1.2"/>
-        <path d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z" stroke="#c5a15b" stroke-width="1.2"/>
+<aside class="db-sidebar" id="db-sidebar" aria-label="Customer navigation">
+  <div class="db-sidebar__head">
+    <a class="db-sidebar__brand" href="/dashboard">
+      <span class="db-sidebar__logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="#c5a15b" stroke-width="1.5"/>
+          <ellipse cx="16" cy="16" rx="6" ry="14" stroke="#c5a15b" stroke-width="1.2"/>
+          <path d="M2 16h28M16 2c4 4 6 9 6 14s-2 10-6 14c-4-4-6-9-6-14s2-10 6-14z" stroke="#c5a15b" stroke-width="1.2"/>
+        </svg>
+      </span>
+      <span>
+        <strong>GLOBE TRUST</strong>
+        <small>BANK</small>
+      </span>
+    </a>
+    <button type="button" class="db-sidebar__close" id="db-nav-close" aria-label="Close menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
       </svg>
-    </span>
-    <span>
-      <strong>GLOBE TRUST</strong>
-      <small>BANK</small>
-    </span>
-  </a>
+    </button>
+  </div>
 
   <nav class="db-sidebar__nav">
-    <a href="/dashboard" class="db-nav-item<%= path === '/dashboard' ? ' is-active' : '' %>">
+    <a href="/dashboard" class="db-nav-item<%= typeof path !== 'undefined' && path === '/dashboard' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">⌂</span> Dashboard
     </a>
-    <a href="/app/accounts" class="db-nav-item<%= path === '/app/accounts' ? ' is-active' : '' %>">
+    <a href="/app/accounts" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/accounts' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">▤</span> Accounts
     </a>
-    <a href="/app/transfers" class="db-nav-item<%= path === '/app/transfers' ? ' is-active' : '' %>">
+    <a href="/app/transfers" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/transfers' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">⇄</span> Transfers
     </a>
-    <a href="/app/deposit" class="db-nav-item<%= path === '/app/deposit' ? ' is-active' : '' %>">
+    <a href="/app/deposit" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/deposit' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">↓</span> Deposit
     </a>
-    <a href="/app/cards" class="db-nav-item<%= path === '/app/cards' ? ' is-active' : '' %>">
+    <a href="/app/cards" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/cards' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">▣</span> Cards
     </a>
-    <a href="/app/beneficiaries" class="db-nav-item">
+    <a href="/app/beneficiaries" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/beneficiaries' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">◎</span> Beneficiaries
     </a>
-    <a href="/app/statements" class="db-nav-item">
+    <a href="/app/statements" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/statements' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">☰</span> Statements
     </a>
-    <a href="/app/exchange" class="db-nav-item">
+    <a href="/app/exchange" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/exchange' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">↻</span> Exchange Rates
     </a>
-    <a href="/app/support" class="db-nav-item<%= path === '/app/support' ? ' is-active' : '' %>">
+    <a href="/app/support" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/support' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">◇</span> Support
     </a>
-    <a href="/app/profile" class="db-nav-item<%= path === '/app/profile' ? ' is-active' : '' %>">
+    <a href="/app/profile" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/profile' ? ' is-active' : '' %>">
       <span class="db-nav-icon" aria-hidden="true">⚙</span> Settings
     </a>
   </nav>
 
   <div class="db-sidebar__foot">
-    <a href="/app/kyc" class="db-nav-item<%= path === '/app/kyc' ? ' is-active' : '' %>">Identity (KYC)</a>
+    <a href="/app/kyc" class="db-nav-item<%= typeof path !== 'undefined' && path === '/app/kyc' ? ' is-active' : '' %>">Identity (KYC)</a>
     <a href="/mfa/enrol" class="db-nav-item">Authenticator</a>
     <form method="post" action="/sign-out" class="db-signout">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
       <button type="submit">Sign out</button>
     </form>
   </div>
 </aside>
+<div class="db-nav-backdrop" id="db-nav-backdrop" hidden></div>
