@@ -128,11 +128,37 @@
           </div>
           <div class="acd-field">
             <label class="acd-label">Currency</label>
-            <input type="hidden" name="currencyCode" value="<%= homeCode %>">
-            <div class="acd-input" style="display:flex;align-items:center;background:#f5f0e7;font-weight:700;">
-              <%= homeCode %>
-              <span class="acd-muted" style="margin-left:8px;font-weight:500;">(profile country)</span>
-            </div>
+            <select name="currencyCode" required class="acd-input acd-select">
+              <%
+                var homeCodeSel = (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.code)
+                  ? homeCurrency.code
+                  : (typeof homeCode !== 'undefined' ? homeCode : 'USD');
+                var opts = (typeof currencyOptions !== 'undefined' && currencyOptions && currencyOptions.length)
+                  ? currencyOptions
+                  : [
+                      { code: 'USD', symbol: '$', name: 'US Dollar' },
+                      { code: 'EUR', symbol: '€', name: 'Euro' },
+                      { code: 'GBP', symbol: '£', name: 'Pound Sterling' },
+                      { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' }
+                    ];
+                // Ensure any existing balance currencies appear in the list
+                var seen = {};
+                opts.forEach(function (c) { seen[c.code] = true; });
+                (typeof balances !== 'undefined' && balances ? balances : []).forEach(function (b) {
+                  var code = b.currencyCode || b.currency;
+                  if (code && !seen[code]) {
+                    opts.push({ code: code, symbol: code, name: code });
+                    seen[code] = true;
+                  }
+                });
+              %>
+              <% opts.forEach(function (c) { %>
+                <option value="<%= c.code %>" <%= c.code === homeCodeSel ? 'selected' : '' %>>
+                  <%= c.code %> — <%= c.name %><%= c.symbol ? ' (' + c.symbol + ')' : '' %>
+                </option>
+              <% }) %>
+            </select>
+            <p class="acd-muted" style="margin:6px 0 0;font-size:12px;">Default is profile country (<%= typeof homeCodeSel !== 'undefined' ? homeCodeSel : 'USD' %>). Pick any currency to credit, debit, or set.</p>
           </div>
         </div>
         <fieldset class="acd-modes">

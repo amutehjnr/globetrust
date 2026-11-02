@@ -144,9 +144,48 @@ function formatMoney(val, currencyCode, locale) {
   }
 }
 
+/** Unique currencies available for accounts / admin credit-debit. */
+function listCurrencies() {
+  const byCode = new Map();
+  for (const c of Object.values(COUNTRY_CURRENCY)) {
+    if (!c || !c.code) continue;
+    const code = String(c.code).toUpperCase();
+    if (!byCode.has(code)) {
+      byCode.set(code, {
+        code,
+        symbol: c.symbol || code,
+        name: c.name || code
+      });
+    }
+  }
+  // Ensure common banking currencies always present
+  const extras = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'Pound Sterling' },
+    { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+    { code: 'GHS', symbol: 'GH₵', name: 'Ghanaian Cedi' },
+    { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+    { code: 'SAR', symbol: '﷼', name: 'Saudi Riyal' }
+  ];
+  for (const e of extras) {
+    if (!byCode.has(e.code)) byCode.set(e.code, e);
+  }
+  return Array.from(byCode.values()).sort((a, b) => a.code.localeCompare(b.code));
+}
+
 module.exports = {
   COUNTRY_CURRENCY,
   currencyForCountry,
   symbolForCurrency,
+  listCurrencies,
   formatMoney
 };

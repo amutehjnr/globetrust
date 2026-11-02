@@ -1,7 +1,7 @@
 'use strict';
 
 const multer = require('multer');
-const { currencyForCountry } = require('../../utils/currency');
+const { currencyForCountry, listCurrencies } = require('../../utils/currency');
 const express = require('express');
 const { z } = require('zod');
 const { requireAuth, requireRole } = require('../../middleware/authz');
@@ -456,6 +456,7 @@ function createAdminRouter({
           userStatus = profile.status || 'unknown';
         }
         const home = currencyForCountry(profile.countryCode);
+        const currencyOptions = listCurrencies();
         res.render(
           'admin/customer-detail',
           adminLocals(req, {
@@ -472,6 +473,7 @@ function createAdminRouter({
             loginActivity,
             mfaStatus,
             homeCurrency: home,
+            currencyOptions,
             message: req.query.msg || null,
             error: req.query.err || null
           })
