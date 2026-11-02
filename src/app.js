@@ -154,6 +154,12 @@ function createApp(pool) {
     });
   }
 
+  // Friendly aliases (old marketing URLs / external links)
+  app.get('/personal-banking', (_req, res) => res.redirect(301, '/personal'));
+  app.get('/business-banking', (_req, res) => res.redirect(301, '/business'));
+  app.get('/personal-banking/', (_req, res) => res.redirect(301, '/personal'));
+  app.get('/business-banking/', (_req, res) => res.redirect(301, '/business'));
+
   // Legacy path used in some links
   app.get('/app/dashboard', (_req, res) => res.redirect(302, '/dashboard'));
 
