@@ -74,9 +74,12 @@ function createUserRepository(pool) {
       const userId = newBinaryId();
       const profileRef = `CUS${Date.now().toString(36).toUpperCase()}`;
       const userStatus = status === 'active' ? 'active' : 'pending';
-      const phone = phoneE164 && String(phoneE164).trim() ? String(phoneE164).trim() : null;
+      let phone = phoneE164 && String(phoneE164).trim() ? String(phoneE164).trim() : null;
+      if (phone === '' || phone === '+') phone = null;
       // Default OFF for admin-created accounts (explicit true to require MFA)
       const mfa = mfaRequired === true ? 1 : 0;
+      let country = countryCode ? String(countryCode).trim().toUpperCase() : null;
+      if (!country || country === 'OTHER' || country.length !== 2) country = null;
 
       const conn = await pool.getConnection();
       try {
@@ -97,6 +100,11 @@ function createUserRepository(pool) {
         );
 
         const roleId = await resolveRoleId(conn, 'customer');
+        if (!roleId) {
+          const err = new Error('Customer role is not configured.');
+          err.status = 500;
+          throw err;
+        }
         await conn.query(
           `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)
            ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)`,
@@ -112,7 +120,7 @@ function createUserRepository(pool) {
             profileRef,
             firstName || 'Customer',
             lastName || 'User',
-            countryCode || null
+            country
           ]
         );
 
@@ -120,6 +128,23 @@ function createUserRepository(pool) {
         return { id: binaryToUuid(userId), customerReference: profileRef };
       } catch (err) {
         await conn.rollback();
+        if (err && err.code === 'ER_DUP_ENTRY') {
+          const msg = String(err.message || '');
+          const e = new Error(
+            msg.includes('phone')
+              ? 'That phone number is already registered.'
+              : 'That email is already registered.'
+          );
+          e.status = 409;
+          e.code = 'DUPLICATE';
+          throw e;
+        }
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+          const e = new Error('Registration is temporarily unavailable. Please try again later.');
+          e.status = 503;
+          e.cause = err;
+          throw e;
+        }
         throw err;
       } finally {
         conn.release();
