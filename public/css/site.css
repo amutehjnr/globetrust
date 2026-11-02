@@ -205,3 +205,91 @@ body {
 .skiptranslate {
   display: none !important;
 }
+
+
+/* =========================================================
+   Public header — phone/tablet: Login after hamburger
+   ========================================================= */
+
+.primary-nav .nav-mobile-cta {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .site-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .site-header .brand {
+    order: 1;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .site-header .menu-toggle {
+    order: 2;
+    display: block;
+    margin-left: 0;
+  }
+
+  .site-header .header-actions {
+    order: 3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 0;
+  }
+
+  /* Show Login; hide Open Account in the top bar on tablet/phone */
+  .site-header .header-actions .header-login,
+  .site-header .header-actions .button-outline {
+    display: inline-flex !important;
+  }
+
+  .site-header .header-actions .header-register,
+  .site-header .header-actions .button-gold {
+    display: none !important;
+  }
+
+  .site-header .primary-nav {
+    order: 4;
+    width: 100%;
+  }
+
+  /* Open Account lives inside the mobile menu */
+  .primary-nav .nav-mobile-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px 16px !important;
+    border: 0 !important;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #c99b50, #a9762d);
+    color: #fffdf8 !important;
+    font-weight: 650;
+  }
+}
+
+@media (max-width: 390px) {
+  /* Override previous rule that hid Login */
+  .site-header .header-actions .button-outline,
+  .site-header .header-actions .header-login {
+    display: inline-flex !important;
+  }
+
+  .site-header .header-actions .button-gold,
+  .site-header .header-actions .header-register {
+    display: none !important;
+  }
+
+  .site-header .header-login {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+}
