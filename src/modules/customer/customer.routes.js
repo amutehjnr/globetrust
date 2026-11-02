@@ -99,14 +99,14 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
     }
   }
 
-  /** Prefer profile currency (+ USD). Hide zero-balance legacy NGN/etc. */
+  /** Prefer profile-country currency. Keep other currencies only if they have balance. */
   function filterAccountsForProfile(accounts, profile, sessionUser) {
     const home = homeCurrencyFrom(profile, sessionUser);
     const list = Array.isArray(accounts) ? accounts : [];
     return list.filter((a) => {
       const code = String(a.currencyCode || a.currency || '').toUpperCase();
       if (!code) return false;
-      if (code === home.code || code === 'USD') return true;
+      if (code === home.code) return true;
       const avail = Number(
         a.balance && a.balance.available != null
           ? a.balance.available
@@ -116,6 +116,30 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
       );
       return Number.isFinite(avail) && avail > 0;
     });
+  }
+
+  /** Profile-country account first so dashboard / selects default to home currency. */
+  function sortAccountsHomeFirst(accounts, profile, sessionUser) {
+    const home = homeCurrencyFrom(profile, sessionUser);
+    const list = Array.isArray(accounts) ? [...accounts] : [];
+    list.sort((a, b) => {
+      const ac = String(a.currencyCode || a.currency || '').toUpperCase();
+      const bc = String(b.currencyCode || b.currency || '').toUpperCase();
+      if (ac === home.code && bc !== home.code) return -1;
+      if (bc === home.code && ac !== home.code) return 1;
+      return ac.localeCompare(bc);
+    });
+    return list;
+  }
+
+  function currencyLocals(profile, sessionUser, extra = {}) {
+    const home = homeCurrencyFrom(profile, sessionUser);
+    return {
+      homeCurrency: home,
+      currencyCode: home.code,
+      currencySymbol: home.symbol,
+      ...extra
+    };
   }
 
 
@@ -135,6 +159,10 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links, userId);
         accounts = filterAccountsForProfile(accounts, profile, req.session.user);
+        accounts = sortAccountsHomeFirst(accounts, profile, req.session.user);
+        if (profile && profile.countryCode) {
+          req.session.user.countryCode = profile.countryCode;
+        }
         recentTransfers = await transferRepo.listForUser(userId, 5);
       }
 
@@ -488,13 +516,20 @@ function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferS
         const links = await transferRepo.listLinksWithExternal(userId);
         accounts = await transferService.getBalancesForLinks(links, userId);
         accounts = filterAccountsForProfile(accounts, prof, req.session.user);
+        accounts = sortAccountsHomeFirst(accounts, prof, req.session.user);
+        if (prof && prof.countryCode && req.session.user) {
+          req.session.user.countryCode = prof.countryCode;
+        }
       }
+      const homeAcc = homeCurrencyFrom(prof, req.session.user);
       res.render('customer/accounts', pageLocals(req, {
         title: 'Accounts',
         path: '/app/accounts',
         profile: prof,
         accounts,
-        homeCurrency: homeCurrencyFrom(prof, req.session.user)
+        homeCurrency: homeAcc,
+        currencyCode: homeAcc.code,
+        currencySymbol: homeAcc.symbol
       }));
     } catch (err) {
       next(err);

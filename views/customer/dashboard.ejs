@@ -25,7 +25,10 @@
     ? currencyCode
     : (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.code)
       ? homeCurrency.code
-      : (profile && profile.countryCode === 'NG' ? 'NGN' : 'USD');
+      : (profile && profile.countryCode === 'NG' ? 'NGN'
+        : profile && profile.countryCode === 'GB' ? 'GBP'
+        : profile && (profile.countryCode === 'DE' || profile.countryCode === 'FR' || profile.countryCode === 'IT' || profile.countryCode === 'ES' || profile.countryCode === 'NL') ? 'EUR'
+        : 'USD');
   var homeSym = (typeof currencySymbol !== 'undefined' && currencySymbol)
     ? currencySymbol
     : (typeof homeCurrency !== 'undefined' && homeCurrency && homeCurrency.symbol)
@@ -47,16 +50,32 @@
   var totalBalance = 0;
   var checking = null, savings = null, euro = null;
   if (accounts && accounts.length) {
+    // Primary card = profile-country currency account (never prefer USD over home)
     accounts.forEach(function(a) {
+      var code = String(a.currencyCode || a.currency || '').toUpperCase();
       var n = a.balance && a.balance.available != null ? Number(String(a.balance.available).replace(/[^0-9.-]/g, '')) : 0;
-      if (!isNaN(n)) totalBalance += n;
-      var label = ((a.displayLabel || '') + ' ' + (a.currencyCode || '')).toLowerCase();
-      if (!checking && (label.indexOf('check') >= 0 || a.currencyCode === homeCode || a.currencyCode === 'USD')) checking = a;
+      if (isNaN(n)) n = 0;
+      // Only sum balances in the home currency (do not mix FX)
+      if (code === homeCode) totalBalance += n;
+      var label = ((a.displayLabel || '') + ' ' + code).toLowerCase();
+      if (!checking && code === homeCode) checking = a;
       if (!savings && label.indexOf('sav') >= 0) savings = a;
-      if (!euro && a.currencyCode === 'EUR') euro = a;
+      if (!euro && code === 'EUR') euro = a;
     });
+    if (!checking) {
+      for (var i = 0; i < accounts.length; i++) {
+        if (String(accounts[i].currencyCode || '').toUpperCase() === homeCode) {
+          checking = accounts[i];
+          break;
+        }
+      }
+    }
     if (!checking && accounts[0]) checking = accounts[0];
-    if (!savings && accounts[1]) savings = accounts[1];
+    if (!savings) {
+      for (var j = 0; j < accounts.length; j++) {
+        if (accounts[j] !== checking) { savings = accounts[j]; break; }
+      }
+    }
   }
   var nowStr = new Date().toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
