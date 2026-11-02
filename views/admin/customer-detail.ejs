@@ -66,6 +66,25 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="acd-btn acd-btn--ghost">Force password reset flag</button>
       </form>
+
+      <form method="post" action="/admin/customers/<%= customerId %>/set-password" class="acd-form" style="margin-top:14px;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="acd-card__head" style="padding:0 0 10px;"><h3 style="margin:0;font-size:14px;">Set customer password</h3></div>
+        <p class="acd-muted" style="margin:0 0 10px;font-size:12px;">
+          Sets a new password immediately (no email link). Requires admin login. Share the new password only through a secure channel.
+        </p>
+        <div class="acd-fields">
+          <div class="acd-field">
+            <label class="acd-label">New password</label>
+            <input type="password" name="password" required minlength="12" autocomplete="new-password" class="acd-input" placeholder="Min. 12 characters">
+          </div>
+          <div class="acd-field">
+            <label class="acd-label">Confirm password</label>
+            <input type="password" name="confirmPassword" required minlength="12" autocomplete="new-password" class="acd-input" placeholder="Repeat password">
+          </div>
+        </div>
+        <button type="submit" class="acd-btn acd-btn--primary">Update password</button>
+      </form>
     </section>
 
     <!-- Roles -->

@@ -897,6 +897,76 @@ function createAdminRouter({
     }
   );
 
+  /**
+   * Admin sets a customer password directly (no customer email/MFA step).
+   * Still requires admin session + CSRF — never public/unauthenticated.
+   */
+  router.post(
+    '/admin/customers/:id/set-password',
+    requireRole('admin'),
+    requireCsrf,
+    async (req, res, next) => {
+      try {
+        if (!isUuid(req.params.id)) {
+          return res.redirect(
+            '/admin/customers?err=' + encodeURIComponent('Invalid customer.')
+          );
+        }
+        if (!userRepo || typeof userRepo.updatePassword !== 'function') {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Password service unavailable.')}`
+          );
+        }
+
+        const password = String(req.body.password || '');
+        const confirm = String(req.body.confirmPassword || '');
+        if (password.length < 12) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Password must be at least 12 characters.')}`
+          );
+        }
+        if (password !== confirm) {
+          return res.redirect(
+            303,
+            `/admin/customers/${req.params.id}?err=${encodeURIComponent('Passwords do not match.')}`
+          );
+        }
+
+        const passwordHash = await hashPassword(password);
+        await userRepo.updatePassword(req.params.id, passwordHash);
+
+        // Clear lockouts / failed attempts when admin resets password
+        try {
+          const pool = req.app.get('pool');
+          // best-effort via userRepo if helpers exist
+          if (typeof userRepo.recordLoginSuccess === 'function') {
+            await userRepo.recordLoginSuccess(req.params.id);
+          }
+        } catch (_) {}
+
+        try {
+          if (adminRepo && typeof adminRepo.forcePasswordResetFlag === 'function') {
+            // optional: leave flag alone; password is already set
+          }
+        } catch (_) {}
+
+        console.log('[GLOBE_ADMIN] set customer password', JSON.stringify({
+          actorId: req.session.user && req.session.user.id,
+          customerId: req.params.id
+        }));
+
+        return res.redirect(
+          303,
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Customer password updated. Share it securely.')}`
+        );
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   router.post(
     '/admin/customers/:id/roles',
     requireRole('admin'),
