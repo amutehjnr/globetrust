@@ -173,7 +173,6 @@
         'style',
         'display:block!important;max-width:min(220px,70vw)!important;max-height:240px!important;width:auto!important;height:auto!important;border-radius:10px;margin:0;background:#f3f4f6;object-fit:contain;'
       );
-      img.referrerPolicy = 'no-referrer';
       img.onerror = function () {
         // Keep a visible fallback link if the browser blocks the img (e.g. CSP)
         if (bubble.querySelector('.lc-img-fallback')) return;
