@@ -125,7 +125,18 @@ function createUserRepository(pool) {
         );
 
         await conn.commit();
-        return { id: binaryToUuid(userId), customerReference: profileRef };
+        const uuid = binaryToUuid(userId);
+        // Belt-and-suspenders: role outside the transaction (fixes edge cases / replicas)
+        try {
+          const roleId2 = await resolveRoleId(null, 'customer');
+          await pool.query(
+            `INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)`,
+            [userId, roleId2]
+          );
+        } catch (e) {
+          console.error('[GLOBE_USER] post-create ensure role', e.message || e);
+        }
+        return { id: uuid, customerReference: profileRef };
       } catch (err) {
         await conn.rollback();
         if (err && err.code === 'ER_DUP_ENTRY') {
@@ -153,12 +164,29 @@ function createUserRepository(pool) {
 
     /** Persist customer role if missing (fixes 403 for older admin-created users). */
     async ensureCustomerRole(userId) {
-      const roleId = await resolveRoleId(null, 'customer');
+      let roleId = await resolveRoleId(null, 'customer');
+      roleId = Number(roleId);
+      if (!roleId || Number.isNaN(roleId)) {
+        const err = new Error('Could not resolve customer role id');
+        err.status = 500;
+        throw err;
+      }
       await pool.query(
         `INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)`,
         [uuidToBinary(userId), roleId]
       );
-      return this.getRoleCodes(userId);
+      const codes = await this.getRoleCodes(userId);
+      if (!codes.includes('customer')) {
+        // Fallback if INSERT IGNORE raced: try plain insert
+        try {
+          await pool.query(
+            `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)`,
+            [uuidToBinary(userId), roleId]
+          );
+        } catch (_) {}
+        return this.getRoleCodes(userId);
+      }
+      return codes;
     },
 
     async recordLoginSuccess(userId) {

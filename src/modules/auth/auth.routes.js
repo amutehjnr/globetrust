@@ -96,28 +96,30 @@ function createAuthRouter({ authService, customerRepo }) {
       });
 
       let roles = Array.isArray(result.user.roles) ? [...result.user.roles] : [];
-      // Persist customer role in DB when missing (admin-created users / legacy rows)
-      if (
-        authService &&
-        typeof authService.ensureCustomerRole === 'function' &&
-        !roles.includes('customer') &&
-        !roles.some((r) => STAFF_ROLES.includes(r))
-      ) {
+      const isStaff = roles.some((r) => STAFF_ROLES.includes(r));
+
+      // Always persist customer role for non-staff (fixes 403 for admin-created accounts)
+      if (authService && typeof authService.ensureCustomerRole === 'function' && !isStaff) {
         try {
-          roles = await authService.ensureCustomerRole(result.user.id);
-          console.warn('[GLOBE_LOGIN] ensured customer role in DB', JSON.stringify({ userId: result.user.id, roles }));
+          const dbRoles = await authService.ensureCustomerRole(result.user.id);
+          if (Array.isArray(dbRoles) && dbRoles.length) {
+            roles = dbRoles;
+          }
+          console.log('[GLOBE_LOGIN] roles after ensureCustomerRole', JSON.stringify({
+            userId: result.user.id,
+            roles
+          }));
         } catch (e) {
           console.warn('[GLOBE_LOGIN] ensureCustomerRole failed', e.message || e);
         }
       }
+
+      if (!Array.isArray(roles)) roles = [];
       if (roles.length === 0) {
-        console.warn('[GLOBE_LOGIN] no roles from DB — defaulting to customer');
+        console.warn('[GLOBE_LOGIN] no roles — defaulting to customer');
         roles = ['customer'];
       }
-      if (
-        !roles.includes('customer') &&
-        !roles.some((r) => STAFF_ROLES.includes(r))
-      ) {
+      if (!roles.includes('customer') && !roles.some((r) => STAFF_ROLES.includes(r))) {
         roles.push('customer');
       }
 

@@ -80,8 +80,20 @@ function createAuthService({ userRepo, tokenRepo, logger, emailService }) {
         throw err;
       }
 
-      const ok = await verifyPassword(user.passwordHash, password);
+      // Try exact password, then trimmed (admin copy/paste often adds spaces)
+      let ok = await verifyPassword(user.passwordHash, password);
+      if (!ok && password !== String(password).trim()) {
+        ok = await verifyPassword(user.passwordHash, String(password).trim());
+      }
       if (!ok) {
+        console.warn('[GLOBE_LOGIN] bad_password', JSON.stringify({
+          userId: user.id,
+          email,
+          hashPresent: Boolean(user.passwordHash),
+          hashLen: user.passwordHash ? String(user.passwordHash).length : 0,
+          hashPrefix: user.passwordHash ? String(user.passwordHash).slice(0, 10) : null,
+          passwordLen: password ? String(password).length : 0
+        }));
         await userRepo.recordLoginFailure(user.id, MAX_ATTEMPTS, LOCK_MINUTES);
         await tokenRepo.logLoginEvent({
           userId: user.id,

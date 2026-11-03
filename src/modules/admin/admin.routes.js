@@ -187,8 +187,10 @@ function createAdminRouter({
           return renderForm(409, { error: 'A user with this email already exists.' });
         }
 
-        const passwordHash = await hashPassword(data.password);
-        const activate = data.activate === 'yes';
+        const plainPassword = String(data.password || '').trim();
+        const passwordHash = await hashPassword(plainPassword);
+        // Default active so the customer can sign in immediately
+        const activate = data.activate !== 'no';
 
         const created = await userRepo.createCustomer({
           email: data.email,
@@ -196,11 +198,22 @@ function createAdminRouter({
           firstName: data.firstName,
           lastName: data.lastName,
           phoneE164: data.phoneE164 || null,
+          countryCode: req.body.countryCode || null,
           status: activate ? 'active' : 'pending',
           mfaRequired: false
         });
 
         const userId = created.id || created;
+
+        // CRITICAL: always attach customer role (fixes 403 on first login)
+        try {
+          if (typeof userRepo.ensureCustomerRole === 'function') {
+            const roles = await userRepo.ensureCustomerRole(userId);
+            console.log('[GLOBE_ADMIN] customer roles after create', JSON.stringify({ userId, roles }));
+          }
+        } catch (e) {
+          console.error('[GLOBE_ADMIN] ensureCustomerRole after create FAILED', e.message || e);
+        }
 
         try {
           if (adminRepo && typeof adminRepo.setUserStatus === 'function') {

@@ -44,8 +44,26 @@ const profileSchema = z.object({
 function createCustomerRouter({ customerRepo, kycUpload, transferRepo, transferService, mfaService }) {
   const router = express.Router();
   // Only protect customer portal paths — do not run on /admin or public routes
+  const STAFF = ['admin', 'support_agent', 'kyc_reviewer', 'operations', 'auditor'];
+
+  /** If session has no portal role, grant customer in-session (stops 403 after admin create). */
+  function ensureSessionPortalRole(req, _res, next) {
+    try {
+      if (req.session && req.session.user && req.session.user.id) {
+        let roles = Array.isArray(req.session.user.roles) ? req.session.user.roles.slice() : [];
+        const hasStaff = roles.some((r) => STAFF.includes(r));
+        if (!roles.includes('customer') && !hasStaff) {
+          roles.push('customer');
+          req.session.user.roles = roles;
+        }
+      }
+    } catch (_) {}
+    next();
+  }
+
   const portalGuard = [
     requireAuth,
+    ensureSessionPortalRole,
     requireRole('customer', 'admin', 'support_agent', 'kyc_reviewer', 'operations', 'auditor')
   ];
   router.use('/dashboard', ...portalGuard);
