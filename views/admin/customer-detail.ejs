@@ -66,24 +66,46 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="acd-btn acd-btn--ghost">Force password reset flag</button>
       </form>
+    </section>
 
-      <form method="post" action="/admin/customers/<%= customerId %>/set-password" class="acd-form" style="margin-top:14px;">
+    <!-- Change customer password (admin types the new password) -->
+    <section class="acd-card">
+      <div class="acd-card__head"><h2>Change customer password</h2></div>
+      <p class="acd-muted" style="margin:0 0 12px;font-size:13px;">
+        Enter a new password below to replace this customer&rsquo;s current password.
+        They can sign in immediately with the new password. Share it only through a secure channel.
+      </p>
+      <form method="post" action="/admin/customers/<%= customerId %>/set-password" class="acd-form" autocomplete="off">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div class="acd-card__head" style="padding:0 0 10px;"><h3 style="margin:0;font-size:14px;">Set customer password</h3></div>
-        <p class="acd-muted" style="margin:0 0 10px;font-size:12px;">
-          Sets a new password immediately (no email link). Requires admin login. Share the new password only through a secure channel.
-        </p>
         <div class="acd-fields">
           <div class="acd-field">
-            <label class="acd-label">New password</label>
-            <input type="password" name="password" required minlength="12" autocomplete="new-password" class="acd-input" placeholder="Min. 12 characters">
+            <label class="acd-label" for="set-pwd">New password</label>
+            <input
+              type="password"
+              id="set-pwd"
+              name="password"
+              class="acd-input"
+              required
+              minlength="12"
+              autocomplete="new-password"
+              placeholder="At least 12 characters"
+            >
           </div>
           <div class="acd-field">
-            <label class="acd-label">Confirm password</label>
-            <input type="password" name="confirmPassword" required minlength="12" autocomplete="new-password" class="acd-input" placeholder="Repeat password">
+            <label class="acd-label" for="set-pwd-confirm">Confirm new password</label>
+            <input
+              type="password"
+              id="set-pwd-confirm"
+              name="confirmPassword"
+              class="acd-input"
+              required
+              minlength="12"
+              autocomplete="new-password"
+              placeholder="Repeat the new password"
+            >
           </div>
         </div>
-        <button type="submit" class="acd-btn acd-btn--primary">Update password</button>
+        <button type="submit" class="acd-btn acd-btn--primary">Save new password</button>
       </form>
     </section>
 

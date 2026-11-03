@@ -898,8 +898,8 @@ function createAdminRouter({
   );
 
   /**
-   * Admin sets a customer password directly (no customer email/MFA step).
-   * Still requires admin session + CSRF — never public/unauthenticated.
+   * Admin enters a new password for a customer — replaces the existing hash.
+   * Requires admin session + CSRF (not a public endpoint).
    */
   router.post(
     '/admin/customers/:id/set-password',
@@ -921,6 +921,7 @@ function createAdminRouter({
 
         const password = String(req.body.password || '');
         const confirm = String(req.body.confirmPassword || '');
+
         if (password.length < 12) {
           return res.redirect(
             303,
@@ -937,29 +938,9 @@ function createAdminRouter({
         const passwordHash = await hashPassword(password);
         await userRepo.updatePassword(req.params.id, passwordHash);
 
-        // Clear lockouts / failed attempts when admin resets password
-        try {
-          const pool = req.app.get('pool');
-          // best-effort via userRepo if helpers exist
-          if (typeof userRepo.recordLoginSuccess === 'function') {
-            await userRepo.recordLoginSuccess(req.params.id);
-          }
-        } catch (_) {}
-
-        try {
-          if (adminRepo && typeof adminRepo.forcePasswordResetFlag === 'function') {
-            // optional: leave flag alone; password is already set
-          }
-        } catch (_) {}
-
-        console.log('[GLOBE_ADMIN] set customer password', JSON.stringify({
-          actorId: req.session.user && req.session.user.id,
-          customerId: req.params.id
-        }));
-
         return res.redirect(
           303,
-          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Customer password updated. Share it securely.')}`
+          `/admin/customers/${req.params.id}?msg=${encodeURIComponent('Customer password changed. Share the new password securely.')}`
         );
       } catch (err) {
         next(err);
