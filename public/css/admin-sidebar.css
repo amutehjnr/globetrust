@@ -230,7 +230,7 @@
 }
 
 /* Mobile and tablet */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .db-hamburger {
     display: inline-flex;
   }
@@ -288,5 +288,109 @@
   .db-nav-item,
   .db-signout button {
     transition: none;
+  }
+}
+
+
+/* =========================================================
+   Admin responsive hardening — tablet + phone
+   ========================================================= */
+
+html, body.db-body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.db-shell {
+  max-width: 100vw;
+}
+
+.db-main,
+.db-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Tables scroll horizontally on small screens */
+.db-content table,
+.acd-table,
+.cust-table,
+.admin-table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1024px) {
+  .db-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .db-topbar {
+    padding-left: 64px !important; /* room for hamburger */
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .db-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .db-content {
+    padding: 14px 12px 28px !important;
+  }
+
+  .db-hamburger {
+    display: inline-flex !important;
+  }
+
+  /* Override portal.css stacking rules that break admin drawer */
+  .db-shell {
+    display: block !important;
+  }
+
+  .db-sidebar {
+    position: fixed !important;
+    transform: translateX(-105%) !important;
+    width: min(280px, 86vw) !important;
+    max-width: 280px !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 1000 !important;
+  }
+
+  body.db-sidebar-open .db-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  body.db-sidebar-open .db-sidebar-backdrop {
+    display: block !important;
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-user__meta {
+    display: none;
+  }
+
+  .db-topbar {
+    padding: 10px 12px 10px 60px !important;
+  }
+
+  .db-search input {
+    font-size: 14px;
+  }
+
+  /* Admin cards / grids */
+  .db-balance-grid,
+  .admin-stats,
+  .ao-grid,
+  .acd-fields {
+    grid-template-columns: 1fr !important;
   }
 }

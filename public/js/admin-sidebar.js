@@ -1,4 +1,3 @@
-
 (function () {
   'use strict';
 
@@ -18,7 +17,7 @@
 
     button.dataset.sidebarInitialized = 'true';
 
-    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const mobileQuery = window.matchMedia('(max-width: 1024px)');
 
     function setSidebar(open) {
       const shouldOpen = Boolean(open) && mobileQuery.matches;
