@@ -1,108 +1,43 @@
+'use strict';
+
 (function () {
-  'use strict';
-
   function initAdminSidebar() {
-    const sidebar = document.getElementById('db-sidebar');
-    const button = document.querySelector('.db-hamburger');
-    const backdrop = document.querySelector('.db-sidebar-backdrop');
+    var sidebar = document.getElementById('db-sidebar');
+    var button = document.querySelector('.db-hamburger');
+    var backdrop = document.querySelector('.db-sidebar-backdrop');
+    if (!sidebar || !button || !backdrop) return;
+    if (button.getAttribute('data-ready') === '1') return;
+    button.setAttribute('data-ready', '1');
 
-    if (!sidebar || !button || !backdrop) {
-      return;
-    }
+    var mq = window.matchMedia('(max-width: 900px)');
 
-    // Prevent duplicate event listeners.
-    if (button.dataset.sidebarInitialized === 'true') {
-      return;
-    }
-
-    button.dataset.sidebarInitialized = 'true';
-
-    const mobileQuery = window.matchMedia('(max-width: 1024px)');
-
-    function setSidebar(open) {
-      const shouldOpen = Boolean(open) && mobileQuery.matches;
-
-      document.body.classList.toggle('db-sidebar-open', shouldOpen);
-
-      button.setAttribute('aria-expanded', String(shouldOpen));
-      button.setAttribute(
-        'aria-label',
-        shouldOpen ? 'Close navigation menu' : 'Open navigation menu'
-      );
-
-      backdrop.setAttribute('aria-hidden', String(!shouldOpen));
-
-      // Keep keyboard focus and the background page usable.
-      if (mobileQuery.matches) {
-        sidebar.inert = !shouldOpen;
-      } else {
-        sidebar.inert = false;
-      }
+    function setOpen(open) {
+      var should = Boolean(open) && mq.matches;
+      document.body.classList.toggle('db-sidebar-open', should);
+      button.setAttribute('aria-expanded', should ? 'true' : 'false');
+      backdrop.setAttribute('aria-hidden', should ? 'false' : 'true');
     }
 
     button.addEventListener('click', function () {
-      const isOpen = document.body.classList.contains('db-sidebar-open');
-      setSidebar(!isOpen);
+      setOpen(!document.body.classList.contains('db-sidebar-open'));
     });
-
     backdrop.addEventListener('click', function () {
-      setSidebar(false);
+      setOpen(false);
     });
-
-    sidebar.querySelectorAll('a').forEach(function (link) {
-      link.addEventListener('click', function () {
-        if (mobileQuery.matches) {
-          setSidebar(false);
-        }
+    sidebar.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        if (mq.matches) setOpen(false);
       });
     });
-
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') {
-        setSidebar(false);
-        button.focus();
-      }
-
-      if (
-        event.key === 'Tab' &&
-        mobileQuery.matches &&
-        document.body.classList.contains('db-sidebar-open')
-      ) {
-        const focusable = sidebar.querySelectorAll(
-          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-
-        if (!focusable.length) return;
-
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (
-          !event.shiftKey &&
-          document.activeElement === last
-        ) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setOpen(false);
     });
-
-    function handleViewportChange() {
-      setSidebar(false);
-      sidebar.inert = mobileQuery.matches;
+    function onChange() {
+      setOpen(false);
     }
-
-    if (mobileQuery.addEventListener) {
-      mobileQuery.addEventListener('change', handleViewportChange);
-    } else {
-      mobileQuery.addListener(handleViewportChange);
-    }
-
-    setSidebar(false);
-    sidebar.inert = mobileQuery.matches;
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+    setOpen(false);
   }
 
   if (document.readyState === 'loading') {
