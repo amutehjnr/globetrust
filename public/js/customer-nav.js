@@ -8,6 +8,8 @@
   var closeBtn = document.getElementById('db-nav-close') || document.querySelector('.db-sidebar__close');
 
   if (!shell || !sidebar) return;
+  if (shell.getAttribute('data-nav-init') === '1') return;
+  shell.setAttribute('data-nav-init', '1');
 
   function isMobile() {
     return window.matchMedia('(max-width: 900px)').matches;
@@ -36,13 +38,17 @@
     if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
   }
 
-  if (openBtn) {
-    openBtn.addEventListener('click', function (e) {
+  function toggleNav(e) {
+    if (e) {
       e.preventDefault();
       e.stopPropagation();
-      if (shell.classList.contains('nav-open')) closeNav();
-      else openNav();
-    });
+    }
+    if (shell.classList.contains('nav-open')) closeNav();
+    else openNav();
+  }
+
+  if (openBtn) {
+    openBtn.addEventListener('click', toggleNav);
   }
 
   if (closeBtn) {
@@ -54,24 +60,15 @@
   }
 
   if (backdrop) {
-    backdrop.addEventListener('click', function (e) {
-      e.preventDefault();
+    backdrop.addEventListener('click', function () {
       closeNav();
     });
   }
 
-  // CRITICAL: do not close the drawer in the same event as the link click.
-  // Closing/transforming the sidebar immediately cancels navigation on mobile Safari/Chrome.
   sidebar.querySelectorAll('a[href]').forEach(function (link) {
-    link.addEventListener('click', function (e) {
-      // Never preventDefault on real links
+    link.addEventListener('click', function () {
       if (!isMobile()) return;
-      var href = link.getAttribute('href');
-      if (!href || href === '#') return;
-      // Let the browser navigate; close a bit later as a soft cleanup
-      setTimeout(function () {
-        closeNav();
-      }, 400);
+      setTimeout(closeNav, 350);
     });
   });
 
