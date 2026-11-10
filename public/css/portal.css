@@ -1668,3 +1668,38 @@ body.db-nav-lock {
     padding: 14px 12px 28px !important;
   }
 }
+
+/* =========================================================
+   Customer mobile sidebar — clickable links fix
+   ========================================================= */
+@media (max-width: 900px) {
+  .db-nav-backdrop {
+    z-index: 900 !important;
+  }
+
+  .db-shell.nav-open .db-sidebar,
+  .db-sidebar {
+    z-index: 950 !important;
+    pointer-events: auto !important;
+  }
+
+  .db-sidebar a.db-nav-item,
+  .db-sidebar a[href],
+  .db-sidebar button,
+  .db-sidebar .db-signout button {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(197, 161, 91, 0.3);
+  }
+
+  /* Ensure main content cannot sit above the open drawer */
+  .db-shell.nav-open .db-main {
+    pointer-events: none;
+  }
+
+  .db-shell.nav-open .db-sidebar {
+    pointer-events: auto !important;
+  }
+}
