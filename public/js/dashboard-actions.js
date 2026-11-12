@@ -10,10 +10,7 @@
   var banksLoaded = false;
 
   function openModal(name) {
-    if (mustMfa) {
-      window.location.href = '/mfa/enrol';
-      return;
-    }
+    // MFA enrolment is optional for navigation — do not redirect away from portal pages
     var modal = document.getElementById('modal-' + name);
     if (!modal) return;
     root.hidden = false;

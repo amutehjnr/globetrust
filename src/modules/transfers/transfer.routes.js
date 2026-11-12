@@ -3,7 +3,7 @@ const { currencyForCountry } = require('../../utils/currency');
 
 const express = require('express');
 const crypto = require('node:crypto');
-const { requireAuth, requireRole, requireMfaEnrolled } = require('../../middleware/authz');
+const { requireAuth, requireRole } = require('../../middleware/authz');
 const { requireCsrf } = require('../../middleware/csrf');
 const { banksForCountry, resolveCountryCode } = require('../../utils/banksByCountry');
 const { enrichBanks, flagUrlForCountry } = require('../../utils/bankLogos');
@@ -250,7 +250,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     }
   });
 
-  router.get('/app/transfers', requireMfaEnrolled(mfaService), async (req, res, next) => {
+  router.get('/app/transfers', async (req, res, next) => {
     try {
       console.error('[GLOBE_TRANSFER] GET /app/transfers', JSON.stringify({
         userId: req.session?.user?.id,
@@ -286,7 +286,7 @@ function createTransferRouter({ transferService, transferRepo, coreBanking, mfaS
     }
   });
 
-  router.post('/app/transfers', requireCsrf, requireMfaEnrolled(mfaService), async (req, res, next) => {
+  router.post('/app/transfers', requireCsrf, async (req, res, next) => {
     try {
       const result = await transferService.createTransfer({
         userId: req.session.user.id,
