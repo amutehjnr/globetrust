@@ -128,11 +128,16 @@
     fd.append('ajax', '1');
     if (hasFile) fd.append('file', fileInput.files[0]);
 
+    var token = csrfToken();
     var res = await fetch(form.action, {
       method: 'POST',
       body: fd,
       credentials: 'same-origin',
-      headers: { Accept: 'application/json' }
+      headers: {
+        Accept: 'application/json',
+        'X-CSRF-Token': token,
+        'CSRF-Token': token
+      }
     });
     var data = await res.json().catch(function () {
       return null;

@@ -245,19 +245,38 @@ function createSupportRouter({ supportService, supportRepo, supportUpload }) {
     }
   );
 
+  // Admin reply: text and/or file. Multer MUST run before requireCsrf
+  // so multipart field _csrf is parsed into req.body.
   router.post(
     '/admin/support/:id/messages',
     requireAuth,
     requireRole('support_agent', 'admin', 'operations'),
+    (req, res, next) => {
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+          err.status = 400;
+          return next(err);
+        }
+        next();
+      });
+    },
     requireCsrf,
     async (req, res, next) => {
       try {
-        // Staff reply text only — customers upload; agents view attachments in the thread
+        let attachment = null;
+        if (req.file) {
+          if (!supportUpload) {
+            const e = new Error('File uploads are not configured.');
+            e.status = 503;
+            throw e;
+          }
+          attachment = await supportUpload.upload(req.file);
+        }
         const result = await supportService.postMessage(
           req.session.user,
           req.params.id,
           req.body.text,
-          null
+          attachment
         );
         await broadcastMessage(req, result.conversation, result.message);
 
